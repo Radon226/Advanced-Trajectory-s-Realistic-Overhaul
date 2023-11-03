@@ -1431,9 +1431,9 @@ function damagePlayershot(player, damage, baseGunDmg, headShotDmg, bodyShotDmg, 
         defense = maxDefense
     end
 
-    local playerDamageDealt = baseGunDmg*damage
+    local playerDamageDealt = baseGunDmg*damage*(1-defense)
 
-    player:getBodyDamage():ReduceGeneralHealth(baseGunDmg*damage*(1-defense))
+    player:getBodyDamage():ReduceGeneralHealth(playerDamageDealt)
 end
 
 -----------------------------------
@@ -1634,22 +1634,22 @@ function Advanced_trajectory.checkontick()
                 -- steady aim wins the game, else bodyshot damage 
                 if Advanced_trajectory.aimnumBeforeShot <= 5 then
                     damagezb = Advanced_trajectory.HeadShotDmgZomMultiplier            -- zombie headshot aka strong headshot
-                    damagepr = Advanced_trajectory.HeadShotDmgPlayerMultiplier         -- zombie headshot aka strong headshot
+                    damagepr = Advanced_trajectory.HeadShotDmgPlayerMultiplier         -- player headshot aka strong headshot
                     saywhat = "IGUI_Headshot (STRONG): " .. Advanced_trajectory.aimnumBeforeShot
                 else
                     damagezb = Advanced_trajectory.BodyShotDmgZomMultiplier            -- zombie bodyshot aka weak headshot
-                    damagepr = Advanced_trajectory.BodyShotDmgPlayerMultiplier         -- zombie bodyshot aka weak headshot
+                    damagepr = Advanced_trajectory.BodyShotDmgPlayerMultiplier         -- player bodyshot aka weak headshot
                     saywhat = "IGUI_Headshot (WEAK): " .. Advanced_trajectory.aimnumBeforeShot
                 end
                 -- vt[4] is offset xyz
                 if not Zombie and not Playershot  then
-                    Zombie,Playershot = Advanced_trajectory.getShootzombie({vt[4][1]-0.9 +angleammooff*0.45 +admindel*3, vt[4][2]-0.9 +angleammooff*0.45 +admindel*3, shootlevel},2,isshotplayer, {vt[20][1],vt[20][2],vt[20][3]})
+                    Zombie,Playershot = Advanced_trajectory.getShootzombie({vt[4][1] - 0.9 + angleammooff*0.45 + admindel*3, vt[4][2] - 0.9 + angleammooff*0.45 + admindel*3, shootlevel}, 2, isshotplayer, {vt[20][1], vt[20][2], vt[20][3]})
                     damagezb = Advanced_trajectory.BodyShotDmgZomMultiplier            -- zombie bodyshot
                     damagepr = Advanced_trajectory.BodyShotDmgPlayerMultiplier         -- player bodyshot
                     saywhat = "IGUI_Bodyshot"
                 end
                 if not Zombie and not Playershot then
-                    Zombie,Playershot = Advanced_trajectory.getShootzombie({vt[4][1]-1.8 +angleammooff*0.9 +admindel*3, vt[4][2]-1.8 +angleammooff*0.9 +admindel*3, shootlevel},3,isshotplayer, {vt[20][1],vt[20][2],vt[20][3]})
+                    Zombie,Playershot = Advanced_trajectory.getShootzombie({vt[4][1] - 1.8 + angleammooff*0.9 + admindel*3, vt[4][2] - 1.8 + angleammooff*0.9 + admindel*3, shootlevel}, 3, isshotplayer, {vt[20][1], vt[20][2], vt[20][3]})
                     damagezb = Advanced_trajectory.FootShotDmgZomMultiplier            -- zombie footshot
                     damagepr = Advanced_trajectory.FootShotDmgPlayerMultiplier         -- player footshot
                     saywhat = "IGUI_Footshot"
