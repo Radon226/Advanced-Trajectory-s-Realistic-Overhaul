@@ -55,13 +55,14 @@ function Advanced_trajectory.panel:prerender()
         AR,AG,AB = getSandboxOptions():getOptionByName("Advanced_trajectory.crosshairRed"):getValue(), getSandboxOptions():getOptionByName("Advanced_trajectory.crosshairGreen"):getValue() , getSandboxOptions():getOptionByName("Advanced_trajectory.crosshairBlue"):getValue() 
     end
 
-    local transparency = Advanced_trajectory.alpha
+    local transparency  = Advanced_trajectory.alpha
 
-    -- causes shaky effect with drunk, maybe best paired with panic or stress
-    self:drawTextureScaled(self.texturetable[1], (self.width/2 -texturescal/2) - ZombRand(Advanced_trajectory.stressEffect),            (self.height/2 - multiper- texturescal/2)  - ZombRand(Advanced_trajectory.stressEffect), texturescal, texturescal, transparency,AR, AG, AB)
-    self:drawTextureScaled(self.texturetable[2], (self.width/2 +multiper -texturescal/2) + ZombRand(Advanced_trajectory.stressEffect) , (self.height/2 -texturescal/2)  + ZombRand(Advanced_trajectory.stressEffect),            texturescal, texturescal, transparency, AR, AG, AB)
-    self:drawTextureScaled(self.texturetable[3], (self.width/2  -texturescal/2) - ZombRand(Advanced_trajectory.stressEffect),           (self.height/2 + multiper-texturescal/2) - ZombRand(Advanced_trajectory.stressEffect),  texturescal, texturescal, transparency, AR, AG, AB)
-    self:drawTextureScaled(self.texturetable[4], (self.width/2 -multiper -texturescal/2) - ZombRand(Advanced_trajectory.stressEffect),  (self.height/2-texturescal/2)  - ZombRand(Advanced_trajectory.stressEffect),           texturescal, texturescal, transparency, AR, AG, AB)
+    local shakyEffect   = Advanced_trajectory.stressEffect + Advanced_trajectory.painEffect
+
+    self:drawTextureScaled(self.texturetable[1], (self.width/2 -texturescal/2)              - ZombRand(shakyEffect), (self.height/2 - multiper- texturescal/2)  - ZombRand(shakyEffect),  texturescal, texturescal, transparency, AR, AG, AB)
+    self:drawTextureScaled(self.texturetable[2], (self.width/2 +multiper -texturescal/2)    + ZombRand(shakyEffect), (self.height/2 -texturescal/2)             + ZombRand(shakyEffect),  texturescal, texturescal, transparency, AR, AG, AB)
+    self:drawTextureScaled(self.texturetable[3], (self.width/2 -texturescal/2)              - ZombRand(shakyEffect), (self.height/2 + multiper-texturescal/2)   - ZombRand(shakyEffect),  texturescal, texturescal, transparency, AR, AG, AB)
+    self:drawTextureScaled(self.texturetable[4], (self.width/2 -multiper -texturescal/2)    - ZombRand(shakyEffect), (self.height/2-texturescal/2)              - ZombRand(shakyEffect),  texturescal, texturescal, transparency, AR, AG, AB)
  
     
 

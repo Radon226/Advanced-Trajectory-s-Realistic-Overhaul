@@ -20,11 +20,11 @@ option Advanced_trajectory.callshot
 {type = boolean,default = false,page = Advanced_trajectory_debug,translation = Advanced_trajectorycallshot,}
 
 /* ------Enable player damage------ */
-option Advanced_trajectory.EnablePlayerDamage
-{type = boolean,default = false,page = Advanced_trajectory_damage,translation = Advanced_trajectoryEnablePlayerDamage,}
+option Advanced_trajectory.IgnorePVPSafety
+{type = boolean,default = false,page = Advanced_trajectory_damage,translation = Advanced_trajectoryIgnorePVPSafety,}
 
 option Advanced_trajectory.enableBulletPenFlesh
-{type = boolean, default = true, page = Advanced_trajectory_damage, translation = Advanced_trajectoryenableBulletPenFlesh}
+{type = boolean, default = true, page = Advanced_trajectory_damage, translation = Advanced_trajectoryenableBulletPenFlesh,}
 
 option AT_VehicleDamageenable
 {type = boolean,page = Advanced_trajectory_damage,translation = ATvdenable,default = true,}
@@ -51,16 +51,6 @@ option Advanced_trajectory.ATY_damage
 	default = 1,
 	page = Advanced_trajectory_damage,
 	translation = Advanced_trajectoryATY_damage,
-}
-
-option Advanced_trajectory.penDamageReductionMultiplier
-{
-	type = double,
-	min = 0,
-	max = 1,
-	default = 0.1,
-	page = Advanced_trajectory_damage,
-	translation = Advanced_trajectorypenDamageReductionMultiplier,
 }
 
 option Advanced_trajectory.DebugOffset
@@ -137,6 +127,16 @@ option Advanced_trajectory.DebugSayShotPart
 	translation = Advanced_trajectoryDebugSayShotPart,
 }
 
+option Advanced_trajectory.bowBreakChance
+{
+	type = double,
+	min = 1,
+	max = 100,
+	default = 30,
+	page = Advanced_trajectory_debug,
+	translation = Advanced_trajectorybowBreakChance,
+}
+
 option Advanced_trajectory.XPKillModifier
 {
 	type = double,
@@ -157,6 +157,16 @@ option Advanced_trajectory.XPHitModifier
 	translation = Advanced_trajectoryXPHitModifier,
 }
 
+option Advanced_trajectory.penDamageReductionMultiplier
+{
+	type = double,
+	min = 0,
+	max = 1,
+	default = 0.25,
+	page = Advanced_trajectory_damage,
+	translation = Advanced_trajectorypenDamageReductionMultiplier,
+}
+
 option Advanced_trajectory.MaxProjCone
 {
 	type = double,
@@ -166,23 +176,22 @@ option Advanced_trajectory.MaxProjCone
 	page = Advanced_trajectory,
 	translation = Advanced_trajectoryMaxProjCone,
 }
-
-option Advanced_trajectory.bowBreakChance
+option Advanced_trajectory.maxShotgunProjCone
 {
 	type = double,
-	min = 1,
-	max = 100,
-	default = 30,
+	min = 0,
+	max = 1,
+	default = 0.5,
 	page = Advanced_trajectory,
-	translation = Advanced_trajectorybowBreakChance,
+	translation = Advanced_trajectorymaxShotgunProjCone,
 }
 
 option Advanced_trajectory.maxaimnum
 {
 	type = double,
-	min = -100,
-	max = 100,
-	default = -9,
+	min = 0,
+	max = 20,
+	default = 7,
 	page = Advanced_trajectory,
 	translation = Advanced_trajectorymaxaimnum,
 }
@@ -192,7 +201,7 @@ option Advanced_trajectory.minaimnumModifier
 	type = double,
 	min = 0,
 	max = 100,
-	default = 5,
+	default = 7,
 	page = Advanced_trajectory,
 	translation = Advanced_trajectoryminaimnumModifier,
 }
@@ -206,6 +215,14 @@ option Advanced_trajectory.maxDefenseReduction
 	page = Advanced_trajectory_damage,
 	translation = Advanced_trajectorymaxDefenseReduction,
 }
+
+
+
+
+
+
+
+
 option Advanced_trajectory.headShotIncChance
 {
 	type = double,
@@ -279,6 +296,12 @@ option Advanced_trajectory.footShotDmgPlayerMultiplier
 	page = Advanced_trajectory_damage,
 	translation = Advanced_trajectoryfootShotDmgPlayerMultiplier,
 }
+
+
+
+
+
+
 
 option Advanced_trajectory.shotgunDamageMultiplier
 {
@@ -409,6 +432,15 @@ option Advanced_trajectory.focusCounterSpeed
 	page = Advanced_trajectory,
 	translation = Advanced_trajectoryfocusCounterSpeed,
 }
+option Advanced_trajectory.focusCounterSpeedScaleModifier
+{
+	type = double,
+	min = 0,
+	max = 10,
+	default = 7,
+	page = Advanced_trajectory,
+	translation = Advanced_trajectoryfocusCounterSpeedScaleModifier,
+}
 option Advanced_trajectory.maxFocusSpeed
 {
 	type = double,
@@ -418,6 +450,44 @@ option Advanced_trajectory.maxFocusSpeed
 	page = Advanced_trajectory,
 	translation = Advanced_trajectorymaxFocusSpeed,
 }
+
+option Advanced_trajectory.crouchCounterSpeed
+{
+	type = double,
+	min = 0,
+	max = 10,
+	default = 8,
+	page = Advanced_trajectory,
+	translation = Advanced_trajectorycrouchCounterSpeed,
+}
+option Advanced_trajectory.crouchPenaltyModifier
+{
+	type = double,
+	min = 0,
+	max = 10,
+	default = 2,
+	page = Advanced_trajectory,
+	translation = Advanced_trajectorycrouchPenaltyModifier,
+}
+option Advanced_trajectory.crouchTurnEffect
+{
+	type = double,
+	min = 0,
+	max = 10,
+	default = 3,
+	page = Advanced_trajectory,
+	translation = Advanced_trajectorycrouchTurnEffect,
+}
+option Advanced_trajectory.proneTurnEffect
+{
+	type = double,
+	min = 0,
+	max = 10,
+	default = 5,
+	page = Advanced_trajectory,
+	translation = Advanced_trajectoryproneTurnEffect,
+}
+
 option Advanced_trajectory.proneFocusCounterSpeedBuff
 {
 	type = double,
@@ -465,14 +535,68 @@ option Advanced_trajectory.recoilModifier
 }
 
 /* ----------------------------------- MOODLES ----------------------------------- */
+option Advanced_trajectory.staminaCrouchScale
+{
+	type = double,
+	min = 0,
+	max = 5,
+	default = 0.001,
+	page = Advanced_trajectory_moodles,
+	translation = Advanced_trajectorystaminaCrouchScale,
+}
+option Advanced_trajectory.staminaHeavyCrouchScale
+{
+	type = double,
+	min = 0,
+	max = 5,
+	default = 0.5,
+	page = Advanced_trajectory_moodles,
+	translation = Advanced_trajectorystaminaHeavyCrouchScale,
+}
+option Advanced_trajectory.staminaCrawlScale
+{
+	type = double,
+	min = 0,
+	max = 5,
+	default = 0.003,
+	page = Advanced_trajectory_moodles,
+	translation = Advanced_trajectorystaminaCrawlScale,
+}
+option Advanced_trajectory.staminaHeavyCrawlScale
+{
+	type = double,
+	min = 0,
+	max = 5,
+	default = 0.5,
+	page = Advanced_trajectory_moodles,
+	translation = Advanced_trajectorystaminaHeavyCrawlScale,
+}
+option Advanced_trajectory.heavyTurnEffectModifier
+{
+	type = double,
+	min = 0,
+	max = 5,
+	default = 0.5,
+	page = Advanced_trajectory_moodles,
+	translation = Advanced_trajectoryheavyTurnEffectModifier,
+}
 option Advanced_trajectory.painModifier
 {
 	type = double,
 	min = 0,
 	max = 1,
-	default = 0.005,
+	default = 0.1,
 	page = Advanced_trajectory_moodles,
 	translation = Advanced_trajectorypainModifier,
+}
+option Advanced_trajectory.painVisualModifier
+{
+	type = double,
+	min = 0,
+	max = 100,
+	default = 3,
+	page = Advanced_trajectory_moodles,
+	translation = Advanced_trajectorypainVisualModifier,
 }
 option Advanced_trajectory.drunkActionEffectModifier
 {
@@ -483,30 +607,39 @@ option Advanced_trajectory.drunkActionEffectModifier
 	page = Advanced_trajectory_moodles,
 	translation = Advanced_trajectorydrunkActionEffectModifier,
 }
-option Advanced_trajectory.drunkModifier
+option Advanced_trajectory.drunkMaxBloomModifier
 {
 	type = double,
 	min = 0,
 	max = 100,
 	default = 6,
 	page = Advanced_trajectory_moodles,
-	translation = Advanced_trajectorydrunkModifier,
+	translation = Advanced_trajectorydrunkMaxBloomModifier,
 }
-option Advanced_trajectory.hyperHypoModifier
+option Advanced_trajectory.heavyMaxBloomModifier
 {
 	type = double,
 	min = 0,
 	max = 100,
-	default = 1,
+	default = 6,
+	page = Advanced_trajectory_moodles,
+	translation = Advanced_trajectoryheavyMaxBloomModifier,
+}
+option Advanced_trajectory.hyperHypoModifier
+{
+	type = double,
+	min = 0.5,
+	max = 2,
+	default = 0.66,
 	page = Advanced_trajectory_moodles,
 	translation = Advanced_trajectoryhyperHypoModifier,
 }
 option Advanced_trajectory.tiredModifier
 {
 	type = double,
-	min = 0,
-	max = 100,
-	default = 1,
+	min = 0.5,
+	max = 2,
+	default = 0.5,
 	page = Advanced_trajectory_moodles,
 	translation = Advanced_trajectorytiredModifier,
 }
@@ -524,7 +657,7 @@ option Advanced_trajectory.stressVisualModifier
 	type = double,
 	min = 0,
 	max = 100,
-	default = 3,
+	default = 1.25,
 	page = Advanced_trajectory_moodles,
 	translation = Advanced_trajectorystressVisualModifier,
 }
@@ -542,7 +675,7 @@ option Advanced_trajectory.enduranceBreathModifier
 	type = double,
 	min = 0,
 	max = 100,
-	default = 1,
+	default = 1.5,
 	page = Advanced_trajectory_moodles,
 	translation = Advanced_trajectoryenduranceBreathModifier,
 }
@@ -551,7 +684,7 @@ option Advanced_trajectory.inhaleModifier1
 	type = double,
 	min = 0,
 	max = 100,
-	default = 2.5,
+	default = 3,
 	page = Advanced_trajectory_moodles,
 	translation = Advanced_trajectoryinhaleModifier1,
 }
@@ -560,7 +693,7 @@ option Advanced_trajectory.exhaleModifier1
 	type = double,
 	min = 0,
 	max = 100,
-	default = 0.8,
+	default = 2,
 	page = Advanced_trajectory_moodles,
 	translation = Advanced_trajectoryexhaleModifier1,
 }
@@ -569,7 +702,7 @@ option Advanced_trajectory.inhaleModifier2
 	type = double,
 	min = 0,
 	max = 100,
-	default = 2.75,
+	default = 3,
 	page = Advanced_trajectory_moodles,
 	translation = Advanced_trajectoryinhaleModifier2,
 }
@@ -578,7 +711,7 @@ option Advanced_trajectory.exhaleModifier2
 	type = double,
 	min = 0,
 	max = 100,
-	default = 1.5,
+	default = 3.66,
 	page = Advanced_trajectory_moodles,
 	translation = Advanced_trajectoryexhaleModifier2,
 }
@@ -587,7 +720,7 @@ option Advanced_trajectory.inhaleModifier3
 	type = double,
 	min = 0,
 	max = 100,
-	default = 2.85,
+	default = 3,
 	page = Advanced_trajectory_moodles,
 	translation = Advanced_trajectoryinhaleModifier3,
 }
@@ -596,7 +729,7 @@ option Advanced_trajectory.exhaleModifier3
 	type = double,
 	min = 0,
 	max = 100,
-	default = 3,
+	default = 4,
 	page = Advanced_trajectory_moodles,
 	translation = Advanced_trajectoryexhaleModifier3,
 }
@@ -605,7 +738,7 @@ option Advanced_trajectory.inhaleModifier4
 	type = double,
 	min = 0,
 	max = 100,
-	default = 3.25,
+	default = 4,
 	page = Advanced_trajectory_moodles,
 	translation = Advanced_trajectoryinhaleModifier4,
 }
@@ -614,7 +747,7 @@ option Advanced_trajectory.exhaleModifier4
 	type = double,
 	min = 0,
 	max = 100,
-	default = 4,
+	default = 7,
 	page = Advanced_trajectory_moodles,
 	translation = Advanced_trajectoryexhaleModifier4,
 }

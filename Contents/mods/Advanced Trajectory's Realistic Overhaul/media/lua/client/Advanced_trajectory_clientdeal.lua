@@ -246,19 +246,19 @@ local function Advanced_trajectory_OnServerCommand(module, command, arguments)
     --sendClientCommand("ATY_writePVPLog", "true", {player, playerShot, nameShotPart, damage, baseGunDmg, playerDamageDealt, isDead})--
     -----------------------------------------------------------------------------------------------------------------------------------
     elseif module == "ATY_writePVPLog" then
-        local shooter                   = getPlayerByOnlineID(arguments[1])
-        local target                    = getPlayerByOnlineID(arguments[2])
+        local shooter                   = getPlayerByOnlineID(arguments[1]):getUsername()
+        local target                    = getPlayerByOnlineID(arguments[2]):getUsername()
         local strShotPart               = arguments[3]   
         local damagepr                  = arguments[4]                 
         local baseGunDmg                = arguments[5]     
         local damageDealtToTarget       = arguments[6]     
         local targetIsDead              = arguments[7]   
     
-        local log1 = string.format(("[ATROPVP] \"%s\" shot \"%s\" (PartShot: \"%s\" || HitDmg: \"%s\" || BaseGunDmg: \"%s\"  || ActDmg: \"%s\")"), shooter:getUsername(), target:getUsername(), strShotPart, damagepr, baseGunDmg, damageDealtToTarget)
+        local log1 = string.format(("[ATROPVP] \"%s\" shot \"%s\" (PartShot: \"%s\" || HitDmg: \"%s\" || BaseGunDmg: \"%s\"  || ActDmg: \"%s\")"), shooter, target, strShotPart, damagepr, baseGunDmg, damageDealtToTarget)
         writeLog("ATROPVP", log1)
     
         if targetIsDead == true then
-            local killLog = string.format(("[ATROPVP] \"%s\" was killed by \"%s\""), target:getUsername(), shooter:getUsername())
+            local killLog = string.format(("[ATROPVP] \"%s\" was killed by \"%s\""), target, shooter)
             writeLog("ATROPVP", killLog)
         end
 

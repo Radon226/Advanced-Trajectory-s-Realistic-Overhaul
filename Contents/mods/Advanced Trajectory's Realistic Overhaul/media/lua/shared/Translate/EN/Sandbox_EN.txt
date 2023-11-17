@@ -17,7 +17,8 @@ Sandbox_EN = {
 	
 	Sandbox_Advanced_trajectoryEnablerange = "Enable Ranged Weapon",
 	Sandbox_Advanced_trajectoryEnablethrow = "Enable Throwed Weapon",
-	Sandbox_Advanced_trajectoryEnablePlayerDamage = "Enable Damage To Player",
+	Sandbox_Advanced_trajectoryIgnorePVPSafety = "Ignore PVP Safety (PVP)",
+	Sandbox_Advanced_trajectoryIgnorePVPSafety_tooltip = "Need to check this if you want gun PVP with safety features OFF. UNCHECK IF YOU HAVE PVP OFF AND DO NOT WANT GUN PVP!",
 
 	Sandbox_ATblood = "Number Of Bleeding",
 	Sandbox_ATvd = "Bullets Damage To Vehicle",
@@ -33,8 +34,8 @@ Sandbox_EN = {
 	Sandbox_Advanced_trajectoryheadShotIncChance = "Increased Headshot Chance (PVP)",
 	Sandbox_Advanced_trajectoryheadShotIncChance_tooltip = "If dealt headshot, increase chance of wounding head. (ex. 20 means percentage of wounding head is 30% (20 + 10))",
 
-	Sandbox_Advanced_trajectoryheadShotIncChance = "Increased Footshot Chance (PVP)",
-	Sandbox_Advanced_trajectoryheadShotIncChance_tooltip = "If dealt footshot, increase chance of wounding legs/groin. (ex. 10 means percentage of wounding foot is 20% (10 + 10))",
+	Sandbox_Advanced_trajectoryfootShotIncChance = "Increased Footshot Chance (PVP)",
+	Sandbox_Advanced_trajectoryfootShotIncChance_tooltip = "If dealt footshot, increase chance of wounding legs/groin. (ex. 10 means percentage of wounding foot is 20% (10 + 10))",
 
 	Sandbox_Advanced_trajectoryheadShotDmgZomMultiplier = "Headshot Damage Multiplier (PVE)",
 	Sandbox_Advanced_trajectoryheadShotDmgZomMultiplier_tooltip = "Multiplier on base damage for headshot",
@@ -81,7 +82,7 @@ Sandbox_EN = {
 
 	Sandbox_Advanced_trajectorybowBreakChance = "Chance of arrow/bolt breaking (Brita's) when bloom is 0",
 	
-	Sandbox_Advanced_trajectoryMaxProjCone = "Max cone spread",
+	Sandbox_Advanced_trajectoryMaxProjCone = "Max Projectile Cone (All guns but shotguns)",
 	Sandbox_Advanced_trajectorymaxaimnum = "Max bloom / Maxaimnum",
 	Sandbox_Advanced_trajectorymaxaimnum_tooltip = "Value that limits how much bloom is added to crosshair. Higher means larger possible bloom.",
 
@@ -104,26 +105,24 @@ Sandbox_EN = {
 	Sandbox_Advanced_trajectoryshotgunnum = "Shotgun Projectile Count / Shotgunnum",
 	Sandbox_Advanced_trajectoryshotgunnum_tooltip = "Amount of pellots shot",
 
+	Sandbox_Advanced_trajectorymaxShotgunProjCone = "Max Projectile Cone (Shotgun)",
+	Sandbox_Advanced_trajectorymaxShotgunProjCone_tooltip = "Shotgun has a max independent projectile cone.",
+
 	Sandbox_Advanced_trajectoryshotgunDistanceModifier = "Shotgun Distance Modifier",
 	Sandbox_Advanced_trajectoryshotgunDistanceModifier_tooltip = "Multiplier on base stat (range) of shotgun. Default value is 0.75 which means 75% of vanilla's range.",
 
 	Sandbox_Advanced_trajectoryreloadEffectModifier = "Reload Effect Modifier",
 	Sandbox_Advanced_trajectoryreloadEffectModifier_tooltip = "Value affects how much bloom is added when reloading and racking firearm.",
 
-	Sandbox_Advanced_trajectoryfocusCounterSpeed = "Focus Counter Speed",
-	Sandbox_Advanced_trajectoryfocusCounterSpeed_tooltip = "Driving part of the focus mechanic. Determines how fast it takes for the crosshair to begin its process of reducing aimnum to 0 (max accuracy). Set to 0 to disable if you want to remove ability to gain max accuracy.",
+	Sandbox_Advanced_trajectoryfocusCounterSpeed = "Focus Counter Speed (Overall)",
+	Sandbox_Advanced_trajectoryfocusCounterSpeed_tooltip = "Driving part of the focus mechanic. Determines time it takes for the crosshair to begin its process of reducing aimnum to 0 (max accuracy). This is a flat value. Set to 0 to disable if you want to remove ability to gain max accuracy without waiting.",
+
+	Sandbox_Advanced_trajectoryfocusCounterSpeedScaleModifier = "Focus Counter Speed (Level Scaling)",
+	Sandbox_Advanced_trajectoryfocusCounterSpeedScaleModifier_tooltip = "Multiplier that determines how much focus counter/timer should be shorten based off of aiming level. ",
+
 
 	Sandbox_Advanced_trajectorymaxFocusSpeed = "Max Focus Speed",
 	Sandbox_Advanced_trajectorymaxFocusSpeed_tooltip = "Part of the focus mechanic. Determines speed of crosshair reducing aimnum to 0 once process has begun.",
-
-	Sandbox_Advanced_trajectoryproneFocusCounterSpeedBuff = "Prone Buff: Focus Counter Speed",
-	Sandbox_Advanced_trajectoryproneFocusCounterSpeedBuff_tooltip = "When proning, you gain max accuracy faster (applies when focus mechanic is unlocked).",
-
-	Sandbox_Advanced_trajectoryproneReduceSpeedBuff = "Prone Buff: Reduce Speed",
-	Sandbox_Advanced_trajectoryproneReduceSpeedBuff_tooltip = "When proning, your crosshair reduces bloom faster. Helpful after intense cardio.",
-
-	Sandbox_Advanced_trajectorycrouchReduceSpeedBuff = "Crouch Buff: Reduce Speed",
-	Sandbox_Advanced_trajectorycrouchReduceSpeedBuff_tooltip = "When crouching, your crosshair reduces bloom faster. Helpful after intense cardio.",
 
 	Sandbox_Advanced_trajectoryrecoilDelayModifier = "Recoil Delay Modifier (linked to Focus Counter Speed)",
 	Sandbox_Advanced_trajectoryrecoilDelayModifier_tooltip = "Part of the focus mechanic. Weapon's recoil delay affects how long it takes for character to recover from recoil and this is a multiplier of that. Set to 0 to ignore weapon's recoil delay stat.",
@@ -134,42 +133,99 @@ Sandbox_EN = {
 
 
 
-	Sandbox_Advanced_trajectorypainModifier = "Pain Modifier",
-	Sandbox_Advanced_trajectorypainModifier_tooltip = "This value must be very small as it affects how slow your crosshair reduces bloom. This is a multiplier of the total pain value from arms and hands, which can go up to 200.",
 
-	Sandbox_Advanced_trajectorydrunkActionEffectModifier = "Drunk Action Effect Modifier",
+	Sandbox_Advanced_trajectorycrouchReduceSpeedBuff = "Crouch Buff: Reduce Speed",
+	Sandbox_Advanced_trajectorycrouchReduceSpeedBuff_tooltip = "When crouching, your crosshair reduces bloom faster. Helpful after intense cardio.",
+
+	Sandbox_Advanced_trajectorycrouchCounterSpeed = "Time it takes to crouch (don't mess with this)",
+
+	Sandbox_Advanced_trajectorycrouchPenaltyModifier = "Flat value of bloom added when Switching Crouch Stance",
+
+	Sandbox_Advanced_trajectorycrouchTurnEffect = "Bloom addition rate when turning while crouch",
+
+	Sandbox_Advanced_trajectorystaminaCrouchScale = "Stamina Consumption when Switching Crouch Stance (Overall)",
+
+	Sandbox_Advanced_trajectorystaminaHeavyCrouchScale = "Stamina Consumption when Switching Crouch Stance (Heavy Moodle Scaling)",
+	Sandbox_Advanced_trajectorystaminaHeavyCrouchScale_tooltip = "Multiplier that scales off of heavy moodle level",
+
+
+
+	Sandbox_Advanced_trajectoryproneTurnEffect = "Bloom addition rate when turning while prone",
+
+	Sandbox_Advanced_trajectoryproneFocusCounterSpeedBuff = "Prone Buff: Focus Counter Speed",
+	Sandbox_Advanced_trajectoryproneFocusCounterSpeedBuff_tooltip = "When proning, you gain max accuracy faster (applies when focus mechanic is unlocked).",
+
+	Sandbox_Advanced_trajectoryproneReduceSpeedBuff = "Prone Buff: Reduce Speed",
+	Sandbox_Advanced_trajectoryproneReduceSpeedBuff_tooltip = "When proning, your crosshair reduces bloom faster. Helpful after intense cardio.",
+
+	Sandbox_Advanced_trajectorystaminaCrawlScale = "Stamina Consumption when Switching Crawl Stance (Overall)",
+
+	Sandbox_Advanced_trajectorystaminaHeavyCrawlScale = "Stamina Consumption when Switching Crawl Stance (Heavy Moodle Scaling)",
+	Sandbox_Advanced_trajectorystaminaHeavyCrawlScale_tooltip = "Multiplier that scales off of heavy moodle level",
+
+
+
+
+	Sandbox_Advanced_trajectoryheavyTurnEffectModifier = "Bloom amplifier on Turning/Moving (Heavy Moodle Scaling)",
+	Sandbox_Advanced_trajectoryheavyTurnEffectModifier_tooltip = "This value adds more bloom when walking or turning (Heavy Moodle Scaling)",
+
+	Sandbox_Advanced_trajectoryheavyLoadModifier = "Bloom amplifier on Crouch Switching (Heavy Moodle Scaling)",
+	Sandbox_Advanced_trajectoryheavyLoadModifier_tooltip = "This value adds more bloom when switching stances between stand and crouch depending on heavy moodle level.",
+	
+	Sandbox_Advanced_trajectoryheavyMaxBloomModifier = "Max bloom limit (Heavy Moodle Scaling)",
+	Sandbox_Advanced_trajectoryheavyMaxBloomModifier_tooltip = "This value increases max bloom limit dpeending on heavy moodle level.",
+
+
+
+	Sandbox_Advanced_trajectorypainModifier = "Slower bloom reduction rate (Pain Moodle)",
+	Sandbox_Advanced_trajectorypainModifier_tooltip = "This value must be very small as it affects how slow your crosshair reduces bloom.",
+
+	Sandbox_Advanced_trajectorypainVisualModifier = "Shaky crosshair effect (Pain Moodle)",
+	Sandbox_Advanced_trajectorypainVisualModifier_tooltip = "Makes crosshair shaky.",
+
+
+
+	Sandbox_Advanced_trajectorydrunkActionEffectModifier = "Bloom amplifier on Turning/Moving (Drunk Moodle Scaling)",
 	Sandbox_Advanced_trajectorydrunkActionEffectModifier_tooltip = "This value amplifies move and turning effect, which means more bloom when performing those actions. Set to 0 to disable.",
 
-	Sandbox_Advanced_trajectorydrunkModifier = "Drunk Modifier",
-	Sandbox_Advanced_trajectorydrunkModifier_tooltip = "Multiplier that increases your maxaimnum or max bloom. Set to 0 to disable.",
+	Sandbox_Advanced_trajectorydrunkMaxBloomModifier = "Max bloom limit (Drunk Moodle Scaling)",
+	Sandbox_Advanced_trajectorydrunkMaxBloomModifier_tooltip = "Multiplier that increases your maxaimnum or max bloom. Set to 0 to disable.",
 
-	Sandbox_Advanced_trajectoryhyperHypoModifier = "Hyper/Hypothermia Modifier",
+
+
+	Sandbox_Advanced_trajectoryhyperHypoModifier = "Slower bloom reduction rate (Hyper/Hypo Moodle Scaling)",
 	Sandbox_Advanced_trajectoryhyperHypoModifier_tooltip = "Multiplier that affects how slow your crosshair reduces bloom.",
 
-	Sandbox_Advanced_trajectorytiredModifier = "Fatigue/Tired Modifier",
+	Sandbox_Advanced_trajectorytiredModifier = "Slower bloom reduction rate (Fatigue/Tired Moodle Scaling)",
 	Sandbox_Advanced_trajectorytiredModifier_tooltip = "Multiplier that affects how slow your crosshair reduces bloom.",
 
-	Sandbox_Advanced_trajectorystressBloomModifier = "Stress Bloom Modifier",
+
+
+	Sandbox_Advanced_trajectorystressBloomModifier = "Minimum bloom limit (Stress Moodle Scaling)",
 	Sandbox_Advanced_trajectorystressBloomModifier_tooltip = "Multiplier that affects how much is added to minaimnum or minimum bloom.",
 
-	Sandbox_Advanced_trajectorystressVisualModifier = "Stress Visual Modifier",
+	Sandbox_Advanced_trajectorystressVisualModifier = "Shaky crosshair effect (Stress Moodle Scaling)",
 	Sandbox_Advanced_trajectorystressVisualModifier_tooltip = "Affects how intense the crosshair shaking affect is. Set to 0 to disable.",
 
-	Sandbox_Advanced_trajectorycoughModifier = "Cough Modifier",
+
+
+	Sandbox_Advanced_trajectorycoughModifier = "Bloom added when coughing (Sick Moodle)",
 	Sandbox_Advanced_trajectorycoughModifier_tooltip = "Value affects how much bloom is added when coughing.",
 
-	Sandbox_Advanced_trajectoryenduranceBreathModifier = "Endurance Breathing Modifier",
+
+
+	Sandbox_Advanced_trajectoryenduranceBreathModifier = "Bloom addition rate when inhaling (Exhaustion/Endurance Moodle)",
 	Sandbox_Advanced_trajectoryenduranceBreathModifier_tooltip = "Value affects the rate of bloom added when inhaling. Set to 0 to disable the whole endurance mechanic.",
 
-	Sandbox_Advanced_trajectoryinhaleModifier1 = "Endurance level 1: Inhale intensity (counter to how long char inhales)",
-	Sandbox_Advanced_trajectoryinhaleModifier1_tooltip = "Value determines how long the characters inhales (adds bloom). Links to exhaleModifier1. Inhale value must be greater than linked exhale value.",
-	Sandbox_Advanced_trajectoryexhaleModifier1 = "Endurance level 1: Exhale intensity (counter to how long char exhales)",
-	Sandbox_Advanced_trajectoryexhaleModifier1_tooltip = "Value determines how long the characters exhales (reduces bloom). Links to exhaleModifier1. Exhale value must be less than linked inhale value.",
+	Sandbox_Advanced_trajectoryinhaleModifier1 = "Endurance level 1: Inhale time modifier (affects counter to how long char inhales)",
+	Sandbox_Advanced_trajectoryinhaleModifier1_tooltip = "Value determines how long the characters inhales (adds bloom). Links to exhaleModifier1. Higher value means shorter timer, lower means longer.",
+	Sandbox_Advanced_trajectoryexhaleModifier1 = "Endurance level 1: Exhale time modifier (affects counter to how long char exhales)",
+	Sandbox_Advanced_trajectoryexhaleModifier1_tooltip = "Value determines how long the characters exhales (reduces bloom). Links to exhaleModifier1. Higher value means shorter timer, lower means longer.",
 
-	Sandbox_Advanced_trajectoryinhaleModifier2 = "Endurance level 2: Inhale intensity",
-	Sandbox_Advanced_trajectoryexhaleModifier2 = "Endurance level 2: Exhale intensity",
-	Sandbox_Advanced_trajectoryinhaleModifier3 = "Endurance level 3: Inhale intensity",
-	Sandbox_Advanced_trajectoryexhaleModifier3 = "Endurance level 3: Exhale intensity",
-	Sandbox_Advanced_trajectoryinhaleModifier4 = "Endurance level 4: Inhale intensity",
-	Sandbox_Advanced_trajectoryexhaleModifier4 = "Endurance level 4: Exhale intensity",
+	Sandbox_Advanced_trajectoryinhaleModifier2 = "Endurance level 2: Inhale time modifier",
+	Sandbox_Advanced_trajectoryexhaleModifier2 = "Endurance level 2: Exhale time modifier",
+	Sandbox_Advanced_trajectoryinhaleModifier3 = "Endurance level 3: Inhale time modifier",
+	Sandbox_Advanced_trajectoryexhaleModifier3 = "Endurance level 3: Exhale time modifier",
+	Sandbox_Advanced_trajectoryinhaleModifier4 = "Endurance level 4: Inhale time modifier",
+	Sandbox_Advanced_trajectoryexhaleModifier4 = "Endurance level 4: Exhale time modifier",
 }
