@@ -2,6 +2,7 @@ Sandbox_EN = {
 
     Sandbox_Advanced_trajectory = "Advanced Trajectory (MAIN)",
 	Sandbox_Advanced_trajectory_damage = "Advanced Trajectory (DAMAGE)",
+	Sandbox_Advanced_trajectory_shotgun = "Advanced Trajectory (SHOTGUN)",
 	Sandbox_Advanced_trajectory_moodles = "Advanced Trajectory (MOODLES)",
 	Sandbox_Advanced_trajectory_crosshair = "Advanced Trajectory (CROSSHAIR)",
 	Sandbox_Advanced_trajectory_debug = "Advanced Trajectory (DEBUG / DONT TOUCH)",

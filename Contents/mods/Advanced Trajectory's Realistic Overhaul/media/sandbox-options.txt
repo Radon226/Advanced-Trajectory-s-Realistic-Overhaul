@@ -176,15 +176,6 @@ option Advanced_trajectory.MaxProjCone
 	page = Advanced_trajectory,
 	translation = Advanced_trajectoryMaxProjCone,
 }
-option Advanced_trajectory.maxShotgunProjCone
-{
-	type = double,
-	min = 0,
-	max = 1,
-	default = 0.5,
-	page = Advanced_trajectory,
-	translation = Advanced_trajectorymaxShotgunProjCone,
-}
 
 option Advanced_trajectory.maxaimnum
 {
@@ -303,25 +294,7 @@ option Advanced_trajectory.footShotDmgPlayerMultiplier
 
 
 
-option Advanced_trajectory.shotgunDamageMultiplier
-{
-	type = double,
-	min = 0,
-	max = 100,
-	default = 1,
-	page = Advanced_trajectory_damage,
-	translation = Advanced_trajectoryshotgunDamageMultiplier,
-}
 
-option Advanced_trajectory.critChanceModifierShotgunsOnly
-{
-	type = double,
-	min = 0,
-	max = 100,
-	default = 10,
-	page = Advanced_trajectory_damage,
-	translation = Advanced_trajectorycritChanceModifierShotgunsOnly,
-}
 
 option Advanced_trajectory.critChanceModifier
 {
@@ -353,13 +326,23 @@ option Advanced_trajectory.bulletdistance
 	translation = Advanced_trajectorybulletdistance,
 }
 
+option Advanced_trajectory.maxShotgunProjCone
+{
+	type = double,
+	min = 0,
+	max = 1,
+	default = 0.5,
+	page = Advanced_trajectory_shotgun,
+	translation = Advanced_trajectorymaxShotgunProjCone,
+}
+
 option Advanced_trajectory.shotgunDistanceModifier
 {
 	type = double,
 	min = 0,
 	max = 5,
 	default = 0.75,
-	page = Advanced_trajectory,
+	page = Advanced_trajectory_shotgun,
 	translation = Advanced_trajectoryshotgunDistanceModifier,
 }
 
@@ -369,7 +352,7 @@ option Advanced_trajectory.shotgunnum
 	min = 0,
 	max = 100,
 	default = 5,
-	page = Advanced_trajectory,
+	page = Advanced_trajectory_shotgun,
 	translation = Advanced_trajectoryshotgunnum,
 }
 
@@ -379,8 +362,28 @@ option Advanced_trajectory.shotgundivision
 	min = 0,
 	max = 1,
 	default = 0.1,
-	page = Advanced_trajectory,
+	page = Advanced_trajectory_shotgun,
 	translation = Advanced_trajectoryshotgundivision,
+}
+
+option Advanced_trajectory.shotgunDamageMultiplier
+{
+	type = double,
+	min = 0,
+	max = 100,
+	default = 1,
+	page = Advanced_trajectory_shotgun,
+	translation = Advanced_trajectoryshotgunDamageMultiplier,
+}
+
+option Advanced_trajectory.critChanceModifierShotgunsOnly
+{
+	type = double,
+	min = 0,
+	max = 100,
+	default = 10,
+	page = Advanced_trajectory_shotgun,
+	translation = Advanced_trajectorycritChanceModifierShotgunsOnly,
 }
 
 option Advanced_trajectory.moveeffect

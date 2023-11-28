@@ -21,6 +21,8 @@ function Advanced_trajectory.Boom(sq,info)
     local player = getPlayer()
     if not sq or not info  or  not player then return end
 
+    --local isPlayerSafe = player:getSafety():isEnabled()
+
     if info["zombie"] then
         info["zombie"]:knockDown(false)
         info["zombie"]:setHealth(info["zombie"]:getHealth()-info[8]*0.1)
@@ -144,17 +146,15 @@ function Advanced_trajectory.Boom(sq,info)
                                
                             end
                             
-                        elseif getSandboxOptions():getOptionByName("Advanced_trajectory.EnablePlayerDamage"):getValue() and instanceof(zombiez,"IsoPlayer") then
-    
-                            if isClient() then
-
-                                sendClientCommand("ATY_reducehealth", "true", {ExplosionPower, zombiez:getOnlineID()})
-    
-                            else
-                                zombiez:getBodyDamage():ReduceGeneralHealth(ExplosionPower)
-                            end
-                            
-    
+                        elseif instanceof(zombiez,"IsoPlayer") then
+                            --if (not isPlayerSafe or not zombiez:getSafety():isEnabled()) or getSandboxOptions():getOptionByName("Advanced_trajectory.IgnorePVPSafety"):getValue() then
+                                if isClient() then
+                                    sendClientCommand("ATY_reducehealth", "true", {ExplosionPower, zombiez:getOnlineID()})
+                                else
+                                    zombiez:getBodyDamage():ReduceGeneralHealth(ExplosionPower)
+                                end
+                            --end
+                        
                         end
                     end
                     

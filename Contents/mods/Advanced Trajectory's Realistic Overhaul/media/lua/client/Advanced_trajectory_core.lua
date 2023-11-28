@@ -1995,12 +1995,12 @@ function Advanced_trajectory.OnWeaponSwing(character, handWeapon)
     -- W (bottom left): pi/2 (90)
     -- E (top right): -pi/2 (-90)
     -- S (bottom right corner): 0
-    local dirc = player:getForwardDirection():getDirection()
+    local playerDir = player:getForwardDirection():getDirection()
 
     -- bullet position 
     local spawnOffset = getSandboxOptions():getOptionByName("Advanced_trajectory.DebugSpawnOffset"):getValue()
-    local offx = character:getX()+spawnOffset * math.cos(dirc)
-    local offy = character:getY()+spawnOffset * math.sin(dirc)
+    local offx = character:getX()+spawnOffset * math.cos(playerDir)
+    local offy = character:getY()+spawnOffset * math.sin(playerDir)
     local offz = character:getZ()
 
     --local offx = character:getX()
@@ -2013,7 +2013,6 @@ function Advanced_trajectory.OnWeaponSwing(character, handWeapon)
     Advanced_trajectory.aimrate = Advanced_trajectory.aimnum * math.pi / 250
 
     local maxProjCone = getSandboxOptions():getOptionByName("Advanced_trajectory.MaxProjCone"):getValue()
-    local maxShotgunProjCone = getSandboxOptions():getOptionByName("Advanced_trajectory.maxShotgunProjCone"):getValue()
 
     -- spread should be no wider than 70 degrees from where player is aiming
     if Advanced_trajectory.aimrate > maxProjCone then
@@ -2025,7 +2024,7 @@ function Advanced_trajectory.OnWeaponSwing(character, handWeapon)
     
     -- NOTES: I'm assuming aimrate, which is affected by aimnum, determines how wide the bullets can spread.
     -- adding dirc (direction player is facing) will cause bullets to go towards the direction of where player is looking
-    dirc = dirc + ZombRandFloat(-Advanced_trajectory.aimrate, Advanced_trajectory.aimrate)
+    local dirc = playerDir + ZombRandFloat(-Advanced_trajectory.aimrate, Advanced_trajectory.aimrate)
 
     --print("Dirc: ", dirc)
     deltX = math.cos(dirc)
@@ -2159,7 +2158,10 @@ function Advanced_trajectory.OnWeaponSwing(character, handWeapon)
                 end
 
                 -- Shotgun's max cone spread is independent from default spread
-                tablez[5] = player:getForwardDirection():getDirection() + ZombRandFloat(-maxShotgunProjCone, maxShotgunProjCone)
+                local maxShotgunProjCone = getSandboxOptions():getOptionByName("Advanced_trajectory.maxShotgunProjCone"):getValue()
+                if (dirc > playerDir + maxShotgunProjCone or dirc < playerDir - maxShotgunProjCone) then
+                    tablez[5] = playerDir + ZombRandFloat(-maxShotgunProjCone, maxShotgunProjCone)
+                end
 
                 tablez[12] = 1.6                                    --ballistic speed
                 tablez[7] = tablez[7] * shotgunDistanceModifier     --ballistic distance
