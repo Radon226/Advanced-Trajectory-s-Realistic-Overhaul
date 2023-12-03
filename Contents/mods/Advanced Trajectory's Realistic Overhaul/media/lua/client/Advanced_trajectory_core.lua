@@ -1805,8 +1805,8 @@ function Advanced_trajectory.checkontick()
                 -- the player shot can not be the client player (you can't shoot you)
                 if not vt["nonsfx"] and Playershot and vt[19] and Playershot ~= vt[19] and (Faction.getPlayerFaction(Playershot)~=Faction.getPlayerFaction(vt[19]) or not Faction.getPlayerFaction(Playershot))     then
                     
-                    Playershot:setX(Playershot:getX()+0.15*vt[3][1])
-                    Playershot:setY(Playershot:getY()+0.15*vt[3][2])
+                    --Playershot:setX(Playershot:getX()+0.15*vt[3][1])
+                    --Playershot:setY(Playershot:getY()+0.15*vt[3][2])
                     Playershot:addBlood(100)
 
                     -- isClient() returns true if the code is being run in MP
