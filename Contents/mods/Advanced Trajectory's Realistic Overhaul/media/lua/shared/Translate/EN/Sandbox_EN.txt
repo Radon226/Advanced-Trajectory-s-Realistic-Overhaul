@@ -1,9 +1,12 @@
 Sandbox_EN = {
 
     Sandbox_Advanced_trajectory = "Advanced Trajectory (MAIN)",
+	Sandbox_Advanced_trajectory_movement = "Advanced Trajectory (MOVEMENT)",
 	Sandbox_Advanced_trajectory_damage = "Advanced Trajectory (DAMAGE)",
+	Sandbox_Advanced_trajectory_recoil = "Advanced Trajectory (RECOIL)",
 	Sandbox_Advanced_trajectory_shotgun = "Advanced Trajectory (SHOTGUN)",
 	Sandbox_Advanced_trajectory_moodles = "Advanced Trajectory (MOODLES)",
+	Sandbox_Advanced_trajectory_hitOrMiss = "Advanced Trajectory (HIT OR MISS)",
 	Sandbox_Advanced_trajectory_crosshair = "Advanced Trajectory (CROSSHAIR)",
 	Sandbox_Advanced_trajectory_debug = "Advanced Trajectory (DEBUG / DONT TOUCH)",
 	Sandbox_Advanced_trajectory_XP = "Advanced Trajectory (EXP)",
@@ -63,18 +66,8 @@ Sandbox_EN = {
 	Sandbox_Advanced_trajectorycritChanceModifierShotgunsOnly = "Critchance Modifier (Shotguns)",
 	Sandbox_Advanced_trajectorycritChanceModifierShotgunsOnly_tooltip = "Shotguns crit chance is only affected by their stat and aiming level (not bloom). Default value is 10 meaning the game decides a random value from 1 to (100 - 10) and if value is <= crit stat, then crit.",
 
-	Sandbox_Advanced_trajectorycrosshairRedMain = "Crosshair Main Red Value",
-	Sandbox_Advanced_trajectorycrosshairRedMain_tooltip = "Linked to crosshair color. Pick a color value from 0 to 255 and divide it by 255, must be from 0 to 1.",
-	Sandbox_Advanced_trajectorycrosshairBlueMain = "Crosshair Main Blue Value",
-	Sandbox_Advanced_trajectorycrosshairBlueMain_tooltip = "Linked to crosshair color. Pick a color value from 0 to 255 and divide it by 255, must be from 0 to 1.",
-	Sandbox_Advanced_trajectorycrosshairGreenMain = "Crosshair Main Green Value",
-	Sandbox_Advanced_trajectorycrosshairGreenMain_tooltip = "Linked to crosshair color. Pick a color value from 0 to 255 and divide it by 255, must be from 0 to 1.",
-	Sandbox_Advanced_trajectorycrosshairRed = "Crosshair Focus Red Value",
-	Sandbox_Advanced_trajectorycrosshairRed_tooltip = "Linked to color when there is zero bloom on crosshair. Pick a color value from 0 to 255 and divide it by 255, must be from 0 to 1.",
-	Sandbox_Advanced_trajectorycrosshairBlue = "Crosshair Focus Blue Value",
-	Sandbox_Advanced_trajectorycrosshairBlue_tooltip = "Linked to color when there is zero bloom on crosshair. Pick a color value from 0 to 255 and divide it by 255, must be from 0 to 1.",
-	Sandbox_Advanced_trajectorycrosshairGreen = "Crosshair Focus Green Value",
-	Sandbox_Advanced_trajectorycrosshairGreen_tooltip = "Linked to color when there is zero bloom on crosshair. Pick a color value from 0 to 255 and divide it by 255, must be from 0 to 1.",
+
+	
 	Sandbox_Advanced_trajectoryrecoilModifier = "Recoil Modifier",
 	Sandbox_Advanced_trajectoryrecoilModifier_tooltip = "Multiplier of gun's max dmg added as recoil to crosshair (adds bloom when shooting).",
 
@@ -86,9 +79,15 @@ Sandbox_EN = {
 	Sandbox_Advanced_trajectoryMaxProjCone = "Max Projectile Cone (All guns but shotguns)",
 	Sandbox_Advanced_trajectorymaxaimnum = "Max bloom / Maxaimnum",
 	Sandbox_Advanced_trajectorymaxaimnum_tooltip = "Value that limits how much bloom is added to crosshair. Higher means larger possible bloom.",
-
 	Sandbox_Advanced_trajectoryminaimnumModifier = "Minaimnum Modifier",
 	Sandbox_Advanced_trajectoryminaimnumModifier_tooltip = "Value that affects crosshair's minimum bloom. Characters with low aiming level (0-2) will never be accurate (always has bloom). Set to 0 if you want to be OP or unlock focus mechanic at level 3.",
+	Sandbox_Advanced_trajectoryfocusLevel = "Focus Level",
+	Sandbox_Advanced_trajectoryfocusLevel_tooltip = "Aiming level in which player unlocks the focus mechanic.",
+	
+	Sandbox_Advanced_trajectoryenableDistanceLimitPenalty = "Enable Distance Limit Penalty",
+	Sandbox_Advanced_trajectoryenableDistanceLimitPenalty_tooltip = "Player loses accuracy when trying to shoot targets past their distance limit. Uncheck to disable.",
+	Sandbox_Advanced_trajectorydistanceFocusPenalty = "Distance Focus Penalty",
+	Sandbox_Advanced_trajectorydistanceFocusPenalty_tooltip = "Higher means more punishing bloom scaling.",
 
 	Sandbox_Advanced_trajectorymoveeffect = "Moving Effect",
 	Sandbox_Advanced_trajectorymoveeffect_tooltip = "Value that adds bloom when moving.",
@@ -103,10 +102,10 @@ Sandbox_EN = {
 
 	Sandbox_Advanced_trajectorybulletdistance = "Ballistic Distance / Bullet Distance",
 
-	Sandbox_Advanced_trajectoryshotgunnum = "Shotgun Projectile Count / Shotgunnum",
+	Sandbox_Advanced_trajectoryshotgunnum = "Shotgun Projectile Count",
 	Sandbox_Advanced_trajectoryshotgunnum_tooltip = "Amount of pellots shot",
 
-	Sandbox_Advanced_trajectorymaxShotgunProjCone = "Max Projectile Cone (Shotgun)",
+	Sandbox_Advanced_trajectorymaxShotgunProjCone = "Max Projectile Cone (Shotguns)",
 	Sandbox_Advanced_trajectorymaxShotgunProjCone_tooltip = "Shotgun has a max independent projectile cone.",
 
 	Sandbox_Advanced_trajectoryshotgunDistanceModifier = "Shotgun Distance Modifier",
@@ -134,6 +133,10 @@ Sandbox_EN = {
 
 
 
+	Sandbox_Advanced_trajectorycrouchFocusLimitBuff = "Crouch Buff: Reduce minimum bloom limit",
+	Sandbox_Advanced_trajectorycrouchFocusLimitBuff_tooltip = "Reduces minimum bloom limit by a percentage; lower means smaller crosshair",
+	Sandbox_Advanced_trajectoryproneFocusLimitBuff = "Prone Buff: Reduce minimum bloom limit",
+	Sandbox_Advanced_trajectoryproneFocusLimitBuff_tooltip = "Reduces minimum bloom limit by a percentage; lower means smaller crosshair"",
 
 	Sandbox_Advanced_trajectorycrouchReduceSpeedBuff = "Crouch Buff: Reduce Speed",
 	Sandbox_Advanced_trajectorycrouchReduceSpeedBuff_tooltip = "When crouching, your crosshair reduces bloom faster. Helpful after intense cardio.",
@@ -229,4 +232,51 @@ Sandbox_EN = {
 	Sandbox_Advanced_trajectoryexhaleModifier3 = "Endurance level 3: Exhale time modifier",
 	Sandbox_Advanced_trajectoryinhaleModifier4 = "Endurance level 4: Inhale time modifier",
 	Sandbox_Advanced_trajectoryexhaleModifier4 = "Endurance level 4: Exhale time modifier",
+
+
+
+
+
+	Sandbox_Advanced_trajectoryenableHitOrMiss 				= "Enable Hit or Miss",
+	Sandbox_Advanced_trajectoryenableHitOrMiss_tooltip 		= "If enabled, player will have a chance of missing depending on bloom. Bullet will pass through zombies without damaging them.",
+	Sandbox_Advanced_trajectoryannounceHitOrMiss 			= "Say Hit or Miss (DEBUG)",
+	Sandbox_Advanced_trajectoryannounceHitOrMiss_tooltip 	= "Player will announce if their bullet hit or missed with bloom value comparisons.",
+	Sandbox_Advanced_trajectoryhitLevelScaling				= "Hitchance Level Scaling",
+	Sandbox_Advanced_trajectoryhitLevelScaling_tooltip 		= "Affects how much aiming level will decrease the chances of not missing. Higher means lower chance of missing per level.",
+	Sandbox_Advanced_trajectoryshotgunHitBuff 				= "Shotgun Hitchance Buff",
+	Sandbox_Advanced_trajectoryshotgunHitBuff_tooltip 		= "A flat value that gives a flat increase in chances of hitting zombies with a shotgun.",
+	Sandbox_Advanced_trajectorymissMin 						= "Min Miss",
+	Sandbox_Advanced_trajectorymissMin_tooltip 				= "Bloom value in which player will start having a chance of missing. Must be less than max. rand(minMiss + buff + aimLevel*hitScaling, maxMiss)",
+	Sandbox_Advanced_trajectorymissMax 						= "Max Miss.",
+	Sandbox_Advanced_trajectorymissMax_tooltip 				= "Look at description for Min Miss.",
+
+
+
+
+
+
+
+
+
+
+	Sandbox_Advanced_trajectorycrosshairRedMain = "Crosshair Main [Red Value]",
+	Sandbox_Advanced_trajectorycrosshairRedMain_tooltip = "Linked to crosshair color. Pick a color value from 0 to 255 and divide it by 255, must be from 0 to 1.",
+	Sandbox_Advanced_trajectorycrosshairBlueMain = "Crosshair Main [Blue Value]",
+	Sandbox_Advanced_trajectorycrosshairBlueMain_tooltip = "Linked to crosshair color. Pick a color value from 0 to 255 and divide it by 255, must be from 0 to 1.",
+	Sandbox_Advanced_trajectorycrosshairGreenMain = "Crosshair Main [Green Value]",
+	Sandbox_Advanced_trajectorycrosshairGreenMain_tooltip = "Linked to crosshair color. Pick a color value from 0 to 255 and divide it by 255, must be from 0 to 1.",
+	
+	Sandbox_Advanced_trajectorycrosshairRed = "Crosshair Focus [Red Value]",
+	Sandbox_Advanced_trajectorycrosshairRed_tooltip = "Linked to color when there is zero bloom on crosshair. Pick a color value from 0 to 255 and divide it by 255, must be from 0 to 1.",
+	Sandbox_Advanced_trajectorycrosshairBlue = "Crosshair Focus [Blue Value]",
+	Sandbox_Advanced_trajectorycrosshairBlue_tooltip = "Linked to color when there is zero bloom on crosshair. Pick a color value from 0 to 255 and divide it by 255, must be from 0 to 1.",
+	Sandbox_Advanced_trajectorycrosshairGreen = "Crosshair Focus [Green Value]",
+	Sandbox_Advanced_trajectorycrosshairGreen_tooltip = "Linked to color when there is zero bloom on crosshair. Pick a color value from 0 to 255 and divide it by 255, must be from 0 to 1.",
+	
+	Sandbox_Advanced_trajectorycrosshairRedLimit = "Crosshair Out of Range [Red Value]",
+	Sandbox_Advanced_trajectorycrosshairRedLimit_tooltip = "Linked to color when crosshair is out of range. Pick a color value from 0 to 255 and divide it by 255, must be from 0 to 1.",
+	Sandbox_Advanced_trajectorycrosshairBlueLimit = "Crosshair Out of Range [Blue Value]",
+	Sandbox_Advanced_trajectorycrosshairBlueLimit_tooltip = "Linked to color when crosshair is out of range. Pick a color value from 0 to 255 and divide it by 255, must be from 0 to 1.",
+	Sandbox_Advanced_trajectorycrosshairGreenLimit = "Crosshair Out of Range [Green Value]",
+	Sandbox_Advanced_trajectorycrosshairGreenLimit_tooltip = "Linked to color when crosshair is out of range. Pick a color value from 0 to 255 and divide it by 255, must be from 0 to 1.",
 }

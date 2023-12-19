@@ -55,6 +55,10 @@ function Advanced_trajectory.panel:prerender()
         AR,AG,AB = getSandboxOptions():getOptionByName("Advanced_trajectory.crosshairRed"):getValue(), getSandboxOptions():getOptionByName("Advanced_trajectory.crosshairGreen"):getValue() , getSandboxOptions():getOptionByName("Advanced_trajectory.crosshairBlue"):getValue() 
     end
 
+    if Advanced_trajectory.isOverDistanceLimit then
+        AR,AG,AB = getSandboxOptions():getOptionByName("Advanced_trajectory.crosshairRedLimit"):getValue(), getSandboxOptions():getOptionByName("Advanced_trajectory.crosshairGreenLimit"):getValue() , getSandboxOptions():getOptionByName("Advanced_trajectory.crosshairBlueLimit"):getValue() 
+    end
+
     local transparency  = Advanced_trajectory.alpha
 
     local shakyEffect   = Advanced_trajectory.stressEffect + Advanced_trajectory.painEffect

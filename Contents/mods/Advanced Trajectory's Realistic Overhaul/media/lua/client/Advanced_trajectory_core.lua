@@ -9,6 +9,11 @@ Advanced_trajectory.aimnum              = 100
 Advanced_trajectory.aimnumBeforeShot    = 0
 Advanced_trajectory.maxaimnum           = 100
 Advanced_trajectory.minaimnum           = 0
+
+Advanced_trajectory.missedShot          = false
+Advanced_trajectory.targetDistance      = 0
+Advanced_trajectory.isOverDistanceLimit = false
+
 Advanced_trajectory.inhaleCounter       = 0
 Advanced_trajectory.exhaleCounter       = 0
 Advanced_trajectory.maxFocusCounter     = 100
@@ -117,6 +122,17 @@ function Advanced_trajectory.getShootzombie(bulletTable,damage,playerTable)
     -- Define grid dimensions
     local gridMultiplier = getSandboxOptions():getOptionByName("Advanced_trajectory.DebugGridMultiplier"):getValue()    
     local ignorePVPSafety = getSandboxOptions():getOptionByName("Advanced_trajectory.IgnorePVPSafety"):getValue()   
+
+    -- minimum distance from player to target
+    local mindistance = 0
+
+    -- is target in bullet cell? mindistance = 1
+    local minzb = {false,1}
+    local minpr = {false,1}
+
+    if Advanced_trajectory.missedShot then
+        return minzb[1],minpr[1]
+    end
     
     --local numZomsShootable = 0
 
@@ -179,13 +195,6 @@ function Advanced_trajectory.getShootzombie(bulletTable,damage,playerTable)
     --print("Num Zoms Shootable: ", numZomsShootable)
     --print("*********END**********")
 
-    -- minimum distance from player to target
-    local mindistance = 0
-
-    -- is target in bullet cell? mindistance = 1
-    local minzb = {false,1}
-    local minpr = {false,1}
-
     local zomMindistModifier = getSandboxOptions():getOptionByName("Advanced_trajectory.DebugZomMindistCondition"):getValue()
     local playerMindistModifier = getSandboxOptions():getOptionByName("Advanced_trajectory.DebugPlayerMindistCondition"):getValue()
     
@@ -208,8 +217,9 @@ function Advanced_trajectory.getShootzombie(bulletTable,damage,playerTable)
             --print("Player dir: ", playerDir)
         else
             -- uses euclidian distance to find distance between target and bullet
+            --mindistance = math.sqrt((bulletTable[1] - sz:getX())^2 + (bulletTable[2] - sz:getY())^2 )
             mindistance = (bulletTable[1] - sz:getX())^2 + (bulletTable[2] - sz:getY())^2 
-            --print("Mindist <= mindistMod*dmg: ", mindistance, " <= ", zomMindistModifier*damage)
+            --print("Mindist <= mindistMod*dmg: --->>> ", mindistance, " <= ", zomMindistModifier*damage)
             
             if mindistance < minzb[2] and (mindistance <= zomMindistModifier * damage) then
                 minzb = {sz,mindistance}
@@ -231,6 +241,7 @@ function Advanced_trajectory.getShootzombie(bulletTable,damage,playerTable)
             --print("**********skipCheckBehind LOOKING LEFT *********")
         else
 
+            --mindistance = math.sqrt((bulletTable[1] - sz:getX())^2 + (bulletTable[2] - sz:getY())^2)
             mindistance = (bulletTable[1] - sz:getX())^2 + (bulletTable[2] - sz:getY())^2 
             --print("Mindist <= mindistMod*dmg: ", mindistance, " <= ", playerMindistModifier * damage)
             
@@ -655,11 +666,9 @@ function Advanced_trajectory.OnPlayerUpdate()
 
         local maxaimnumModifier         = getSandboxOptions():getOptionByName("Advanced_trajectory.maxaimnum"):getValue() 
         local realMaxaimnum             = weaitem:getAimingTime() + (reversedLevel * maxaimnumModifier)
-        Advanced_trajectory.maxaimnum   = realMaxaimnum
-
 
         local minaimnumModifier = getSandboxOptions():getOptionByName("Advanced_trajectory.minaimnumModifier"):getValue() 
-        local realMin       = (reversedLevel - 1) * minaimnumModifier
+        local realMin           = (reversedLevel - 1) * minaimnumModifier
 
         -- aimbot level (sorta)
         if realLevel >= 10 then
@@ -667,9 +676,26 @@ function Advanced_trajectory.OnPlayerUpdate()
         end
 
         -- bloom reduction scaling rate capped at 6
-        if realLevel >= 6 then
-            gametimemul   = getGameTime():getMultiplier() * 16 / (6 + 10)
+        if realLevel > 6 then
+            gametimemul = getGameTime():getMultiplier() * 16 / (12-6 + 10)
         end
+
+        if realLevel < 3 then
+            gametimemul = getGameTime():getMultiplier() * 16 / (12-3 + 10)
+        end
+
+        -- maxaimnum capped at 6
+        if realLevel > 6 then
+            realMaxaimnum = weaitem:getAimingTime() + ((11-6) * maxaimnumModifier)
+        end
+
+        local canRunNGun = false
+        -- run and gun unlock
+        if realLevel >= 10 then
+            canRunNGun = true
+        end
+
+        Advanced_trajectory.maxaimnum   = realMaxaimnum
 
         --------------------------------------------------------------------------------
         ---FOCUS MECHANIC SECT (IF MINAIMNUM IS REACHED, start counting down to 0)---
@@ -687,18 +713,23 @@ function Advanced_trajectory.OnPlayerUpdate()
         local focusCounterSpeed = getSandboxOptions():getOptionByName("Advanced_trajectory.focusCounterSpeed"):getValue() 
         focusCounterSpeed = focusCounterSpeed - (recoilDelay * recoilDelayModifier)
         
-        local focusLevelGained = 3
+        local focusLevelGained = getSandboxOptions():getOptionByName("Advanced_trajectory.focusLevel"):getValue() 
         local focusCounterSpeedScaleModifier = getSandboxOptions():getOptionByName("Advanced_trajectory.focusCounterSpeedScaleModifier"):getValue() 
-        local hasFocusSkill = false
-        if realLevel >= focusLevelGained then
-            hasFocusSkill = true
-        end
+        local hasFocusSkill = true
+
+        --if realLevel >= focusLevelGained then
+        --    hasFocusSkill = true
+        --end
 
         local focusLimit = 0
 
         -- focusCounterSpeed scales with flat buff
         if realLevel > focusLevelGained then
             focusCounterSpeed = focusCounterSpeed + (((realLevel-focusLevelGained) * focusCounterSpeedScaleModifier) / 10)
+        end
+
+        if realLevel < focusLevelGained then
+            focusLimit = focusLimit + 20/(realLevel+1)
         end
 
         ------------------------
@@ -721,17 +752,47 @@ function Advanced_trajectory.OnPlayerUpdate()
          -- Main purpose is to nerf lv 10 when exhausted
         if enduranceLv > 0 then    
             realMin = realMin + 6    
-            Advanced_trajectory.maxaimnum = realMaxaimnum + enduranceLv*2
+            Advanced_trajectory.maxaimnum = Advanced_trajectory.maxaimnum + enduranceLv*2
         end
         -----------------------------------
         --TRUE CROUCH/CRAWL (FIRST) SECT---
         -----------------------------------
-        if player:getVariableBoolean("IsCrouchAim") and realLevel < 3 then
+        if player:getVariableBoolean("IsCrouchAim") and not hasFocusSkill then
             realMin = realMin - 15
         end
 
-        if player:getVariableBoolean("isCrawling") and realLevel < 3 then
+        if player:getVariableBoolean("isCrawling") and not hasFocusSkill then
             realMin = realMin - 25
+        end
+
+        --------------------------------
+        ---TARGET DISTANCE LIMIT SECT---
+        --------------------------------
+        getTargetDistance(player)
+        local enableDistanceLimitPenalty  = getSandboxOptions():getOptionByName("Advanced_trajectory.enableDistanceLimitPenalty"):getValue() 
+        local distanceFocusPenalty  = getSandboxOptions():getOptionByName("Advanced_trajectory.distanceFocusPenalty"):getValue() 
+
+        local maxDistance = math.floor(modEffectsTable[4] + (getSandboxOptions():getOptionByName("Advanced_trajectory.bulletdistance"):getValue() * weaitem:getMaxRange()))
+        
+        --local distanceLimit = (maxDistance * distanceLimitPenalty) + ((maxDistance * (1-distanceLimitPenalty)) * realLevel/10)
+        local distanceLimit = maxDistance * realLevel/10
+        
+        local targetDist = Advanced_trajectory.targetDistance
+
+        --print("target / maxDistance / limit: ", targetDist, " || ", maxDistance, " || ", distanceLimit)
+
+        if targetDist > maxDistance then
+            targetDist = maxDistance
+            Advanced_trajectory.isOverDistanceLimit = true  
+        else
+            Advanced_trajectory.isOverDistanceLimit = false
+        end
+
+        if targetDist > distanceLimit then
+            if enableDistanceLimitPenalty and (maxDistance - distanceLimit > 0) then
+                --focusLimit = focusLimit + reversedLevel * (1 + (targetDist*distanceFocusPenalty)/maxDistance)
+                focusLimit = focusLimit + (((targetDist-distanceLimit)*distanceFocusPenalty*reversedLevel) / (maxDistance-distanceLimit))
+            end
         end
 
         ------------------------
@@ -916,7 +977,9 @@ function Advanced_trajectory.OnPlayerUpdate()
 
             if Advanced_trajectory.crouchCounter > 0 then
                 Advanced_trajectory.crouchCounter = Advanced_trajectory.crouchCounter - crouchCounterSpeed*constantTime
-                Advanced_trajectory.aimnum = Advanced_trajectory.aimnum + constantTime*crouchPenaltyEffect
+                if not player:HasTrait("RunNGun") then 
+                    Advanced_trajectory.aimnum = Advanced_trajectory.aimnum + constantTime*crouchPenaltyEffect
+                end
             end
 
             -- counter can not go below 0
@@ -980,14 +1043,14 @@ function Advanced_trajectory.OnPlayerUpdate()
         -- TURNING AND MOVING SECT--
         ----------------------------
         local drunkActionEffectModifier = getSandboxOptions():getOptionByName("Advanced_trajectory.drunkActionEffectModifier"):getValue() 
-        if player:getVariableBoolean("isMoving") then
+        if player:getVariableBoolean("isMoving") and not player:HasTrait("RunNGun") and not canRunNGun then
             Advanced_trajectory.aimnum = Advanced_trajectory.aimnum + gametimemul * getSandboxOptions():getOptionByName("Advanced_trajectory.moveeffect"):getValue() * ((drunkLv*drunkActionEffectModifier)+1) * (heavyLv * heavyTurnEffectModifier + 1)
             Advanced_trajectory.maxFocusCounter = 100
         end
         
 
         local turningEffect = gametimemul * getSandboxOptions():getOptionByName("Advanced_trajectory.turningeffect"):getValue() * (drunkLv * drunkActionEffectModifier + 1) * (heavyLv * heavyTurnEffectModifier + 1)
-        if player:getVariableBoolean("isTurning") then
+        if player:getVariableBoolean("isTurning") and not player:HasTrait("RunNGun") and not canRunNGun then
             if Advanced_trajectory.isCrouch then
                 Advanced_trajectory.aimnum = Advanced_trajectory.aimnum + turningEffect * getSandboxOptions():getOptionByName("Advanced_trajectory.crouchTurnEffect"):getValue()
 
@@ -1047,17 +1110,20 @@ function Advanced_trajectory.OnPlayerUpdate()
         local proneFocusCounterSpeedBuff = getSandboxOptions():getOptionByName("Advanced_trajectory.proneFocusCounterSpeedBuff"):getValue() 
         if Advanced_trajectory.isCrawl and hasFocusSkill then
             focusCounterSpeed = focusCounterSpeed * 1.5
-            focusLimit = focusLimit * 0.30
+            focusLimit = focusLimit * getSandboxOptions():getOptionByName("Advanced_trajectory.proneFocusLimitBuff"):getValue() 
         end
 
         if Advanced_trajectory.isCrouch and hasFocusSkill then
-            focusLimit = focusLimit * 0.60
+            focusLimit = focusLimit * getSandboxOptions():getOptionByName("Advanced_trajectory.crouchFocusLimitBuff"):getValue() 
         end
 
-        -- coruching means no need to wait to get to 0 when below minaimnum (helpful when bursting)
-        if (Advanced_trajectory.isCrouch or Advanced_trajectory.isCrawl) and hasFocusSkill then
-            if Advanced_trajectory.aimnum < (20 - (recoilDelay/10)) then
-                Advanced_trajectory.maxFocusCounter = 0
+        -- crouching means no need to wait to get to 0 when below minaimnum (helpful when bursting)
+        if hasFocusSkill then
+            if Advanced_trajectory.isCrouch and Advanced_trajectory.aimnum < (realLevel*1.5 - (recoilDelay*2)/10) then
+                    Advanced_trajectory.maxFocusCounter = 0
+            
+            elseif Advanced_trajectory.isCrawl and Advanced_trajectory.aimnum < (realLevel*1.75 - (recoilDelay*2)/10) then
+                    Advanced_trajectory.maxFocusCounter = 0
             end
         end
 
@@ -1159,15 +1225,14 @@ function Advanced_trajectory.OnPlayerUpdate()
         -------------------------------
         -- needs to be between max and min or else crosshair just disappears if ur aim is dog
         -- place after other minaimnum effects
-        local panicModifierAlpha = 1
 
         local limit = 0
         if panicLv == 4 then
             limit = 0
         elseif panicLv == 3 then
-            limit = realMin
+            limit = Advanced_trajectory.maxaimnum * 0.25
         else
-            limit = realMin + (Advanced_trajectory.maxaimnum - realMin)*panicModifierAlpha*(1/panicLv)
+            limit = Advanced_trajectory.maxaimnum * 0.5
         end
 
         if panicLv > 1 then
@@ -1197,7 +1262,7 @@ function Advanced_trajectory.OnPlayerUpdate()
         --print("Aim Level (real): ", realLevel)
         --print("Def/Curr ReduceSpeed: ", speed, "/", reduceSpeed)
         --print("FocusCounterSpeed: ", focusCounterSpeed)
-        --print("FocusLimit/Min/Max/Aimnum: ", focusLimit, " / ", Advanced_trajectory.minaimnum, " / ", Advanced_trajectory.maxaimnum, " / ", Advanced_trajectory.aimnum)   
+        --("FocusLimit/Min/Max/Aimnum: ", focusLimit, " / ", Advanced_trajectory.minaimnum, " / ", Advanced_trajectory.maxaimnum, " / ", Advanced_trajectory.aimnum)   
         --------------------------------------------------------------------
         if not Advanced_trajectory.panel.instance and getSandboxOptions():getOptionByName("Advanced_trajectory.aimpoint"):getValue() then
             Advanced_trajectory.panel.instance = Advanced_trajectory.panel:new(0, 0, 200, 200)
@@ -1229,11 +1294,13 @@ function Advanced_trajectory.OnPlayerUpdate()
 
 
         -- Get the scaled mouse coordinates
-        local dx = getMouseXScaled()
-        local dy = getMouseYScaled()
+        local mouseX = getMouseXScaled()
+        local mouseY = getMouseYScaled()
 
         -- Get the player's Z position and player number
         local playerZ = math.floor(player:getZ())
+        local playerX = math.floor(player:getX())
+        local playerY = math.floor(player:getY())
         local playerNum = player:getPlayerNum()
 
         -- Initialize a flag to check if we are aiming at an object
@@ -1245,7 +1312,7 @@ function Advanced_trajectory.OnPlayerUpdate()
             local delDis = Z - playerZ
 
             -- Calculate world coordinates adjusted for the Z level
-            local wx, wy = ISCoordConversion.ToWorld(dx - 3 * delDis, dy - 3 * delDis, Z)
+            local wx, wy = ISCoordConversion.ToWorld(mouseX - 3 * delDis, mouseY - 3 * delDis, Z)
             wx, wy = math.floor(wx), math.floor(wy)
 
             -- Get the current world cell
@@ -1283,7 +1350,7 @@ function Advanced_trajectory.OnPlayerUpdate()
 
                             if instanceof(zombie, "IsoZombie") or instanceof(zombie, "IsoPlayer") then
                                 Advanced_trajectory.aimlevels = Z
-                                isAimingObject = true
+                                isAimingObject = true   
                                 return
                             end
                         end
@@ -1298,7 +1365,6 @@ function Advanced_trajectory.OnPlayerUpdate()
         if not isAimingObject then
             Advanced_trajectory.aimlevels = nil
         end
-
 
         -- print(Advanced_trajectory.aimlevels)
          
@@ -1320,6 +1386,23 @@ function Advanced_trajectory.OnPlayerUpdate()
         Advanced_trajectory.alpha = 0
     end
     
+end
+
+function getTargetDistance(player)
+        local mouseX = getMouseXScaled()
+        local mouseY = getMouseYScaled()
+
+        local playerX = math.floor(player:getX())
+        local playerY = math.floor(player:getY())
+        local playerZ = math.floor(player:getZ())
+        
+        local wx, wy = ISCoordConversion.ToWorld(mouseX, mouseY, playerZ)
+        wx, wy = math.floor(wx) + 2, math.floor(wy) + 2
+
+        Advanced_trajectory.targetDistance = (math.sqrt((playerX - wx)^2 + (playerY - wy)^2))
+
+        --print("Player X/Y || MouseX/Y: ", playerX," / ",playerY, " || ", wx," / ",wy)
+        --print("Target Distance: ", Advanced_trajectory.targetDistance)
 end
 
 Advanced_trajectory.damagedisplayer = {}
@@ -1762,6 +1845,8 @@ function Advanced_trajectory.checkontick()
 
                 local Playershot
 
+                local saywhat = ""
+
                 -- returns object zombie and player that was shot
                 local Zombie,Playershot =  Advanced_trajectory.getShootzombie({vt[4][1] + admindel * 3, vt[4][2]  + admindel * 3, shootlevel}, 1 + angleammooff, {vt[20][1], vt[20][2], vt[20][3]})
                 
@@ -1770,8 +1855,6 @@ function Advanced_trajectory.checkontick()
 
                 -- headshot damage multiplier on player (will be multiplied by vt6 in player's if statement)
                 local damagepr = 0
-
-                local saywhat = ""
 
                 -- steady aim wins the game, else bodyshot damage 
                 if Advanced_trajectory.aimnumBeforeShot <= 5 then
@@ -1951,6 +2034,35 @@ end
 
 Events.OnTick.Add(Advanced_trajectory.checkontick)
 
+function determineHitOrMiss(isHoldingShotgun) 
+    local player = getPlayer()
+    local aimingLevel = player:getPerkLevel(Perks.Aiming)
+
+    local buff = 0
+    if isHoldingShotgun then
+        buff = getSandboxOptions():getOptionByName("Advanced_trajectory.shotgunHitBuff"):getValue()
+    end
+
+    local hitLevelScaling = getSandboxOptions():getOptionByName("Advanced_trajectory.hitLevelScaling"):getValue()
+    local missMin = getSandboxOptions():getOptionByName("Advanced_trajectory.missMin"):getValue()
+    local missMax = getSandboxOptions():getOptionByName("Advanced_trajectory.missMax"):getValue()
+
+    local randNum = ZombRandFloat(missMin + aimingLevel*hitLevelScaling + buff, missMax) 
+
+    local enableAnnounce = getSandboxOptions():getOptionByName("Advanced_trajectory.announceHitOrMiss"):getValue()
+    if Advanced_trajectory.aimnumBeforeShot > randNum then
+        Advanced_trajectory.missedShot = true
+        if enableAnnounce then
+            player:Say(getText("Missed: " .. Advanced_trajectory.aimnumBeforeShot .. " > " .. randNum))
+        end
+    else
+        Advanced_trajectory.missedShot = false
+        if enableAnnounce then
+            player:Say(getText("Hit: " .. Advanced_trajectory.aimnumBeforeShot .. " <= " .. randNum))
+        end
+    end
+end
+
 -----------------------------------
 --SHOOTING PROJECTILE FUNC SECT---
 -----------------------------------
@@ -1960,7 +2072,7 @@ function Advanced_trajectory.OnWeaponSwing(character, handWeapon)
         handWeapon:setMaxHitCount(0)
     end
 
-    local playerlevel = character:getPerkLevel(Perks.Aiming)
+    local playerLevel = character:getPerkLevel(Perks.Aiming)
     local modEffectsTable = Advanced_trajectory.getAttachmentEffects(handWeapon)  
 
     -- print(character)
@@ -1970,7 +2082,7 @@ function Advanced_trajectory.OnWeaponSwing(character, handWeapon)
     local rollspeed = 0
     local iscanthrough = false
     local ballisticspeed = 0.15  
-    local ballisticdistance = handWeapon:getMaxRange(character) * 1.5
+    local ballisticdistance = handWeapon:getMaxRange() 
     local itemtypename = ""
     local iscanbigger = 0
     local sfxname = ""
@@ -2010,14 +2122,12 @@ function Advanced_trajectory.OnWeaponSwing(character, handWeapon)
     -- pi/250 = .7 degrees
     -- aimnum can go up to (77-9+40) 108 
     -- max/min -+96 degrees, and even more when drunk (6*24+108 = 252 => 208 deg)
-    Advanced_trajectory.aimrate = Advanced_trajectory.aimnum * math.pi / 250
+    -- og denominator was 250
 
     local maxProjCone = getSandboxOptions():getOptionByName("Advanced_trajectory.MaxProjCone"):getValue()
-
-    -- spread should be no wider than 70 degrees from where player is aiming
-    if Advanced_trajectory.aimrate > maxProjCone then
-        Advanced_trajectory.aimrate = maxProjCone
-    end
+    -- 120 as max aimnum
+    local denom = 120 * math.pi / maxProjCone
+    Advanced_trajectory.aimrate = Advanced_trajectory.aimnum * math.pi / denom
 
     --print("MaxProjCone: ", maxProjCone)
     --print("Aimrate: ", Advanced_trajectory.aimrate )
@@ -2237,12 +2347,12 @@ function Advanced_trajectory.OnWeaponSwing(character, handWeapon)
     -- Shotguns - 60 to 80
     -- Lower aimnum (to reduce spamming crits with god awful bloom) and higher player level means higher crit chance.
     local critChanceModifier = getSandboxOptions():getOptionByName("Advanced_trajectory.critChanceModifier"):getValue() 
-    local critChanceAdd = (Advanced_trajectory.aimnumBeforeShot*critChanceModifier) + (11-playerlevel)
+    local critChanceAdd = (Advanced_trajectory.aimnumBeforeShot*critChanceModifier) + (11-playerLevel)
 
     -- higher = higher crit chance
     local critIncreaseShotgun = getSandboxOptions():getOptionByName("Advanced_trajectory.critChanceModifierShotgunsOnly"):getValue() 
     if isHoldingShotgun then
-        critChanceAdd = (critChanceAdd * 0) - (critIncreaseShotgun - playerlevel)
+        critChanceAdd = (critChanceAdd * 0) - (critIncreaseShotgun - playerLevel)
     end
     if ZombRand(100+critChanceAdd) <= handWeapon:getCriticalChance() then
         tablez[6]=tablez[6] * 2
@@ -2331,31 +2441,78 @@ function Advanced_trajectory.OnWeaponSwing(character, handWeapon)
         end
 
         -- print(Advanced_trajectory.aimtexdistance)
-        
     end
 
 
     local recoilModifier = getSandboxOptions():getOptionByName("Advanced_trajectory.recoilModifier"):getValue()
-    -- recoils range from 0.5 to 2.7
+    local recoilScaleModifier = getSandboxOptions():getOptionByName("Advanced_trajectory.recoilScaleModifier"):getValue()
+    local proneRecoilBuff = getSandboxOptions():getOptionByName("Advanced_trajectory.proneRecoilBuff"):getValue()
+    local proneExpoRecoilBuff = getSandboxOptions():getOptionByName("Advanced_trajectory.proneExpoRecoilBuff"):getValue()
+    local crouchRecoilBuff = getSandboxOptions():getOptionByName("Advanced_trajectory.crouchRecoilBuff"):getValue()
+    local crouchExpoRecoilBuff = getSandboxOptions():getOptionByName("Advanced_trajectory.crouchExpoRecoilBuff"):getValue()
     Advanced_trajectory.aimnumBeforeShot = Advanced_trajectory.aimnum
-    --character:Say("aimnumBeforeShot:  " .. Advanced_trajectory.aimnumBeforeShot)
+
+    -----------------
+    ---MISSED SHOT---
+    -----------------
+    determineHitOrMiss(isHoldingShotgun) 
     
-    local recoil = handWeapon:getMaxDamage()*recoilModifier
+    -- typ dmg from wep category
+
+    -- recoilModifier = ?? < 10
+    -- Britas 2.5 - 2.7 (rifles)
+    -- Britas 3.0 - 6.0 (snipers)
+    -- Britas 1.4 - 1.5 (SMG, pistols)
+
+    -- recoilModifier = 10
+    -- Vanilla 1.0 - 1.4 (light pistols)
+    -- Vanilla 1.4 - 2.0 (rifles)
+    -- Vanilla 2.2 - 2.7 (shotguns)
+
+    -- recoilModifier = 10
+    -- VFE 1.0 - 1.4 (SMG, pistols)
+    -- VFE 2.0 - 2.7 (rifles)
+    -- VFE 2.2 - 2.7 (shotguns)
+    -- VFE 2.9 - 3.2 (snipers)
 
     -----------------------------
     --RECOIL ATTACHMENT EFFECT---
     -----------------------------
+    -- recoilMod is always 0.5
     local recoilMod = modEffectsTable[3]
+    local wepMaxDmg = handWeapon:getMaxDamage()
     if recoilMod ~= 0 then
-        recoil = recoil * recoilMod
+        wepMaxDmg = wepMaxDmg * recoilMod
     end
+
+    -- recoil control capped at lv9
+    if playerLevel >= 10 then
+        playerLevel = 9
+    end
+
+    -- linear relationship between player level and recoil
+    local recoil = (wepMaxDmg * recoilModifier) + (11-playerLevel)
 
     -- Prone stance means less recoil
     if Advanced_trajectory.isCrawl  then
-        recoil = recoil * 0.5
+        recoil = recoil * proneRecoilBuff
+        recoilScaleModifier = proneExpoRecoilBuff
+
+    elseif Advanced_trajectory.isCrouch  then
+        recoil = recoil * crouchRecoilBuff
+        recoilScaleModifier = crouchExpoRecoilBuff
     end
 
-    Advanced_trajectory.aimnum = Advanced_trajectory.aimnum + ((14 - 0.8*playerlevel)*1.8 + recoil)
+    -- simulates recoil control through exponential function
+    -- embraces burst and tap fire but not full auto spraying
+    local exponentialRecoil = 1 + ( (11-playerLevel) * (  20^((Advanced_trajectory.aimnumBeforeShot - recoilScaleModifier) * 0.01) * 0.01  ) )
+
+
+
+    local totalRecoil = recoil * exponentialRecoil
+    print("Total / Recoil / Exponential: ", totalRecoil, " || ", recoil, " || ", exponentialRecoil)
+
+    Advanced_trajectory.aimnum = Advanced_trajectory.aimnum + totalRecoil
     Advanced_trajectory.maxFocusCounter = 100
 
     
