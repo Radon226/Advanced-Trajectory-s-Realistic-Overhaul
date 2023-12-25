@@ -1647,7 +1647,7 @@ function damagePlayershot(player, damage, baseGunDmg, headShotDmg, bodyShotDmg, 
             bodypart:setBleedingTime(bleedTime)
         else
 			-- Decides whether to add a bullet based on chance in sandbox settings
-			if ZombRand(100) > Advanced_trajectory.throughChance then
+			if ZombRand(0, 100)+1 > Advanced_trajectory.throughChance then
 				bodypart:setHaveBullet(true, 0)
 			else
 				-- Making sure that the deep wound is still inflicted, even if we don't inflict a lodged bullet
@@ -1656,7 +1656,7 @@ function damagePlayershot(player, damage, baseGunDmg, headShotDmg, bodyShotDmg, 
         end
 		
 		-- Decides whether to inflict a fracture based on chance in sandbox settings
-		if ZombRand(100) <= Advanced_trajectory.fractureChance then
+		if ZombRand(0, 100)+1 <= Advanced_trajectory.fractureChance then
 			if bodyPart:getFractureTime() < 21 then
 				bodyPart:setFractureTime(21)
 			end
