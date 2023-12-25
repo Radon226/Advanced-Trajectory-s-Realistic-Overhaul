@@ -627,6 +627,25 @@ option Advanced_trajectory.footShotDmgPlayerMultiplier
 	page = Advanced_trajectory_damage,
 	translation = Advanced_trajectoryfootShotDmgPlayerMultiplier,
 }
+option Advanced_trajectory.fractureChance
+{
+	type = double,
+	min = 0,
+	max = 100,
+	default = 25,
+	page = Advanced_trajectory_damage,
+	translation = Advanced_trajectoryfractureChance,
+}
+
+option Advanced_trajectory.throughChance
+{
+	type = double,
+	min = 0,
+	max = 100,
+	default = 25,
+	page = Advanced_trajectory_damage,
+	translation = Advanced_trajectorythroughChance,
+}
 option Advanced_trajectory.critChanceModifier
 {
 	type = double,

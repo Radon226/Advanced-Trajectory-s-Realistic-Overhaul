@@ -53,6 +53,12 @@ Sandbox_EN = {
 	Sandbox_Advanced_trajectorybodyShotDmgPlayerMultiplier_tooltip = "Multiplier on base damage for bodyshot",
 	Sandbox_Advanced_trajectoryfootShotDmgPlayerMultiplier = "Footshot Damage Multiplier (PVP)",
 	Sandbox_Advanced_trajectoryfootShotDmgPlayerMultiplier_tooltip = "Multiplier on base damage for footshot",
+	
+	Sandbox_Advanced_trajectoryfractureChance = "Gunshot Fracture Chance (PVP)",
+	Sandbox_Advanced_trajectoryfractureChance_tooltip = "Chance that a gunshot wound will cause a fracture",
+	
+	Sandbox_Advanced_trajectorythroughChance = "Gunshot Clean Through Chance (PVP)",
+	Sandbox_Advanced_trajectorythroughChance_tooltip = "Chance that a gunshot wound will not inflict a lodged bullet",
 
 	Sandbox_Advanced_trajectoryenableBulletPenFlesh = "Enable Bullet Penetration Through Flesh",
 	Sandbox_Advanced_trajectorypenDamageReductionMultiplier = "Bullet Penetration Reduction Multiplier",
