@@ -462,27 +462,17 @@ function Advanced_trajectory.checkiswallordoor(square,bulletAngle,bulletPosition
     -- end
     
     if squarecar and ((squarecar:getX() -playerPosition[1] )^2  + (squarecar:getY() -playerPosition[2])^2)  >8 then
-
-
         if nosfx then return true end
 
-
         if ((squarecar:getX() -bulletPosition[1] )^2  + (squarecar:getY() -bulletPosition[2])^2) < 2.8  then
-
             if getSandboxOptions():getOptionByName("AT_VehicleDamageenable"):getValue() then
-
-                
                 squarecar:HitByVehicle(squarecar, 0.3)
-                
             end
+
             return true
-            
         end 
-        
-        
     end
 
-    
 end
 
 -----------------------------------
