@@ -804,15 +804,6 @@ function Advanced_trajectory.OnPlayerUpdate()
         end
 
 
-
-
-        if targetDist > distanceLimit then
-            if enableDistanceLimitPenalty and (maxDistance - distanceLimit > 0) then
-                focusLimit = focusLimit + (((targetDist-distanceLimit)*distanceFocusPenalty*reversedLevel) / (maxDistance-distanceLimit))
-            end
-        end
-
-        -------------------------
         ------ STRESS SECT ------
         -------------------------
         local stressBloomModifier = getSandboxOptions():getOptionByName("Advanced_trajectory.stressBloomModifier"):getValue() 
@@ -832,45 +823,7 @@ function Advanced_trajectory.OnPlayerUpdate()
             focusLimit = focusLimit + 6 * (stressLv-1)
         end
 
-        --print('realMin: ', realMin)
 
-        ----------------------
-        ---DRUNK/HEAVY SECT---
-        ----------------------
-        local drunkMaxBloomModifier     = getSandboxOptions():getOptionByName("Advanced_trajectory.drunkMaxBloomModifier"):getValue() 
-        local heavyMaxBloomModifier     = getSandboxOptions():getOptionByName("Advanced_trajectory.heavyMaxBloomModifier"):getValue() 
-        Advanced_trajectory.maxaimnum   = Advanced_trajectory.maxaimnum + (drunkLv*drunkMaxBloomModifier) + (heavyLv*heavyMaxBloomModifier)
-
-        ----------------------------
-        -- HYPER, HYPO, TIRED SECT--
-        ----------------------------
-        -- SPEED EFFECTS (must be greater than 0, higher number means less effect)
-        -- considering that you can only get hypo or hyper, there are mainly 2 moodles that can stack (temp and tired)
-        -- can either stack to -100% if full severity with 0s
-        -- all 1s mean stack -66%
-        -- all 0s mean stack -100%
-        local hyperHypoModifier = getSandboxOptions():getOptionByName("Advanced_trajectory.hyperHypoModifier"):getValue() 
-        local tiredModifier = getSandboxOptions():getOptionByName("Advanced_trajectory.tiredModifier"):getValue() 
-
-        -- with default modifiers of 1, it should total up to 1
-        local speed = getSandboxOptions():getOptionByName("Advanced_trajectory.reducespeed"):getValue() 
-        local reduceSpeed = speed 
-
-        -- needs to subtract at most 1/3 --> 1/(x-4) = 1/3
-        -- no effects for lv 1 temp serverity
-        if hyperLv > 1 then
-            reduceSpeed = reduceSpeed * (hyperHypoModifier  - ((hyperLv - 2) / 5))
-        end
-
-        if hypoLv > 1 then
-            reduceSpeed = reduceSpeed * (hyperHypoModifier  - ((hypoLv - 2) / 5))
-        end
-
-        if tiredLv > 0 then
-            reduceSpeed = reduceSpeed * (tiredModifier      - ((tiredLv - 1) / 8))
-        end
-
-        ----------------------------
         -- ARMS, HANDS DAMAGE SECT--
         ----------------------------
         local bodyDamage = player:getBodyDamage()
@@ -904,11 +857,57 @@ function Advanced_trajectory.OnPlayerUpdate()
                 end
             end
 
-            reduceSpeed =  reduceSpeed * (1 - (painModifider * (0.5+totalArmPain/50)))
-
             Advanced_trajectory.painEffect = getSandboxOptions():getOptionByName("Advanced_trajectory.painVisualModifier"):getValue() 
         else
             Advanced_trajectory.painEffect = 0
+        end
+
+
+
+        if targetDist > distanceLimit then
+            if enableDistanceLimitPenalty and (maxDistance - distanceLimit > 0) then
+                focusLimit = focusLimit + (((targetDist-distanceLimit)*distanceFocusPenalty*reversedLevel) / (maxDistance-distanceLimit))
+            end
+        end
+
+        ----------------------
+        ---DRUNK/HEAVY SECT---
+        ----------------------
+        local drunkMaxBloomModifier     = getSandboxOptions():getOptionByName("Advanced_trajectory.drunkMaxBloomModifier"):getValue() 
+        local heavyMaxBloomModifier     = getSandboxOptions():getOptionByName("Advanced_trajectory.heavyMaxBloomModifier"):getValue() 
+        Advanced_trajectory.maxaimnum   = Advanced_trajectory.maxaimnum + (drunkLv*drunkMaxBloomModifier) + (heavyLv*heavyMaxBloomModifier)
+
+        ----------------------------------
+        -- HYPER, HYPO, TIRED, PAIN SECT--
+        ----------------------------------
+        -- SPEED EFFECTS (must be greater than 0, higher number means less effect)
+        -- considering that you can only get hypo or hyper, there are mainly 2 moodles that can stack (temp and tired)
+        -- can either stack to -100% if full severity with 0s
+        -- all 1s mean stack -66%
+        -- all 0s mean stack -100%
+        local hyperHypoModifier = getSandboxOptions():getOptionByName("Advanced_trajectory.hyperHypoModifier"):getValue() 
+        local tiredModifier = getSandboxOptions():getOptionByName("Advanced_trajectory.tiredModifier"):getValue() 
+
+        -- with default modifiers of 1, it should total up to 1
+        local speed = getSandboxOptions():getOptionByName("Advanced_trajectory.reducespeed"):getValue() 
+        local reduceSpeed = speed 
+
+        -- needs to subtract at most 1/3 --> 1/(x-4) = 1/3
+        -- no effects for lv 1 temp serverity
+        if hyperLv > 1 then
+            reduceSpeed = reduceSpeed * (hyperHypoModifier  - ((hyperLv - 2) / 5))
+        end
+
+        if hypoLv > 1 then
+            reduceSpeed = reduceSpeed * (hyperHypoModifier  - ((hypoLv - 2) / 5))
+        end
+
+        if tiredLv > 0 then
+            reduceSpeed = reduceSpeed * (tiredModifier      - ((tiredLv - 1) / 8))
+        end
+
+        if totalArmPain >= 39 and painLv > 1 then
+            reduceSpeed =  reduceSpeed * (1 - (painModifider * (0.5+totalArmPain/50)))
         end
 
         ------------------------
@@ -2087,10 +2086,10 @@ function determineHitOrMiss(isHoldingShotgun)
     end
 
     local hitLevelScaling = getSandboxOptions():getOptionByName("Advanced_trajectory.hitLevelScaling"):getValue()
-    local missMin = getSandboxOptions():getOptionByName("Advanced_trajectory.missMin"):getValue()
+    local missMin = getSandboxOptions():getOptionByName("Advanced_trajectory.missMin"):getValue() + aimingLevel*hitLevelScaling + buff
     local missMax = getSandboxOptions():getOptionByName("Advanced_trajectory.missMax"):getValue()
 
-    local randNum = ZombRandFloat(missMin + aimingLevel*hitLevelScaling + buff, missMax) 
+    local randNum = ZombRandFloat(missMin, missMax) 
 
     local enableAnnounce = getSandboxOptions():getOptionByName("Advanced_trajectory.announceHitOrMiss"):getValue()
     if Advanced_trajectory.aimnumBeforeShot > randNum then
@@ -2506,7 +2505,9 @@ function Advanced_trajectory.OnWeaponSwing(character, handWeapon)
     -----------------
     ---MISSED SHOT---
     -----------------
-    determineHitOrMiss(isHoldingShotgun) 
+    if getSandboxOptions():getOptionByName("Advanced_trajectory.enableHitOrMiss"):getValue() then
+        determineHitOrMiss(isHoldingShotgun) 
+    end
     
     -- typ dmg from wep category
 
