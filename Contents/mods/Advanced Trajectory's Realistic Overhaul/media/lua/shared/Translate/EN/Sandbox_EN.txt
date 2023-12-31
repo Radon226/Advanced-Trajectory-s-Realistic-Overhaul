@@ -89,6 +89,12 @@ Sandbox_EN = {
 	Sandbox_Advanced_trajectorydistanceFocusPenalty = "Distance Focus Penalty",
 	Sandbox_Advanced_trajectorydistanceFocusPenalty_tooltip = "Higher means more punishing bloom scaling.",
 
+	Sandbox_Advanced_trajectoryrunNGunLv = "Level with Run and Gun Unlocked",
+	Sandbox_Advanced_trajectoryrunNGunLv_tooltip = "When aiming moving and turnin.",
+
+	Sandbox_Advanced_trajectoryrunNGunBuff = "Run and Gun Buff",
+	Sandbox_Advanced_trajectoryrunNGunBuff_tooltip = "Multiplier that reduces penalty for moving and turning. 0.25 means 75% reduction to penalty.",
+
 	Sandbox_Advanced_trajectorymoveeffect = "Moving Effect",
 	Sandbox_Advanced_trajectorymoveeffect_tooltip = "Value that adds bloom when moving.",
 
@@ -124,8 +130,26 @@ Sandbox_EN = {
 	Sandbox_Advanced_trajectorymaxFocusSpeed = "Max Focus Speed",
 	Sandbox_Advanced_trajectorymaxFocusSpeed_tooltip = "Part of the focus mechanic. Determines speed of crosshair reducing aimnum to 0 once process has begun.",
 
-	Sandbox_Advanced_trajectoryrecoilDelayModifier = "Recoil Delay Modifier (linked to Focus Counter Speed)",
-	Sandbox_Advanced_trajectoryrecoilDelayModifier_tooltip = "Part of the focus mechanic. Weapon's recoil delay affects how long it takes for character to recover from recoil and this is a multiplier of that. Set to 0 to ignore weapon's recoil delay stat.",
+	Sandbox_Advanced_trajectoryrecoilDelayModifier = "Recoil Delay Modifier",
+	Sandbox_Advanced_trajectoryrecoilDelayModifier_tooltip = "Linked to Focus Counter Speed. Part of the focus mechanic. Weapon's recoil delay affects how long it takes for character to recover from recoil and this is a multiplier of that. Set to 0 to ignore weapon's recoil delay stat.",
+
+	Sandbox_Advanced_trajectoryrecoilScaleModifier = "Recoil Control Modifier",
+	Sandbox_Advanced_trajectoryrecoilScaleModifier_tooltip = "Affects exponential growth of recoil (how much bloom is added depending on the previous bloom value the player shot at). Lower means less added bloom as you continue spraying.",
+
+	Sandbox_Advanced_trajectoryproneRecoilBuff = "Prone Recoil Buff",
+	Sandbox_Advanced_trajectoryproneRecoilBuff_tooltip = "Multiplier reduction to gun recoil.",
+
+	Sandbox_Advanced_trajectoryproneExpoRecoilBuff = "Prone Recoil Control Buff",
+	Sandbox_Advanced_trajectoryproneExpoRecoilBuff_tooltip = "Multiplier that affects how much bloom is added depending on the previous bloom value the player shot at. Lower means less added bloom as you continue spraying.",
+
+	Sandbox_Advanced_trajectorycrouchRecoilBuff = "Crouch Recoil Buff",
+	Sandbox_Advanced_trajectorycrouchRecoilBuff_tooltip = "Multiplier reduction to gun recoil.",
+
+	Sandbox_Advanced_trajectorycrouchExpoRecoilBuff = "Crouch Recoil Control Buff",
+	Sandbox_Advanced_trajectorycrouchExpoRecoilBuff_tooltip = "Multiplier that affects how much bloom is added depending on the previous bloom value the player shot at. Lower means less added bloom as you continue spraying.",
+
+
+
 
 	Sandbox_Advanced_trajectoryshotgundivision = "Shotgun Splitting Angle",
 	Sandbox_Advanced_trajectoryshotgundivision_tooltip = "Value affects shotgun spread. The lower the value, the more narrow the spread.",
@@ -187,6 +211,18 @@ Sandbox_EN = {
 	Sandbox_Advanced_trajectorypainVisualModifier = "Shaky crosshair effect (Pain Moodle)",
 	Sandbox_Advanced_trajectorypainVisualModifier_tooltip = "Makes crosshair shaky.",
 
+	Sandbox_Advanced_trajectorypanicPenaltyModifier = "Increased Distance Penalty (Panic Moodle)",   
+	Sandbox_Advanced_trajectorypanicPenaltyModifier_tooltip = "Multiplier that determines how much panic increases the penalty affect when aiming at farther targets.",
+
+	Sandbox_Advanced_trajectorypanicVisualModifier = "Shaky crosshair effect (Panic Moodle)",
+	Sandbox_Advanced_trajectorypanicVisualModifier_tooltip = "Makes crosshair shaky.",
+
+	Sandbox_Advanced_trajectorystressBloomModifier = "Minimum bloom limit (Stress Moodle Scaling)",
+	Sandbox_Advanced_trajectorystressBloomModifier_tooltip = "Multiplier that affects how much is added to minaimnum or minimum bloom.",
+
+	Sandbox_Advanced_trajectorystressVisualModifier = "Shaky crosshair effect (Stress Moodle Scaling)",
+	Sandbox_Advanced_trajectorystressVisualModifier_tooltip = "Affects how intense the crosshair shaking affect is. Set to 0 to disable.",
+
 
 
 	Sandbox_Advanced_trajectorydrunkActionEffectModifier = "Bloom amplifier on Turning/Moving (Drunk Moodle Scaling)",
@@ -202,14 +238,6 @@ Sandbox_EN = {
 
 	Sandbox_Advanced_trajectorytiredModifier = "Slower bloom reduction rate (Fatigue/Tired Moodle Scaling)",
 	Sandbox_Advanced_trajectorytiredModifier_tooltip = "Multiplier that affects how slow your crosshair reduces bloom.",
-
-
-
-	Sandbox_Advanced_trajectorystressBloomModifier = "Minimum bloom limit (Stress Moodle Scaling)",
-	Sandbox_Advanced_trajectorystressBloomModifier_tooltip = "Multiplier that affects how much is added to minaimnum or minimum bloom.",
-
-	Sandbox_Advanced_trajectorystressVisualModifier = "Shaky crosshair effect (Stress Moodle Scaling)",
-	Sandbox_Advanced_trajectorystressVisualModifier_tooltip = "Affects how intense the crosshair shaking affect is. Set to 0 to disable.",
 
 
 
@@ -247,8 +275,8 @@ Sandbox_EN = {
 	Sandbox_Advanced_trajectoryshotgunHitBuff_tooltip 		= "A flat value that gives a flat increase in chances of hitting zombies with a shotgun.",
 	Sandbox_Advanced_trajectorymissMin 						= "Min Miss",
 	Sandbox_Advanced_trajectorymissMin_tooltip 				= "Bloom value in which player will start having a chance of missing. Must be less than max. rand(minMiss + buff + aimLevel*hitScaling, maxMiss)",
-	Sandbox_Advanced_trajectorymissMax 						= "Max Miss.",
-	Sandbox_Advanced_trajectorymissMax_tooltip 				= "Look at description for Min Miss.",
+	Sandbox_Advanced_trajectorymissMax 						= "Max Miss",
+	Sandbox_Advanced_trajectorymissMax_tooltip 				= "Bloom value in which player will start having a chance of missing. Must be greater than min. rand(minMiss + buff + aimLevel*hitScaling, maxMiss)",
 
 
 

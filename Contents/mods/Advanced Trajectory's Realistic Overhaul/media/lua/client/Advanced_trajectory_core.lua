@@ -29,6 +29,7 @@ Advanced_trajectory.hasFlameWeapon      = false
 Advanced_trajectory.alpha           = 0
 Advanced_trajectory.stressEffect    = 0
 Advanced_trajectory.painEffect      = 0
+Advanced_trajectory.panicEffect     = 0
 
 Advanced_trajectory.aimtexwtable    = {}
 Advanced_trajectory.aimtexdistance  = 0 -- Weapons containing crosshairs
@@ -674,14 +675,14 @@ function Advanced_trajectory.OnPlayerUpdate()
             gametimemul = getGameTime():getMultiplier() * 16 / (12-3 + 10)
         end
 
-        -- maxaimnum capped at 6
-        if realLevel > 6 then
-            realMaxaimnum = weaitem:getAimingTime() + ((11-6) * maxaimnumModifier)
+        -- maxaimnum capped at 8
+        if realLevel > 8 then
+            realMaxaimnum = weaitem:getAimingTime() + ((11-8) * maxaimnumModifier)
         end
 
         local canRunNGun = false
         -- run and gun unlock
-        if realLevel >= 10 then
+        if realLevel >= getSandboxOptions():getOptionByName("Advanced_trajectory.runNGunLv"):getValue() or player:HasTrait("RunNGun") then
             canRunNGun = true
         end
 
@@ -761,15 +762,24 @@ function Advanced_trajectory.OnPlayerUpdate()
         getTargetDistance(player)
         local enableDistanceLimitPenalty  = getSandboxOptions():getOptionByName("Advanced_trajectory.enableDistanceLimitPenalty"):getValue() 
         local distanceFocusPenalty  = getSandboxOptions():getOptionByName("Advanced_trajectory.distanceFocusPenalty"):getValue() 
+ 
+        local shotgunDistanceModifier = getSandboxOptions():getOptionByName("Advanced_trajectory.shotgunDistanceModifier"):getValue()
 
-        local maxDistance = math.floor(modEffectsTable[4] + (getSandboxOptions():getOptionByName("Advanced_trajectory.bulletdistance"):getValue() * weaitem:getMaxRange()))
+        local maxDistance = getSandboxOptions():getOptionByName("Advanced_trajectory.bulletdistance"):getValue() * weaitem:getMaxRange()
+
+        if getIsHoldingShotgun(weaitem) then
+            --print("Holding shotgun")
+            maxDistance = maxDistance * shotgunDistanceModifier
+        end
+
+        maxDistance = math.floor(modEffectsTable[4] + maxDistance)
         
         --local distanceLimit = (maxDistance * distanceLimitPenalty) + ((maxDistance * (1-distanceLimitPenalty)) * realLevel/10)
         local distanceLimit = maxDistance * realLevel/10
         
         local targetDist = Advanced_trajectory.targetDistance
 
-        --print("target / maxDistance / limit: ", targetDist, " || ", maxDistance, " || ", distanceLimit)
+        print("target / maxDistance / limit: ", targetDist, " || ", maxDistance, " || ", distanceLimit)
 
         if targetDist > maxDistance then
             targetDist = maxDistance
@@ -778,16 +788,33 @@ function Advanced_trajectory.OnPlayerUpdate()
             Advanced_trajectory.isOverDistanceLimit = false
         end
 
+
+
+        -- PANIC SECT -- 
+        ----------------
+        -- panic causes shakiness and penalty for aiming at farther targets is increased
+        local panicPenaltyModifier = getSandboxOptions():getOptionByName("Advanced_trajectory.panicPenaltyModifier"):getValue() 
+        local panicVisualModifier = getSandboxOptions():getOptionByName("Advanced_trajectory.panicVisualModifier"):getValue() 
+        if panicLv > 1 then
+            Advanced_trajectory.panicEffect = panicVisualModifier * panicLv
+            distanceFocusPenalty = distanceFocusPenalty * panicPenaltyModifier * panicLv
+            distanceLimit = distanceLimit * ((4-panicLv)/5)
+        else
+            Advanced_trajectory.panicEffect = 0
+        end
+
+
+
+
         if targetDist > distanceLimit then
             if enableDistanceLimitPenalty and (maxDistance - distanceLimit > 0) then
-                --focusLimit = focusLimit + reversedLevel * (1 + (targetDist*distanceFocusPenalty)/maxDistance)
                 focusLimit = focusLimit + (((targetDist-distanceLimit)*distanceFocusPenalty*reversedLevel) / (maxDistance-distanceLimit))
             end
         end
 
-        ------------------------
-        ------ STRESS SECT------
-        ------------------------
+        -------------------------
+        ------ STRESS SECT ------
+        -------------------------
         local stressBloomModifier = getSandboxOptions():getOptionByName("Advanced_trajectory.stressBloomModifier"):getValue() 
         local stressVisualModifier = getSandboxOptions():getOptionByName("Advanced_trajectory.stressVisualModifier"):getValue() 
         -- no effects for lv 1 stress
@@ -965,11 +992,13 @@ function Advanced_trajectory.OnPlayerUpdate()
                 Advanced_trajectory.crouchCounter = 100
             end
 
+            if canRunNGun then
+                crouchPenaltyEffect = crouchPenaltyEffect * 0.25
+            end
+
             if Advanced_trajectory.crouchCounter > 0 then
                 Advanced_trajectory.crouchCounter = Advanced_trajectory.crouchCounter - crouchCounterSpeed*constantTime
-                if not player:HasTrait("RunNGun") then 
-                    Advanced_trajectory.aimnum = Advanced_trajectory.aimnum + constantTime*crouchPenaltyEffect
-                end
+                Advanced_trajectory.aimnum = Advanced_trajectory.aimnum + constantTime*crouchPenaltyEffect
             end
 
             -- counter can not go below 0
@@ -1029,26 +1058,34 @@ function Advanced_trajectory.OnPlayerUpdate()
         else
             Advanced_trajectory.isCrawl = false
         end
+
+
         ----------------------------
         -- TURNING AND MOVING SECT--
         ----------------------------
+        local runNGunMultiplierBuff = 1
+        if canRunNGun then
+            runNGunMultiplierBuff = 0.25
+        end
+
         local drunkActionEffectModifier = getSandboxOptions():getOptionByName("Advanced_trajectory.drunkActionEffectModifier"):getValue() 
-        if player:getVariableBoolean("isMoving") and not player:HasTrait("RunNGun") and not canRunNGun then
-            Advanced_trajectory.aimnum = Advanced_trajectory.aimnum + gametimemul * getSandboxOptions():getOptionByName("Advanced_trajectory.moveeffect"):getValue() * ((drunkLv*drunkActionEffectModifier)+1) * (heavyLv * heavyTurnEffectModifier + 1)
+        if player:getVariableBoolean("isMoving") then
+            local totalMoveEffect = getSandboxOptions():getOptionByName("Advanced_trajectory.moveeffect"):getValue() * runNGunMultiplierBuff * ((drunkLv*drunkActionEffectModifier)+1) * (heavyLv * heavyTurnEffectModifier + 1)
+            Advanced_trajectory.aimnum = Advanced_trajectory.aimnum + gametimemul * totalMoveEffect
             Advanced_trajectory.maxFocusCounter = 100
         end
         
 
         local turningEffect = gametimemul * getSandboxOptions():getOptionByName("Advanced_trajectory.turningeffect"):getValue() * (drunkLv * drunkActionEffectModifier + 1) * (heavyLv * heavyTurnEffectModifier + 1)
-        if player:getVariableBoolean("isTurning") and not player:HasTrait("RunNGun") and not canRunNGun then
+        if player:getVariableBoolean("isTurning") then
             if Advanced_trajectory.isCrouch then
-                Advanced_trajectory.aimnum = Advanced_trajectory.aimnum + turningEffect * getSandboxOptions():getOptionByName("Advanced_trajectory.crouchTurnEffect"):getValue()
+                Advanced_trajectory.aimnum = Advanced_trajectory.aimnum + turningEffect * getSandboxOptions():getOptionByName("Advanced_trajectory.crouchTurnEffect"):getValue() * runNGunMultiplierBuff
 
             elseif Advanced_trajectory.isCrawl  then
-                Advanced_trajectory.aimnum = Advanced_trajectory.aimnum + turningEffect * getSandboxOptions():getOptionByName("Advanced_trajectory.proneTurnEffect"):getValue()
+                Advanced_trajectory.aimnum = Advanced_trajectory.aimnum + turningEffect * getSandboxOptions():getOptionByName("Advanced_trajectory.proneTurnEffect"):getValue()  * runNGunMultiplierBuff
             
             else
-                Advanced_trajectory.aimnum = Advanced_trajectory.aimnum + turningEffect 
+                Advanced_trajectory.aimnum = Advanced_trajectory.aimnum + turningEffect * runNGunMultiplierBuff
             end
             Advanced_trajectory.maxFocusCounter = 100
         end
@@ -1134,6 +1171,10 @@ function Advanced_trajectory.OnPlayerUpdate()
 
         --print('maxFocusCounter: ', Advanced_trajectory.maxFocusCounter)
 
+        if focusLimit > Advanced_trajectory.maxaimnum then
+            focusLimit = Advanced_trajectory.maxaimnum
+        end
+
         if Advanced_trajectory.minaimnum < focusLimit then
             Advanced_trajectory.minaimnum = Advanced_trajectory.minaimnum + gametimemul
 
@@ -1216,9 +1257,10 @@ function Advanced_trajectory.OnPlayerUpdate()
         -- needs to be between max and min or else crosshair just disappears if ur aim is dog
         -- place after other minaimnum effects
 
+        --[[
         local limit = 0
         if panicLv == 4 then
-            limit = 0
+            limit = 10
         elseif panicLv == 3 then
             limit = Advanced_trajectory.maxaimnum * 0.25
         else
@@ -1234,7 +1276,11 @@ function Advanced_trajectory.OnPlayerUpdate()
         else
             Advanced_trajectory.alpha = Advanced_trajectory.alpha + gametimemul*0.025
         end
-    
+        ]]
+        
+        -- Purpose is to keep crosshair visible
+        Advanced_trajectory.alpha = Advanced_trajectory.alpha + gametimemul*0.025
+
         if Advanced_trajectory.alpha > 0.6 then
             Advanced_trajectory.alpha = 0.6
         end
@@ -1244,7 +1290,7 @@ function Advanced_trajectory.OnPlayerUpdate()
         end
 
         --print("Trans/Alpha: ", Advanced_trajectory.alpha)
-
+        --print("Shaky Effect: ", Advanced_trajectory.stressEffect + Advanced_trajectory.painEffect + Advanced_trajectory.panicEffect)
         --print("totalArmPain [arms]: ", totalArmPain, ", HL", handPainL ,", FL", forearmPainL ,", UL", upperarmPainL ,", HR", handPainR ,", FR", forearmPainR ,", UR", upperarmPainR)
         --print("isSneezeCough: ", isSneezeCough)
         --print("P", panicLv, ", E", enduranceLv ,", H", hyperLv ,", H", hypoLv ,", S", stressLv,", T", tiredLv)
@@ -1252,7 +1298,7 @@ function Advanced_trajectory.OnPlayerUpdate()
         --print("Aim Level (real): ", realLevel)
         --print("Def/Curr ReduceSpeed: ", speed, "/", reduceSpeed)
         --print("FocusCounterSpeed: ", focusCounterSpeed)
-        --("FocusLimit/Min/Max/Aimnum: ", focusLimit, " / ", Advanced_trajectory.minaimnum, " / ", Advanced_trajectory.maxaimnum, " / ", Advanced_trajectory.aimnum)   
+        --print("FocusLimit/Min/Max/Aimnum: ", focusLimit, " / ", Advanced_trajectory.minaimnum, " / ", Advanced_trajectory.maxaimnum, " / ", Advanced_trajectory.aimnum)   
         --------------------------------------------------------------------
         if not Advanced_trajectory.panel.instance and getSandboxOptions():getOptionByName("Advanced_trajectory.aimpoint"):getValue() then
             Advanced_trajectory.panel.instance = Advanced_trajectory.panel:new(0, 0, 200, 200)
@@ -2053,6 +2099,14 @@ function determineHitOrMiss(isHoldingShotgun)
     end
 end
 
+function getIsHoldingShotgun(weapon)
+    if (string.contains(weapon:getAmmoType() or "","Shotgun") or string.contains(weapon:getAmmoType() or "","shotgun") or string.contains(weapon:getAmmoType() or "","shell") or string.contains(weapon:getAmmoType() or "","Shell")) then
+        return true
+    end
+
+    return false
+end
+
 -----------------------------------
 --SHOOTING PROJECTILE FUNC SECT---
 -----------------------------------
@@ -2243,7 +2297,7 @@ function Advanced_trajectory.OnWeaponSwing(character, handWeapon)
 
             local offset = getSandboxOptions():getOptionByName("Advanced_trajectory.DebugOffset"):getValue()
 
-            if  (string.contains(handWeapon:getAmmoType() or "","Shotgun") or string.contains(handWeapon:getAmmoType() or "","shotgun") or string.contains(handWeapon:getAmmoType() or "","shell") or string.contains(handWeapon:getAmmoType() or "","Shell")) then
+            if  getIsHoldingShotgun(handWeapon) then
                 local shotgunDistanceModifier = getSandboxOptions():getOptionByName("Advanced_trajectory.shotgunDistanceModifier"):getValue()
                 
                 tablez[9] = "Shotgun" --weapon name
@@ -2486,11 +2540,11 @@ function Advanced_trajectory.OnWeaponSwing(character, handWeapon)
     -- Prone stance means less recoil
     if Advanced_trajectory.isCrawl  then
         recoil = recoil * proneRecoilBuff
-        recoilScaleModifier = proneExpoRecoilBuff
+        recoilScaleModifier = recoilScaleModifier * proneExpoRecoilBuff
 
     elseif Advanced_trajectory.isCrouch  then
         recoil = recoil * crouchRecoilBuff
-        recoilScaleModifier = crouchExpoRecoilBuff
+        recoilScaleModifier = recoilScaleModifier * crouchExpoRecoilBuff
     end
 
     -- simulates recoil control through exponential function
@@ -2500,7 +2554,7 @@ function Advanced_trajectory.OnWeaponSwing(character, handWeapon)
 
 
     local totalRecoil = recoil * exponentialRecoil
-    print("Total / Recoil / Exponential: ", totalRecoil, " || ", recoil, " || ", exponentialRecoil)
+    --print("Total / Recoil / Exponential: ", totalRecoil, " || ", recoil, " || ", exponentialRecoil)
 
     Advanced_trajectory.aimnum = Advanced_trajectory.aimnum + totalRecoil
     Advanced_trajectory.maxFocusCounter = 100

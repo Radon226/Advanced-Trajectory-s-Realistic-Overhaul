@@ -61,7 +61,10 @@ function Advanced_trajectory.panel:prerender()
 
     local transparency  = Advanced_trajectory.alpha
 
-    local shakyEffect   = Advanced_trajectory.stressEffect + Advanced_trajectory.painEffect
+    local shakyEffect   = Advanced_trajectory.stressEffect + Advanced_trajectory.painEffect + Advanced_trajectory.panicEffect
+    if shakyEffect > 10 then
+        shakyEffect = 10
+    end
 
     self:drawTextureScaled(self.texturetable[1], (self.width/2 -texturescal/2)              - ZombRand(shakyEffect), (self.height/2 - multiper- texturescal/2)  - ZombRand(shakyEffect),  texturescal, texturescal, transparency, AR, AG, AB)
     self:drawTextureScaled(self.texturetable[2], (self.width/2 +multiper -texturescal/2)    + ZombRand(shakyEffect), (self.height/2 -texturescal/2)             + ZombRand(shakyEffect),  texturescal, texturescal, transparency, AR, AG, AB)
