@@ -58,6 +58,12 @@ Sandbox_EN = {
 	Sandbox_Advanced_trajectorypenDamageReductionMultiplier = "Bullet Penetration Reduction Multiplier",
 	Sandbox_Advanced_trajectorypenDamageReductionMultiplier_tooltip = "Ex: 0.1 means nerf bullet damage by 90% after penetrating through first zombie/player.",
 
+	Sandbox_Advanced_trajectoryfractureChance = "Gunshot Fracture Chance (PVP)",
+	Sandbox_Advanced_trajectoryfractureChance_tooltip = "Chance that a gunshot wound will cause a fracture",
+
+	Sandbox_Advanced_trajectorythroughChance = "Gunshot Clean Through Chance (PVP)",
+	Sandbox_Advanced_trajectorythroughChance_tooltip = "Chance that a gunshot wound will not inflict a lodged bullet",
+	
 	Sandbox_Advanced_trajectorycritChanceModifier = "Critchance Modifier",
 	Sandbox_Advanced_trajectorycritChanceModifier_tooltip = "Bloom affects crit chance. This is a multiplier to that. Set to 0 for better chances of crit.",
 
