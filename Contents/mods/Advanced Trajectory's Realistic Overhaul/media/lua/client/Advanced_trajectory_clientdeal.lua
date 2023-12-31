@@ -164,17 +164,23 @@ local function damagePlayershotPVP(player, playerShot, damage, baseGunDmg, headS
 
     if defense < 0.5 then
         --print("WOUNDED")
+
         if bodypart:haveBullet() then
-            local deepWound = bodypart:isDeepWounded()
-            local deepWoundTime = bodypart:getDeepWoundTime()
             local bleedTime = bodypart:getBleedingTime()
-            --bodypart:setHaveBullet(false, 0)
-            bodypart:setDeepWoundTime(deepWoundTime)
-            bodypart:setDeepWounded(deepWound)
             bodypart:setBleedingTime(bleedTime)
         else
-            bodypart:setHaveBullet(true, 0)
+            -- Decides whether to add a bullet based on chance in sandbox settings
+            if ZombRand(100) >= getSandboxOptions():getOptionByName("Advanced_trajectory.throughChance"):getValue() then
+                bodypart:setHaveBullet(true, 0)
+            else
+                bodypart:generateDeepWound()
+            end
         end
+        
+        -- Decides whether to inflict a fracture based on chance in sandbox settings
+		if ZombRand(100) <= getSandboxOptions():getOptionByName("Advanced_trajectory.fractureChance"):getValue() then
+            bodypart:setFractureTime(21)
+		end
 
         -- Destroy bandage if bandaged
         if bodypart:bandaged() then

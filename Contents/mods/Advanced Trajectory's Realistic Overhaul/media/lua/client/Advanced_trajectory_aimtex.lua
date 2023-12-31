@@ -55,9 +55,16 @@ function Advanced_trajectory.panel:prerender()
         AR,AG,AB = getSandboxOptions():getOptionByName("Advanced_trajectory.crosshairRed"):getValue(), getSandboxOptions():getOptionByName("Advanced_trajectory.crosshairGreen"):getValue() , getSandboxOptions():getOptionByName("Advanced_trajectory.crosshairBlue"):getValue() 
     end
 
+    if Advanced_trajectory.isOverDistanceLimit then
+        AR,AG,AB = getSandboxOptions():getOptionByName("Advanced_trajectory.crosshairRedLimit"):getValue(), getSandboxOptions():getOptionByName("Advanced_trajectory.crosshairGreenLimit"):getValue() , getSandboxOptions():getOptionByName("Advanced_trajectory.crosshairBlueLimit"):getValue() 
+    end
+
     local transparency  = Advanced_trajectory.alpha
 
-    local shakyEffect   = Advanced_trajectory.stressEffect + Advanced_trajectory.painEffect
+    local shakyEffect   = Advanced_trajectory.stressEffect + Advanced_trajectory.painEffect + Advanced_trajectory.panicEffect
+    if shakyEffect > 10 then
+        shakyEffect = 10
+    end
 
     self:drawTextureScaled(self.texturetable[1], (self.width/2 -texturescal/2)              - ZombRand(shakyEffect), (self.height/2 - multiper- texturescal/2)  - ZombRand(shakyEffect),  texturescal, texturescal, transparency, AR, AG, AB)
     self:drawTextureScaled(self.texturetable[2], (self.width/2 +multiper -texturescal/2)    + ZombRand(shakyEffect), (self.height/2 -texturescal/2)             + ZombRand(shakyEffect),  texturescal, texturescal, transparency, AR, AG, AB)
