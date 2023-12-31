@@ -779,7 +779,7 @@ function Advanced_trajectory.OnPlayerUpdate()
         
         local targetDist = Advanced_trajectory.targetDistance
 
-        print("target / maxDistance / limit: ", targetDist, " || ", maxDistance, " || ", distanceLimit)
+        --print("target / maxDistance / limit: ", targetDist, " || ", maxDistance, " || ", distanceLimit)
 
         if targetDist > maxDistance then
             targetDist = maxDistance
@@ -1673,29 +1673,22 @@ function damagePlayershot(player, damage, baseGunDmg, headShotDmg, bodyShotDmg, 
 
     if defense < 0.5 then
         --print("WOUNDED")
+
         if bodypart:haveBullet() then
-            local deepWound = bodypart:isDeepWounded()
-            local deepWoundTime = bodypart:getDeepWoundTime()
             local bleedTime = bodypart:getBleedingTime()
-            --bodypart:setHaveBullet(false, 0)
-            bodypart:setDeepWoundTime(deepWoundTime)
-            bodypart:setDeepWounded(deepWound)
             bodypart:setBleedingTime(bleedTime)
         else
             -- Decides whether to add a bullet based on chance in sandbox settings
-			if ZombRand(100) >= getSandboxOptions():getOptionByName("Advanced_trajectory.throughChance"):getValue() then
-				bodypart:setHaveBullet(true, 0)
-			else
-				-- Making sure that the deep wound is still inflicted, even if we don't inflict a lodged bullet
-				bodyPart:generateDeepWound();
-			end
+            if ZombRand(100) >= getSandboxOptions():getOptionByName("Advanced_trajectory.throughChance"):getValue() then
+                bodypart:setHaveBullet(true, 0)
+            else
+                bodypart:generateDeepWound()
+            end
         end
         
         -- Decides whether to inflict a fracture based on chance in sandbox settings
 		if ZombRand(100) <= getSandboxOptions():getOptionByName("Advanced_trajectory.fractureChance"):getValue() then
-			if bodyPart:getFractureTime() < 21 then
-				bodyPart:setFractureTime(21)
-			end
+            bodypart:setFractureTime(21)
 		end
 
         -- Destroy bandage if bandaged
