@@ -377,6 +377,8 @@ function Advanced_trajectory.checkiswallordoor(square,bulletAngle,bulletPosition
     --print("playerPos: ",   playerPosX , "  //  ", playerPosY)
     --print("------------------------------------------------------------------")
 
+    local offset = 1
+
     -- returns an array of objects in that square, for loop and filter it to get what you want
     local objects = square:getObjects()
     if objects then
@@ -428,7 +430,9 @@ function Advanced_trajectory.checkiswallordoor(square,bulletAngle,bulletPosition
                             --print("----Facing outside into wallNW----")
                             if nosfx then return true end
                             getSoundManager():PlayWorldSoundWav("BreakObject",square, 0.5, 2, 0.5, true);
-                            determineSpawnBrokenArrow(square, -1, -1, true)
+
+                            local spawnSquare = getWorld():getCell():getOrCreateGridSquare(square:getX() - offset, square:getY() - offset, square:getZ())
+                            determineArrowSpawn(spawnSquare, true)
                             return true
                         end
 
@@ -440,7 +444,9 @@ function Advanced_trajectory.checkiswallordoor(square,bulletAngle,bulletPosition
                             --print("----Facing inside into wallNW----")
                             if nosfx then return true end
                             getSoundManager():PlayWorldSoundWav("BreakObject",square, 0.5, 2, 0.5, true);
-                            determineSpawnBrokenArrow(square, 1, 1, true)
+
+                            local spawnSquare = getWorld():getCell():getOrCreateGridSquare(square:getX() + offset, square:getY() + offset, square:getZ())
+                            determineArrowSpawn(spawnSquare, true)
                             return true
                         end
 
@@ -454,7 +460,9 @@ function Advanced_trajectory.checkiswallordoor(square,bulletAngle,bulletPosition
                             --print("----Facing inside into wallSE----")
                             if nosfx then return true end
                             getSoundManager():PlayWorldSoundWav("BreakObject",square, 0.5, 2, 0.5, true);
-                            determineSpawnBrokenArrow(square, -1, -1, true)
+
+                            local spawnSquare = getWorld():getCell():getOrCreateGridSquare(square:getX() - offset, square:getY() - offset, square:getZ())
+                            determineArrowSpawn(spawnSquare, true)
                             return true
                         end
 
@@ -466,7 +474,9 @@ function Advanced_trajectory.checkiswallordoor(square,bulletAngle,bulletPosition
                             --print("----Facing outside into wallSE----")
                             if nosfx then return true end
                             getSoundManager():PlayWorldSoundWav("BreakObject",square, 0.5, 2, 0.5, true);
-                            determineSpawnBrokenArrow(square, 1, 1, true)
+
+                            local spawnSquare = getWorld():getCell():getOrCreateGridSquare(square:getX() + offset, square:getY() + offset, square:getZ())
+                            determineArrowSpawn(spawnSquare, true)
                             return true
                         end
 
@@ -478,7 +488,9 @@ function Advanced_trajectory.checkiswallordoor(square,bulletAngle,bulletPosition
                             --print("----Facing EAST into wallN----")
                             if nosfx then return true end
                             getSoundManager():PlayWorldSoundWav("BreakObject",square, 0.5, 2, 0.5, true);
-                            determineSpawnBrokenArrow(square, 0, 1, true)
+
+                            local spawnSquare = getWorld():getCell():getOrCreateGridSquare(square:getX(), square:getY() + offset, square:getZ())
+                            determineArrowSpawn(spawnSquare, true)
                             return true
                         end
 
@@ -488,7 +500,9 @@ function Advanced_trajectory.checkiswallordoor(square,bulletAngle,bulletPosition
                             --print("----Facing WEST into wallN----")
                             if nosfx then return true end
                             getSoundManager():PlayWorldSoundWav("BreakObject",square, 0.5, 2, 0.5, true);
-                            determineSpawnBrokenArrow(square, 0, -1, true)
+
+                            local spawnSquare = getWorld():getCell():getOrCreateGridSquare(square:getX(), square:getY() - offset, square:getZ())
+                            determineArrowSpawn(spawnSquare, true)
                             return true
                         end
 
@@ -501,7 +515,9 @@ function Advanced_trajectory.checkiswallordoor(square,bulletAngle,bulletPosition
 
                             if nosfx then return true end
                             getSoundManager():PlayWorldSoundWav("BreakObject",square, 0.5, 2, 0.5, true);
-                            determineSpawnBrokenArrow(square, -1, 0, true)
+
+                            local spawnSquare = getWorld():getCell():getOrCreateGridSquare(square:getX() - offset, square:getY(), square:getZ())
+                            determineArrowSpawn(spawnSquare, true)
                             return true
                         end
 
@@ -511,7 +527,9 @@ function Advanced_trajectory.checkiswallordoor(square,bulletAngle,bulletPosition
                             --print("----Facing NORTH into wallW----")
                             if nosfx then return true end
                             getSoundManager():PlayWorldSoundWav("BreakObject",square, 0.5, 2, 0.5, true);
-                            determineSpawnBrokenArrow(square, 1, 0, true)
+
+                            local spawnSquare = getWorld():getCell():getOrCreateGridSquare(square:getX() + offset, square:getY(), square:getZ())
+                            determineArrowSpawn(spawnSquare, true)
                             return true
                         end
 
@@ -548,7 +566,7 @@ function Advanced_trajectory.checkiswallordoor(square,bulletAngle,bulletPosition
                 squarecar:HitByVehicle(squarecar, 0.3)
             end
 
-            determineSpawnBrokenArrow(square, 0, 0, true)
+            determineArrowSpawn(square, true)
 
             return true
         end 
@@ -1796,7 +1814,7 @@ function damagePlayershot(player, damage, baseGunDmg, headShotDmg, bodyShotDmg, 
     player:getBodyDamage():ReduceGeneralHealth(playerDamageDealt)
 end
 
-function determineSpawnBrokenArrow(square, x, y, isBroken)
+function determineArrowSpawn(square, isBroken)
     local player = getPlayer()
     local weaitem = player:getPrimaryHandItem()
 
@@ -1823,7 +1841,7 @@ function determineSpawnBrokenArrow(square, x, y, isBroken)
             proj  = InventoryItemFactory.CreateItem(proj:getModData().Break)
         end
         
-        square:AddWorldInventoryItem(proj, x, y, 0.0)
+        square:AddWorldInventoryItem(proj, 0, 0, 0.0)
     end
 end
 
@@ -1959,7 +1977,7 @@ function Advanced_trajectory.checkontick()
                 Advanced_trajectory.itemremove(vt[1])
                 tablenow[kt]=nil
 
-                determineSpawnBrokenArrow(vt[2], 0, 0, false)
+                determineArrowSpawn(vt[2], false)
 
                 --print("Broke bullet GRENADE")
                 break
