@@ -148,6 +148,23 @@ option Advanced_trajectory.DebugSayShotPart
 	translation = Advanced_trajectoryDebugSayShotPart,
 }
 
+option Advanced_trajectory.DebugRemoveFootHitbox
+{
+	type = boolean,
+	default = false,
+	page = Advanced_trajectory_debug,
+	translation = Advanced_trajectoryDebugRemoveFootHitbox,
+}
+
+option Advanced_trajectory.DebugHitCountShoot
+{
+	type = integer,
+	min = 0,
+	max = 1,
+	default = 0,
+	page = Advanced_trajectory_debug,
+	translation = Advanced_trajectoryDebugHitCountShoot,
+}
 option Advanced_trajectory.bowBreakChance
 {
 	type = double,
@@ -157,7 +174,15 @@ option Advanced_trajectory.bowBreakChance
 	page = Advanced_trajectory_debug,
 	translation = Advanced_trajectorybowBreakChance,
 }
-
+option Advanced_trajectory.hitRegThreshold
+{
+	type = double,
+	min = -10,
+	max = 10,
+	default = 0.1,
+	page = Advanced_trajectory_debug,
+	translation = Advanced_trajectoryhitRegThreshold,
+}
 
 
 
@@ -192,7 +217,7 @@ option Advanced_trajectory.MaxProjCone
 	type = double,
 	min = 0,
 	max = 1,
-	default = 0.4,
+	default = 0.5,
 	page = Advanced_trajectory,
 	translation = Advanced_trajectoryMaxProjCone,
 }
@@ -267,7 +292,7 @@ option Advanced_trajectory.focusCounterSpeed
 	type = double,
 	min = 0,
 	max = 10,
-	default = 3,
+	default = 2,
 	page = Advanced_trajectory,
 	translation = Advanced_trajectoryfocusCounterSpeed,
 }
@@ -319,7 +344,7 @@ option Advanced_trajectory.hitLevelScaling
 	type = double,
 	min = 0,
 	max = 20,
-	default = 3,
+	default = 2,
 	page = Advanced_trajectory_hitOrMiss,
 	translation = Advanced_trajectoryhitLevelScaling,
 }
@@ -328,7 +353,7 @@ option Advanced_trajectory.missMin
 	type = double,
 	min = 0,
 	max = 300,
-	default = 15,
+	default = 25,
 	page = Advanced_trajectory_hitOrMiss,
 	translation = Advanced_trajectorymissMin,
 }
@@ -337,9 +362,18 @@ option Advanced_trajectory.missMax
 	type = double,
 	min = 0,
 	max = 300,
-	default = 100,
+	default = 120,
 	page = Advanced_trajectory_hitOrMiss,
 	translation = Advanced_trajectorymissMax,
+}
+option Advanced_trajectory.missMinTransparency
+{
+	type = double,
+	min = 0,
+	max = 1,
+	default = 0.3,
+	page = Advanced_trajectory_hitOrMiss,
+	translation = Advanced_trajectorymissMinTransparency,
 }
 
 
@@ -414,7 +448,7 @@ option Advanced_trajectory.bulletspeed
 	type = double,
 	min = 0,
 	max = 2.4,
-	default = 2.4,
+	default = 1.7,
 	page = Advanced_trajectory,
 	translation = Advanced_trajectorybulletspeed,
 }
@@ -689,7 +723,7 @@ option Advanced_trajectory.maxShotgunProjCone
 	type = double,
 	min = 0,
 	max = 1,
-	default = 0.5,
+	default = 0.2,
 	page = Advanced_trajectory_shotgun,
 	translation = Advanced_trajectorymaxShotgunProjCone,
 }
@@ -982,6 +1016,15 @@ option Advanced_trajectory.exhaleModifier4
 }
 
 /* ----------------------------------- CROSSHAIR ----------------------------------- */
+option Advanced_trajectory.crosshairMaxTransparency
+{
+	type = double,
+	min = 0,
+	max = 1,
+	default = 1,
+	page = Advanced_trajectory_crosshair,
+	translation = Advanced_trajectorycrosshairMaxTransparency,
+}
 option Advanced_trajectory.crosshairRed
 {
 	type = double,

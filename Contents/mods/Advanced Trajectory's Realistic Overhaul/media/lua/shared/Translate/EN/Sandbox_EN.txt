@@ -283,6 +283,8 @@ Sandbox_EN = {
 	Sandbox_Advanced_trajectorymissMin_tooltip 				= "Bloom value in which player will start having a chance of missing. Must be less than max. rand(minMiss + buff + aimLevel*hitScaling, maxMiss)",
 	Sandbox_Advanced_trajectorymissMax 						= "Max Miss",
 	Sandbox_Advanced_trajectorymissMax_tooltip 				= "Bloom value in which player will start having a chance of missing. Must be greater than min. rand(minMiss + buff + aimLevel*hitScaling, maxMiss)",
+	Sandbox_Advanced_trajectorymissMinTransparency 			= "Crosshair Transparency (Miss Min)",
+	Sandbox_Advanced_trajectorymissMinTransparency_tooltip 	= "Makes crosshair slightly transparent when bloom reaches miss min so players know when they'll start having a chance of missing.",
 
 
 
@@ -291,7 +293,7 @@ Sandbox_EN = {
 
 
 
-
+	Sandbox_Advanced_trajectorycrosshairMaxTransparency = "Crosshair Transparency",
 
 	Sandbox_Advanced_trajectorycrosshairRedMain = "Crosshair Main [Red Value]",
 	Sandbox_Advanced_trajectorycrosshairRedMain_tooltip = "Linked to crosshair color. Pick a color value from 0 to 255 and divide it by 255, must be from 0 to 1.",

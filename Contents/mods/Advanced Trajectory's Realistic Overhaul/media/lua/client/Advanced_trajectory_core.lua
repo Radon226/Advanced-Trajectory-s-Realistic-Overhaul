@@ -10,7 +10,6 @@ Advanced_trajectory.aimnumBeforeShot    = 0
 Advanced_trajectory.maxaimnum           = 100
 Advanced_trajectory.minaimnum           = 0
 
-Advanced_trajectory.missedShot          = false
 Advanced_trajectory.targetDistance      = 0
 Advanced_trajectory.isOverDistanceLimit = false
 
@@ -18,6 +17,7 @@ Advanced_trajectory.inhaleCounter       = 0
 Advanced_trajectory.exhaleCounter       = 0
 Advanced_trajectory.maxFocusCounter     = 100
 Advanced_trajectory.aimrate             = 0
+Advanced_trajectory.missMin             = 0
 
 Advanced_trajectory.crouchCounter       = 100
 Advanced_trajectory.isCrouch            = false
@@ -105,11 +105,19 @@ NOTES:  - bulletTable (position table of offsets xyz {})
         - damage 1+angleoff = head || 2 = body || 3 = foot
         - shooter (client player (you) shooting)
 ]]
-function Advanced_trajectory.getShootzombie(bulletTable,damage,playerTable)
+function Advanced_trajectory.getShootzombie(bulletTable,damage,playerTable, missedShot)
 
     -- Initialize tables to store zombies and players
     local zbtable = {}  -- zombie table
     local prtable = {}  -- player table
+
+    -- is target in bullet cell? mindistance = 1
+    local minzb = {false, 1}
+    local minpr = {false, 1}
+
+    if missedShot then
+        return minzb[1],minpr[1]
+    end
 
     local player = getPlayer()
     local isPlayerSafe = player:getSafety():isEnabled()
@@ -124,18 +132,10 @@ function Advanced_trajectory.getShootzombie(bulletTable,damage,playerTable)
     local gridMultiplier = getSandboxOptions():getOptionByName("Advanced_trajectory.DebugGridMultiplier"):getValue()    
     local ignorePVPSafety = getSandboxOptions():getOptionByName("Advanced_trajectory.IgnorePVPSafety"):getValue()   
 
-    -- minimum distance from player to target
+    -- minimum distance from bullet to target
     local mindistance = 0
 
-    -- is target in bullet cell? mindistance = 1
-    local minzb = {false,1}
-    local minpr = {false,1}
-
-    if Advanced_trajectory.missedShot then
-        return minzb[1],minpr[1]
-    end
-    
-    --local numZomsShootable = 0
+    local prevDistanceFromPlayer = 99
 
     -- Loop through a 3x3 grid centered around the bullet
     for kz = -1, 1 do  -- X position
@@ -159,7 +159,11 @@ function Advanced_trajectory.getShootzombie(bulletTable,damage,playerTable)
 
                     -- Check if the object is an IsoZombie or IsoPlayer
                     if instanceof(zombieOrPlayer, "IsoZombie") then
-                        zbtable[zombieOrPlayer] = 1  -- Add to zombie table
+                        --zbtable[zombieOrPlayer] = 1  -- Add to zombie table
+                        if zombieOrPlayer:getHealth() > 0.1 then
+                            local entry = { entity = zombieOrPlayer, distance = getTargetDistanceFromPlayer(player, zombieOrPlayer) }
+                            table.insert(zbtable, entry)
+                        end
                     end
                     if instanceof(zombieOrPlayer, "IsoPlayer") then
                         --print("FOUND PLAYER SHOOTER/TARGET SAFE?: ", isPlayerSafe, " || ", zombieOrPlayer:getSafety():isEnabled())
@@ -178,8 +182,11 @@ function Advanced_trajectory.getShootzombie(bulletTable,damage,playerTable)
                     local zombieOrPlayer = movingObjects:get(zz - 1)
 
                     if instanceof(zombieOrPlayer, "IsoZombie") then
-                        zbtable[zombieOrPlayer] = 1 
-                        --numZomsShootable = numZomsShootable + 1
+                        --zbtable[zombieOrPlayer] = 1 
+                        if zombieOrPlayer:getHealth() > 0.1 then
+                            local entry = { entity = zombieOrPlayer, distance = getTargetDistanceFromPlayer(player, zombieOrPlayer) }
+                            table.insert(zbtable, entry)
+                        end
                     end
                     if instanceof(zombieOrPlayer, "IsoPlayer") then
                         --print("FOUND PLAYER SHOOTER/TARGET SAFE?: ", isPlayerSafe, " || ", zombieOrPlayer:getSafety():isEnabled())
@@ -193,53 +200,61 @@ function Advanced_trajectory.getShootzombie(bulletTable,damage,playerTable)
         end
     end
 
-    --print("Num Zoms Shootable: ", numZomsShootable)
     --print("*********END**********")
 
     local zomMindistModifier = getSandboxOptions():getOptionByName("Advanced_trajectory.DebugZomMindistCondition"):getValue()
     local playerMindistModifier = getSandboxOptions():getOptionByName("Advanced_trajectory.DebugPlayerMindistCondition"):getValue()
+    local hitRegThreshold = getSandboxOptions():getOptionByName("Advanced_trajectory.hitRegThreshold"):getValue()
+
+    --print("Damage: ", damage)
+
+    -- prio. closest zombie to player rather than closest zombie to bullet
+    table.sort(zbtable, function(a, b) return a.distance < b.distance end)
     
     --print('-----------START-------------------')
     -- goes through zombie table which contains a number of zombies found in the half 3x3 grid
-    -- SEEMS LIKE THIS DETERMINES HITBOX, FOCUS ON THIS INSTEAD FOR ZOMBIE COLLISION
-    for sz,bz in pairs(zbtable) do
-        -- if zombie is behind player when looking SE, skip
-        if (playerDir <= 90 and playerDir >= 0) and ((sz:getX() < playerTable[1]-1 and sz:getY() > playerTable[2]+1) or (sz:getX() < playerTable[1] and sz:getY() < playerTable[2]) or (sz:getX() > playerTable[1]+1 and sz:getY() < playerTable[2]-1)) then
-            --print("**********skipCheckBehind LOOKING DOWN  ********")
-            --print("Player dir: ", playerDir)
-        elseif (playerDir >= -180 and playerDir <= -90) and (sz:getX() > playerTable[1] and sz:getY() > playerTable[2]) then
-            --print("**********skipCheckBehind LOOKING UP    *********")
-            --print("Player dir: ", playerDir)
-        elseif (playerDir <= 0 and playerDir >= -90) and (sz:getX() < playerTable[1] and sz:getY() > playerTable[2]) then
-            --print("**********skipCheckBehind LOOKING RIGHT *********")
-            --print("Player dir: ", playerDir)
-        elseif (playerDir >= 90 and playerDir <= 180) and (sz:getX() > playerTable[1] and sz:getY() < playerTable[2]) then
-            --print("**********skipCheckBehind LOOKING LEFT *********")
-            --print("Player dir: ", playerDir)
+    -- Target collision
+    for i, entry in pairs(zbtable) do
+        local sz = entry.entity
+        local distance = entry.distance
+
+        local isZomProne = sz:isProne()
+        local isOnZom = math.floor(playerTable[1]) == math.floor(sz:getX()) and math.floor(playerTable[2]) == math.floor(sz:getY())
+
+        -- don't skip if player is on zombie that is prone (true)
+        local noSkip = sz:isProne() and isOnZom
+
+        --print("Is prone? ", isZomProne, " ||  Is on Zom? ", isOnZom, " || Don't skip? ", noSkip)
+
+        if isZombieBehind(playerTable[1], playerTable[2], bulletTable[4], sz:getX(), sz:getY(), hitRegThreshold) and not noSkip then
+            --print("**********Skip target behind.*************")
         else
             -- uses euclidian distance to find distance between target and bullet
             --mindistance = math.sqrt((bulletTable[1] - sz:getX())^2 + (bulletTable[2] - sz:getY())^2 )
             mindistance = (bulletTable[1] - sz:getX())^2 + (bulletTable[2] - sz:getY())^2 
-            --print("Mindist <= mindistMod*dmg: --->>> ", mindistance, " <= ", zomMindistModifier*damage)
-            
-            if mindistance < minzb[2] and (mindistance <= zomMindistModifier * damage) then
-                minzb = {sz,mindistance}
-                --print("Updated minzb")
+            --print("Mindist <= mindistMod*dmg: --->>> ", mindistance, " <= ", )
+            --print("DistPlayer || DistBullet: ", distance, " // ", mindistance, " <=? ", zomMindistModifier*damage, " AND < ", minzb[2])
+ 
+            if distance < prevDistanceFromPlayer then
+                prevDistanceFromPlayer = distance
+
+                -- damage 1+angleoff = head || 2 = body || 3 = foot
+                if mindistance < minzb[2] and (mindistance <= zomMindistModifier * damage) then
+                    minzb = {sz,mindistance}
+                    --print("Updated minzb")
+                    --print("Player pos: ", playerTable[1], " | ", playerTable[2])
+                    --print("Zombie pos: ", sz:getX(), " | ", sz:getY())
+                end
             end
+
         end
     end
 
     -- player table [0.4 mindistancemodifier]
     for sz,bz in pairs(prtable) do
-        -- if zombie is behind player when looking SE, skip
-        if (playerDir <= 90 and playerDir >= 0) and ((sz:getX() < playerTable[1]-1 and sz:getY() > playerTable[2]+1) or (sz:getX() < playerTable[1] and sz:getY() < playerTable[2]) or (sz:getX() > playerTable[1]+1 and sz:getY() < playerTable[2]-1)) then
-            --print("**********skipCheckBehind LOOKING DOWN  ********")
-        elseif (playerDir >= -180 and playerDir <= -90) and (sz:getX() > playerTable[1] and sz:getY() > playerTable[2]) then
-            --print("**********skipCheckBehind LOOKING UP    *********")
-        elseif (playerDir <= 0 and playerDir >= -90) and (sz:getX() < playerTable[1] and sz:getY() > playerTable[2]) then
-            --print("**********skipCheckBehind LOOKING RIGHT *********")
-        elseif (playerDir >= 90 and playerDir <= 180) and (sz:getX() > playerTable[1] and sz:getY() < playerTable[2]) then
-            --print("**********skipCheckBehind LOOKING LEFT *********")
+
+        if isZombieBehind(playerTable[1], playerTable[2], bulletTable[4], sz:getX(), sz:getY(), 0) then
+            --print("**********Skip target behind.*************")
         else
 
             --mindistance = math.sqrt((bulletTable[1] - sz:getX())^2 + (bulletTable[2] - sz:getY())^2)
@@ -261,6 +276,57 @@ function Advanced_trajectory.getShootzombie(bulletTable,damage,playerTable)
     return minzb[1],minpr[1]
 
 end
+
+function getTargetDistanceFromPlayer(player, target)
+    local playerX = player:getX()
+    local playerY = player:getY()
+
+    local targetX = target:getX()
+    local targetY = target:getY()
+
+    local distance = math.sqrt((playerX - targetX)^2 + (playerY - targetY)^2)
+
+    return distance
+end
+
+-- Function to calculate the dot product of two vectors
+function findVectorDotProduct(x1, y1, x2, y2)
+    return x1 * x2 + y1 * y2
+end
+
+function angleToVector(angle)
+    -- Convert angle to radians (Lua's math library uses radians)
+    local radians = math.rad(angle)
+
+    -- Calculate the x and y components of the vector
+    local x = math.cos(radians)
+    local y = math.sin(radians)
+
+    return x, y
+end
+
+
+-- Example usage
+function isZombieBehind(playerX, playerY, aimDir, zombieX, zombieY, threshold)
+    local zombieXVector = zombieX - playerX
+    local zombieYVector = zombieY - playerY
+
+    local aimDirX, aimDirY = angleToVector(aimDir)
+
+    local dotProduct = findVectorDotProduct(aimDirX, aimDirY, zombieXVector, zombieYVector)
+
+    --print("DotProd: ", dotProduct, " > Thresh: ", threshold)
+
+    -- Check if the zombie is behind the character
+    if dotProduct > threshold then
+        -- Zombie is in front of the character, allow shooting
+        return false
+    else
+        -- Zombie is behind the character, ignore or handle differently
+        return true
+    end
+end
+
 
 
 ----------------------------------------------------
@@ -362,6 +428,7 @@ function Advanced_trajectory.checkiswallordoor(square,bulletAngle,bulletPosition
                             --print("----Facing outside into wallNW----")
                             if nosfx then return true end
                             getSoundManager():PlayWorldSoundWav("BreakObject",square, 0.5, 2, 0.5, true);
+                            determineSpawnBrokenArrow(square, -1, -1, true)
                             return true
                         end
 
@@ -373,8 +440,11 @@ function Advanced_trajectory.checkiswallordoor(square,bulletAngle,bulletPosition
                             --print("----Facing inside into wallNW----")
                             if nosfx then return true end
                             getSoundManager():PlayWorldSoundWav("BreakObject",square, 0.5, 2, 0.5, true);
+                            determineSpawnBrokenArrow(square, 1, 1, true)
                             return true
                         end
+
+                        --print("++++Detected wallNW++++")
                     elseif wallSE then
                         if 
                         (angle<=135 and angle>=90) and (playerPosY  < square:getY() or playerPosX  > square:getX()) or
@@ -384,6 +454,7 @@ function Advanced_trajectory.checkiswallordoor(square,bulletAngle,bulletPosition
                             --print("----Facing inside into wallSE----")
                             if nosfx then return true end
                             getSoundManager():PlayWorldSoundWav("BreakObject",square, 0.5, 2, 0.5, true);
+                            determineSpawnBrokenArrow(square, -1, -1, true)
                             return true
                         end
 
@@ -395,8 +466,11 @@ function Advanced_trajectory.checkiswallordoor(square,bulletAngle,bulletPosition
                             --print("----Facing outside into wallSE----")
                             if nosfx then return true end
                             getSoundManager():PlayWorldSoundWav("BreakObject",square, 0.5, 2, 0.5, true);
+                            determineSpawnBrokenArrow(square, 1, 1, true)
                             return true
                         end
+
+                        --print("++++Detected wallSE++++")
                     elseif wallN or (doorN and not locobject:IsOpen()) then
                         isAngleTrue = angle <=0 and angle >= -180
                         -- facing east into wallN
@@ -404,6 +478,7 @@ function Advanced_trajectory.checkiswallordoor(square,bulletAngle,bulletPosition
                             --print("----Facing EAST into wallN----")
                             if nosfx then return true end
                             getSoundManager():PlayWorldSoundWav("BreakObject",square, 0.5, 2, 0.5, true);
+                            determineSpawnBrokenArrow(square, 0, 1, true)
                             return true
                         end
 
@@ -413,10 +488,11 @@ function Advanced_trajectory.checkiswallordoor(square,bulletAngle,bulletPosition
                             --print("----Facing WEST into wallN----")
                             if nosfx then return true end
                             getSoundManager():PlayWorldSoundWav("BreakObject",square, 0.5, 2, 0.5, true);
+                            determineSpawnBrokenArrow(square, 0, -1, true)
                             return true
                         end
 
-                        --print("++++Angle was true for wallN++++")
+                        --print("++++Detected wallN++++")
                     elseif wallW or (doorW and  not locobject:IsOpen()) then
                         isAngleTrue = (angle >=0 and angle <= 90) or (angle <=0 and angle >= -90)
                         -- facing south into wallW
@@ -425,6 +501,7 @@ function Advanced_trajectory.checkiswallordoor(square,bulletAngle,bulletPosition
 
                             if nosfx then return true end
                             getSoundManager():PlayWorldSoundWav("BreakObject",square, 0.5, 2, 0.5, true);
+                            determineSpawnBrokenArrow(square, -1, 0, true)
                             return true
                         end
 
@@ -434,10 +511,11 @@ function Advanced_trajectory.checkiswallordoor(square,bulletAngle,bulletPosition
                             --print("----Facing NORTH into wallW----")
                             if nosfx then return true end
                             getSoundManager():PlayWorldSoundWav("BreakObject",square, 0.5, 2, 0.5, true);
+                            determineSpawnBrokenArrow(square, 1, 0, true)
                             return true
                         end
 
-                        --print("++++Angle was true for wallW++++")
+                        --print("++++Detected wallW++++")
                     end
                     
 
@@ -465,10 +543,12 @@ function Advanced_trajectory.checkiswallordoor(square,bulletAngle,bulletPosition
     if squarecar and ((squarecar:getX() -playerPosition[1] )^2  + (squarecar:getY() -playerPosition[2])^2)  >8 then
         if nosfx then return true end
 
-        if ((squarecar:getX() -bulletPosition[1] )^2  + (squarecar:getY() -bulletPosition[2])^2) < 2.8  then
+        if ( (squarecar:getX() - bulletPosition[1])^2  + (squarecar:getY() - bulletPosition[2])^2 ) < 2.8  then
             if getSandboxOptions():getOptionByName("AT_VehicleDamageenable"):getValue() then
                 squarecar:HitByVehicle(squarecar, 0.3)
             end
+
+            determineSpawnBrokenArrow(square, 0, 0, true)
 
             return true
         end 
@@ -666,9 +746,9 @@ function Advanced_trajectory.OnPlayerUpdate()
             realMin = 5 
         end
 
-        -- bloom reduction scaling rate capped at 6
-        if realLevel > 6 then
-            gametimemul = getGameTime():getMultiplier() * 16 / (12-6 + 10)
+        -- bloom reduction scaling rate capped at 8
+        if realLevel > 8 then
+            gametimemul = getGameTime():getMultiplier() * 16 / (12-8 + 10)
         end
 
         if realLevel < 3 then
@@ -722,6 +802,8 @@ function Advanced_trajectory.OnPlayerUpdate()
         if realLevel < focusLevelGained then
             focusLimit = focusLimit + 20/(realLevel+1)
         end
+
+        getMissMin(realLevel, weaitem)
 
         ------------------------
         -- MOODLE LEVELS SECT--
@@ -1278,17 +1360,25 @@ function Advanced_trajectory.OnPlayerUpdate()
         ]]
         
         -- Purpose is to keep crosshair visible
-        Advanced_trajectory.alpha = Advanced_trajectory.alpha + gametimemul*0.025
+        Advanced_trajectory.alpha = Advanced_trajectory.alpha + gametimemul*0.05
 
-        if Advanced_trajectory.alpha > 0.6 then
-            Advanced_trajectory.alpha = 0.6
+        local alphaMax = getSandboxOptions():getOptionByName("Advanced_trajectory.crosshairMaxTransparency"):getValue() 
+
+        if Advanced_trajectory.aimnum >= Advanced_trajectory.missMin and getSandboxOptions():getOptionByName("Advanced_trajectory.enableHitOrMiss"):getValue() then 
+            alphaMax = getSandboxOptions():getOptionByName("Advanced_trajectory.missMinTransparency"):getValue() 
         end
+
+        if Advanced_trajectory.alpha > alphaMax then
+            Advanced_trajectory.alpha = Advanced_trajectory.alpha - gametimemul*0.1
+        end
+
+        Advanced_trajectory.alpha = math.floor(Advanced_trajectory.alpha * 100) / 100
 
         if Advanced_trajectory.alpha < 0 then
             Advanced_trajectory.alpha = 0
         end
 
-        --print("Trans/Alpha: ", Advanced_trajectory.alpha)
+        print("Trans/Alpha: ", Advanced_trajectory.alpha)
         --print("Shaky Effect: ", Advanced_trajectory.stressEffect + Advanced_trajectory.painEffect + Advanced_trajectory.panicEffect)
         --print("totalArmPain [arms]: ", totalArmPain, ", HL", handPainL ,", FL", forearmPainL ,", UL", upperarmPainL ,", HR", handPainR ,", FR", forearmPainR ,", UR", upperarmPainR)
         --print("isSneezeCough: ", isSneezeCough)
@@ -1706,6 +1796,47 @@ function damagePlayershot(player, damage, baseGunDmg, headShotDmg, bodyShotDmg, 
     player:getBodyDamage():ReduceGeneralHealth(playerDamageDealt)
 end
 
+function determineSpawnBrokenArrow(square, x, y, isBroken)
+    local player = getPlayer()
+    local weaitem = player:getPrimaryHandItem()
+
+    if weaitem == nil then return end
+
+    local proj  = ""
+    local isBow = false
+
+    -- check if player has a bow
+    if string.contains(weaitem:getAmmoType() or "","Arrow_Fiberglass") then
+        proj  = InventoryItemFactory.CreateItem("Arrow_Fiberglass")
+        isBow = true
+    end
+
+    if string.contains(weaitem:getAmmoType() or "","Bolt_Bear") then
+        proj  = InventoryItemFactory.CreateItem("Bolt_Bear")
+        isBow = true
+    end
+
+
+    if isBow then
+        --print("Spawned broken arrow.")
+        if (isBroken) then
+            proj  = InventoryItemFactory.CreateItem(proj:getModData().Break)
+        end
+        
+        square:AddWorldInventoryItem(proj, x, y, 0.0)
+    end
+end
+
+function getDistanceFromPlayer(x, y) 
+    local player = getPlayer()
+    local playerX = player:getX()
+    local playerY = player:getY()
+
+    local distance = math.sqrt((playerX - x)^2 + (playerY - y)^2)
+
+    return distance
+end
+
 -----------------------------------
 -----BODY PART LOGIC FUNC SECT-----
 -----------------------------------
@@ -1773,8 +1904,10 @@ function Advanced_trajectory.checkontick()
                     end
                     
                 end
+
                 Advanced_trajectory.itemremove(vt[1]) 
                 tablenow[kt]=nil
+
                 break
             end
 
@@ -1791,6 +1924,7 @@ function Advanced_trajectory.checkontick()
             vt[7] = vt[7] - spnumber
             vt[17] = vt[17] + spnumber
 
+            -- NOT SURE WHAT WEAPON THIS CHECKS SINCE THERE ARE NO FLAMETHROWERS IN VANILLA
             if vt[9] == "flamethrower" then
 
                 -- print(vt[17])
@@ -1803,9 +1937,11 @@ function Advanced_trajectory.checkontick()
                 if vt[21] >4 then
                     Advanced_trajectory.itemremove(vt[1]) 
                     tablenow[kt]=nil
+                    --print("Broke bullet FLAMETHROWER")
                     break
                 end
             
+            -- WHERE BULLET BBEAKS WHEN OUT OF RANGE. CHECKS IF REMAINING DISTANCE IS LESS THAN 0 AND WEAPON IS NOT GRENADE.
             elseif vt[7]<0 and vt[9] ~= "Grenade"  then
 
                 if vt["wallcarmouse"] or vt["wallcarzombie"]then
@@ -1822,6 +1958,10 @@ function Advanced_trajectory.checkontick()
 
                 Advanced_trajectory.itemremove(vt[1])
                 tablenow[kt]=nil
+
+                determineSpawnBrokenArrow(vt[2], 0, 0, false)
+
+                --print("Broke bullet GRENADE")
                 break
             end
 
@@ -1834,6 +1974,7 @@ function Advanced_trajectory.checkontick()
             vt[4][1] = vt[4][1]+tablenowz12_ * vt[3][1]
             vt[4][2] = vt[4][2]+tablenowz12_ * vt[3][2]
 
+            -- BREAKS GRENADE/THROWABLES 
             if  vt["isparabola"]  then
 
                 vt[4][3] = 0.5-vt["isparabola"]*vt[17]*(vt[17]-vt[18])
@@ -1848,6 +1989,7 @@ function Advanced_trajectory.checkontick()
                     end
                     Advanced_trajectory.itemremove(vt[1])
                     tablenow[kt]=nil
+                    --print("Broke bullet PARABOLA")
                     break
                 end
 
@@ -1890,7 +2032,7 @@ function Advanced_trajectory.checkontick()
                 local saywhat = ""
 
                 -- returns object zombie and player that was shot
-                local Zombie,Playershot =  Advanced_trajectory.getShootzombie({vt[4][1] + admindel * 3, vt[4][2]  + admindel * 3, shootlevel}, 1 + angleammooff, {vt[20][1], vt[20][2], vt[20][3]})
+                local Zombie,Playershot =  Advanced_trajectory.getShootzombie({vt[4][1] + admindel * 3, vt[4][2]  + admindel * 3, shootlevel, angleammo}, 1 + angleammooff, {vt[20][1], vt[20][2], vt[20][3]}, vt["missedShot"])
                 
                 -- headshot on zombie
                 local damagezb = 0
@@ -1910,16 +2052,19 @@ function Advanced_trajectory.checkontick()
                 end
                 -- vt[4] is offset xyz
                 if not Zombie and not Playershot  then
-                    Zombie,Playershot = Advanced_trajectory.getShootzombie({vt[4][1] - 0.9 + angleammooff*0.45 + admindel*3, vt[4][2] - 0.9 + angleammooff*0.45 + admindel*3, shootlevel}, 2, {vt[20][1], vt[20][2], vt[20][3]})
+                    Zombie,Playershot = Advanced_trajectory.getShootzombie({vt[4][1] - 0.9 + angleammooff*0.45 + admindel*3, vt[4][2] - 0.9 + angleammooff*0.45 + admindel*3, shootlevel, angleammo}, 2, {vt[20][1], vt[20][2], vt[20][3]}, vt["missedShot"])
                     damagezb = Advanced_trajectory.BodyShotDmgZomMultiplier            -- zombie bodyshot
                     damagepr = Advanced_trajectory.BodyShotDmgPlayerMultiplier         -- player bodyshot
                     saywhat = "IGUI_Bodyshot"
                 end
-                if not Zombie and not Playershot then
-                    Zombie,Playershot = Advanced_trajectory.getShootzombie({vt[4][1] - 1.8 + angleammooff*0.9 + admindel*3, vt[4][2] - 1.8 + angleammooff*0.9 + admindel*3, shootlevel}, 3, {vt[20][1], vt[20][2], vt[20][3]})
-                    damagezb = Advanced_trajectory.FootShotDmgZomMultiplier            -- zombie footshot
-                    damagepr = Advanced_trajectory.FootShotDmgPlayerMultiplier         -- player footshot
-                    saywhat = "IGUI_Footshot"
+
+                if not getSandboxOptions():getOptionByName("Advanced_trajectory.DebugRemoveFootHitbox"):getValue() then
+                    if not Zombie and not Playershot then
+                        Zombie,Playershot = Advanced_trajectory.getShootzombie({vt[4][1] - 1.8 + angleammooff*0.9 + admindel*3, vt[4][2] - 1.8 + angleammooff*0.9 + admindel*3, shootlevel, angleammo}, 3, {vt[20][1], vt[20][2], vt[20][3]}, vt["missedShot"])
+                        damagezb = Advanced_trajectory.FootShotDmgZomMultiplier            -- zombie footshot
+                        damagepr = Advanced_trajectory.FootShotDmgPlayerMultiplier         -- player footshot
+                        saywhat = "IGUI_Footshot"
+                    end
                 end
                 
                 -------------------------------------
@@ -2059,6 +2204,7 @@ function Advanced_trajectory.checkontick()
                     -- break if iscantthrough and penetration is 0
                     if not vt[11] and (vt["ThroNumber"] <= 0  )then
                         tablenow[kt]=nil
+                        --print("Broke bullet PENETRATION")
                         break
                         
                     end  
@@ -2076,32 +2222,37 @@ end
 
 Events.OnTick.Add(Advanced_trajectory.checkontick)
 
-function determineHitOrMiss(isHoldingShotgun) 
-    local player = getPlayer()
-    local aimingLevel = player:getPerkLevel(Perks.Aiming)
-
+function getMissMin(aimingLevel, weapon)
     local buff = 0
-    if isHoldingShotgun then
+    if getIsHoldingShotgun(weapon) then
         buff = getSandboxOptions():getOptionByName("Advanced_trajectory.shotgunHitBuff"):getValue()
     end
 
     local hitLevelScaling = getSandboxOptions():getOptionByName("Advanced_trajectory.hitLevelScaling"):getValue()
-    local missMin = getSandboxOptions():getOptionByName("Advanced_trajectory.missMin"):getValue() + aimingLevel*hitLevelScaling + buff
+
+    Advanced_trajectory.missMin = getSandboxOptions():getOptionByName("Advanced_trajectory.missMin"):getValue() + aimingLevel*hitLevelScaling + buff
+end
+
+function determineHitOrMiss() 
+    local player = getPlayer()
+
     local missMax = getSandboxOptions():getOptionByName("Advanced_trajectory.missMax"):getValue()
 
-    local randNum = ZombRandFloat(missMin, missMax) 
+    local randNum = ZombRandFloat(Advanced_trajectory.missMin, missMax) 
 
     local enableAnnounce = getSandboxOptions():getOptionByName("Advanced_trajectory.announceHitOrMiss"):getValue()
     if Advanced_trajectory.aimnumBeforeShot > randNum then
-        Advanced_trajectory.missedShot = true
+        --Advanced_trajectory.missedShot = true
         if enableAnnounce then
             player:Say(getText("Missed: " .. Advanced_trajectory.aimnumBeforeShot .. " > " .. randNum))
         end
+        return true
     else
-        Advanced_trajectory.missedShot = false
+        --Advanced_trajectory.missedShot = false
         if enableAnnounce then
             player:Say(getText("Hit: " .. Advanced_trajectory.aimnumBeforeShot .. " <= " .. randNum))
         end
+        return false
     end
 end
 
@@ -2119,7 +2270,7 @@ end
 function Advanced_trajectory.OnWeaponSwing(character, handWeapon)
     
     if getSandboxOptions():getOptionByName("Advanced_trajectory.showOutlines"):getValue() and instanceof(handWeapon,"HandWeapon") and not handWeapon:hasTag("Thrown") and not Advanced_trajectory.hasFlameWeapon and not (handWeapon:hasTag("XBow") and not getSandboxOptions():getOptionByName("Advanced_trajectory.DebugEnableBow"):getValue()) and (handWeapon:isRanged() and getSandboxOptions():getOptionByName("Advanced_trajectory.Enablerange"):getValue()) then
-        handWeapon:setMaxHitCount(0)
+        handWeapon:setMaxHitCount(getSandboxOptions():getOptionByName("Advanced_trajectory.DebugHitCountShoot"):getValue())
     end
 
     local playerLevel = character:getPerkLevel(Perks.Aiming)
@@ -2440,6 +2591,8 @@ function Advanced_trajectory.OnWeaponSwing(character, handWeapon)
 
     local damageer = tablez[6]
 
+    Advanced_trajectory.aimnumBeforeShot = Advanced_trajectory.aimnum
+
     -- print(tablez[5])
     if tablez[9] == "Shotgun" then
 
@@ -2468,6 +2621,10 @@ function Advanced_trajectory.OnWeaponSwing(character, handWeapon)
             tablez[20] = {tablez[4][1], tablez[4][2], tablez[4][3]}
 
             tablez[6] = damageer / 4
+
+            if getSandboxOptions():getOptionByName("Advanced_trajectory.enableHitOrMiss"):getValue() then
+                tablez["missedShot"] = determineHitOrMiss() 
+            end
             
 
             if isClient() then
@@ -2484,6 +2641,11 @@ function Advanced_trajectory.OnWeaponSwing(character, handWeapon)
             tablez[7] = Advanced_trajectory.aimtexdistance - 1
         end
         tablez[20] = {offx, offy, tablez[4][3]}
+
+        if getSandboxOptions():getOptionByName("Advanced_trajectory.enableHitOrMiss"):getValue() then
+            tablez["missedShot"] = determineHitOrMiss() 
+        end
+
         table.insert(Advanced_trajectory.table,Advanced_trajectory.twotable(tablez))
         if isClient() then
             tablez["nonsfx"] = 1
@@ -2500,14 +2662,6 @@ function Advanced_trajectory.OnWeaponSwing(character, handWeapon)
     local proneExpoRecoilBuff = getSandboxOptions():getOptionByName("Advanced_trajectory.proneExpoRecoilBuff"):getValue()
     local crouchRecoilBuff = getSandboxOptions():getOptionByName("Advanced_trajectory.crouchRecoilBuff"):getValue()
     local crouchExpoRecoilBuff = getSandboxOptions():getOptionByName("Advanced_trajectory.crouchExpoRecoilBuff"):getValue()
-    Advanced_trajectory.aimnumBeforeShot = Advanced_trajectory.aimnum
-
-    -----------------
-    ---MISSED SHOT---
-    -----------------
-    if getSandboxOptions():getOptionByName("Advanced_trajectory.enableHitOrMiss"):getValue() then
-        determineHitOrMiss(isHoldingShotgun) 
-    end
     
     -- typ dmg from wep category
 
