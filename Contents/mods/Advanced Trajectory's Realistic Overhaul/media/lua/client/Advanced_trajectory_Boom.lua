@@ -185,22 +185,29 @@ function Advanced_trajectory.Boom(sq,info)
         end
     end
 
-
-
-
-    -- Sound plays but does not attract zombies.
-
     -- getSoundManager():PlayWorldSoundWav(info[7],sq, 10, 2, 0.5, true);
     -- print(info[7])
     -- player:playSound(info[7])
 
     local sound = getSoundManager():PlayWorldSound(info[7], sq, 0, 4, 1.0, false);
- 
-    -- Use addSound to attract zombies.
 
-    -- addSound(IsoObject source, int x, int y, int z, int radius, int volume)
-    addSound(player, sq:getX(), sq:getY(), sq:getZ(), 150, 50); 
     
+    local noiseRange = info[11]
+    --print("Noise : ", noiseRange, " || ", " Smoke : ", SmokeRange, " || ", " FireRange : ", FireRange, " || ", " Explosion: ", ExplosionPower, " || ", " FirePower: ", FirePower)
+
+
+    -- Use addSound(IsoObject source, int x, int y, int z, int radius, int volume) to attract zombies.
+
+    if noiseRange > 0 then
+        addSound(player, sq:getX(), sq:getY(), sq:getZ(), noiseRange, 50); 
+    elseif SmokeRange > 0 then
+        addSound(player, sq:getX(), sq:getY(), sq:getZ(), SmokeRange*7, 50); 
+    elseif FireRange > 0 then
+        addSound(player, sq:getX(), sq:getY(), sq:getZ(), FirePower, 50); 
+    else
+        addSound(player, sq:getX(), sq:getY(), sq:getZ(), ExplosionPower, 50); 
+    end
+
     
     -- print(info[7])
 

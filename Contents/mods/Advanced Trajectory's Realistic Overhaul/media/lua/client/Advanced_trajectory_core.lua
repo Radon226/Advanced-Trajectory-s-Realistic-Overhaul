@@ -160,7 +160,7 @@ function Advanced_trajectory.getShootzombie(bulletTable,damage,playerTable, miss
                     -- Check if the object is an IsoZombie or IsoPlayer
                     if instanceof(zombieOrPlayer, "IsoZombie") then
                         --zbtable[zombieOrPlayer] = 1  -- Add to zombie table
-                        if zombieOrPlayer:getHealth() > 0.1 then
+                        if zombieOrPlayer:getHealth() > 0 then
                             local entry = { entity = zombieOrPlayer, distance = getTargetDistanceFromPlayer(player, zombieOrPlayer) }
                             table.insert(zbtable, entry)
                         end
@@ -183,7 +183,7 @@ function Advanced_trajectory.getShootzombie(bulletTable,damage,playerTable, miss
 
                     if instanceof(zombieOrPlayer, "IsoZombie") then
                         --zbtable[zombieOrPlayer] = 1 
-                        if zombieOrPlayer:getHealth() > 0.1 then
+                        if zombieOrPlayer:getHealth() > 0 then
                             local entry = { entity = zombieOrPlayer, distance = getTargetDistanceFromPlayer(player, zombieOrPlayer) }
                             table.insert(zbtable, entry)
                         end
@@ -1396,7 +1396,7 @@ function Advanced_trajectory.OnPlayerUpdate()
             Advanced_trajectory.alpha = 0
         end
 
-        print("Trans/Alpha: ", Advanced_trajectory.alpha)
+        --print("Trans/Alpha: ", Advanced_trajectory.alpha)
         --print("Shaky Effect: ", Advanced_trajectory.stressEffect + Advanced_trajectory.painEffect + Advanced_trajectory.panicEffect)
         --print("totalArmPain [arms]: ", totalArmPain, ", HL", handPainL ,", FL", forearmPainL ,", UL", upperarmPainL ,", HR", handPainR ,", FR", forearmPainR ,", UR", upperarmPainR)
         --print("isSneezeCough: ", isSneezeCough)
@@ -2178,13 +2178,14 @@ function Advanced_trajectory.checkontick()
                         Zombie:addBlood(getSandboxOptions():getOptionByName("AT_Blood"):getValue())
                         
                         -- if zombie's health is very low, just kill it (recall full health is over 140) and give xp like usual
-                        if Zombie:getHealth()<=0.1 then                           
+                        if Zombie:getHealth() <= 0.1 then                           
                             -- if zombie's health is very low, just kill it (recall full health is over 140) and give xp like usual                         
                             if vt[19] then
                                 if isClient() then
                                     sendClientCommand("ATY_killzombie","true",{Zombie:getOnlineID()})
                                 end
 
+                                -- sets zombie hp to 0, zombie death animation is played and then zombie turns into corpse object (no longer zombie)
                                 Zombie:Kill(vt[19])
                                             
                                 vt[19]:setZombieKills(vt[19]:getZombieKills()+1)
@@ -2462,6 +2463,8 @@ function Advanced_trajectory.OnWeaponSwing(character, handWeapon)
             tablez[12] = 0.3
     
             tablez[22][10] = tablez[14]
+            tablez[22][11] = handWeapon:getNoiseRange()
+
             tablez["isparabola"] = tablez[22][6]
         
             -- disabling enable range means guns don't work (no projectiles)
