@@ -152,7 +152,6 @@ end
 --**
 --************************************************************************--
 function Advanced_trajectory.panel:new (x, y, width, height)
-
     
 	local o = {}
 	--o.data = {}
@@ -172,12 +171,24 @@ function Advanced_trajectory.panel:new (x, y, width, height)
 	o.anchorBottom = false;
     o.moveWithMouse = false;
     o.keepOnScreen = false;
-    o.texturetable = {
-        getTexture("media/textures/Aimingtex1.png"),
-        getTexture("media/textures/Aimingtex2.png"),
-        getTexture("media/textures/Aimingtex3.png"),
-        getTexture("media/textures/Aimingtex4.png")
-    }
+
+    if not getSandboxOptions():getOptionByName("Advanced_trajectory.enableOgCrosshair"):getValue() then
+        o.texturetable = {
+            getTexture("media/textures/Aimingtex1_1.png"),
+            getTexture("media/textures/Aimingtex1_2.png"),
+            getTexture("media/textures/Aimingtex1_3.png"),
+            getTexture("media/textures/Aimingtex1_4.png")
+        }
+    else
+        o.texturetable = {
+            getTexture("media/textures/Aimingtex2_1.png"),
+            getTexture("media/textures/Aimingtex2_2.png"),
+            getTexture("media/textures/Aimingtex2_3.png"),
+            getTexture("media/textures/Aimingtex2_4.png")
+        }
+    end
+
+
    return o
 end
 

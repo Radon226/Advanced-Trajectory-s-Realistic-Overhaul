@@ -1016,6 +1016,13 @@ option Advanced_trajectory.exhaleModifier4
 }
 
 /* ----------------------------------- CROSSHAIR ----------------------------------- */
+option Advanced_trajectory.enableOgCrosshair
+{
+	type = boolean,
+	default = false,
+	page = Advanced_trajectory_crosshair,
+	translation = Advanced_trajectoryenableOgCrosshair,
+}
 option Advanced_trajectory.crosshairMaxTransparency
 {
 	type = double,

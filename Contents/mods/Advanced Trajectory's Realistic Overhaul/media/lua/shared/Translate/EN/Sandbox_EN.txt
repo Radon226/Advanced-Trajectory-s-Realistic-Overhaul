@@ -294,6 +294,7 @@ Sandbox_EN = {
 
 
 	Sandbox_Advanced_trajectorycrosshairMaxTransparency = "Crosshair Transparency",
+	Sandbox_Advanced_trajectoryenableOgCrosshair = "Enable Original Crosshair",
 
 	Sandbox_Advanced_trajectorycrosshairRedMain = "Crosshair Main [Red Value]",
 	Sandbox_Advanced_trajectorycrosshairRedMain_tooltip = "Linked to crosshair color. Pick a color value from 0 to 255 and divide it by 255, must be from 0 to 1.",

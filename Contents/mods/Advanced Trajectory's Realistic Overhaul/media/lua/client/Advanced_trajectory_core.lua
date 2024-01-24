@@ -216,22 +216,23 @@ function Advanced_trajectory.getShootzombie(bulletTable,damage,playerTable, miss
     -- Target collision
     for i, entry in pairs(zbtable) do
         local sz = entry.entity
+        local szX = sz:getX()
+        local szY = sz:getY()
         local distance = entry.distance
 
-        local isZomProne = sz:isProne()
-        local isOnZom = math.floor(playerTable[1]) == math.floor(sz:getX()) and math.floor(playerTable[2]) == math.floor(sz:getY())
+        local isOnZom = math.floor(playerTable[1]) == math.floor(szX) and math.floor(playerTable[2]) == math.floor(szY)
 
         -- don't skip if player is on zombie that is prone (true)
         local noSkip = sz:isProne() and isOnZom
 
         --print("Is prone? ", isZomProne, " ||  Is on Zom? ", isOnZom, " || Don't skip? ", noSkip)
 
-        if isZombieBehind(playerTable[1], playerTable[2], bulletTable[4], sz:getX(), sz:getY(), hitRegThreshold) and not noSkip then
+        if isZombieBehind(playerTable[1], playerTable[2], bulletTable[4], szX, szY, hitRegThreshold) and not noSkip then
             --print("**********Skip target behind.*************")
         else
             -- uses euclidian distance to find distance between target and bullet
             --mindistance = math.sqrt((bulletTable[1] - sz:getX())^2 + (bulletTable[2] - sz:getY())^2 )
-            mindistance = (bulletTable[1] - sz:getX())^2 + (bulletTable[2] - sz:getY())^2 
+            mindistance = (bulletTable[1] - szX)^2 + (bulletTable[2] - szY)^2 
             --print("Mindist <= mindistMod*dmg: --->>> ", mindistance, " <= ", )
             --print("DistPlayer || DistBullet: ", distance, " // ", mindistance, " <=? ", zomMindistModifier*damage, " AND < ", minzb[2])
  
@@ -252,13 +253,15 @@ function Advanced_trajectory.getShootzombie(bulletTable,damage,playerTable, miss
 
     -- player table [0.4 mindistancemodifier]
     for sz,bz in pairs(prtable) do
+        local szX = sz:getX()
+        local szY = sz:getY()
 
-        if isZombieBehind(playerTable[1], playerTable[2], bulletTable[4], sz:getX(), sz:getY(), 0) then
+        if isZombieBehind(playerTable[1], playerTable[2], bulletTable[4], szX, szY, 0) then
             --print("**********Skip target behind.*************")
         else
 
             --mindistance = math.sqrt((bulletTable[1] - sz:getX())^2 + (bulletTable[2] - sz:getY())^2)
-            mindistance = (bulletTable[1] - sz:getX())^2 + (bulletTable[2] - sz:getY())^2 
+            mindistance = (bulletTable[1] - szX)^2 + (bulletTable[2] - szY)^2 
             --print("Mindist <= mindistMod*dmg: ", mindistance, " <= ", playerMindistModifier * damage)
             
             if mindistance < minpr[2] and (mindistance <= playerMindistModifier * damage) then
@@ -336,8 +339,7 @@ end
 -- this function determines whether bullets should "break" meaning they stop, pretty much a collision checker
 -- bullet square, dirc, bullet offset, player offset, nonsfx
 function Advanced_trajectory.checkiswallordoor(square,bulletAngle,bulletPosition,playerPosition,nosfx)
-    --print("----SQUARE---: ",   square:getX(), "  //  ", square:getY())
-
+    --[[
     local bulletPosFloorX = math.floor(bulletPosition[1])
     local bulletPosFloorY = math.floor(bulletPosition[2])
 
@@ -347,6 +349,8 @@ function Advanced_trajectory.checkiswallordoor(square,bulletAngle,bulletPosition
 
     local bulletPosX = bulletPosition[1]
     local bulletPosY = bulletPosition[2]
+    ]]
+
     local playerPosX = playerPosition[1]
     local playerPosY = playerPosition[2]
 
@@ -381,6 +385,9 @@ function Advanced_trajectory.checkiswallordoor(square,bulletAngle,bulletPosition
 
     -- returns an array of objects in that square, for loop and filter it to get what you want
     local objects = square:getObjects()
+    local squareX = square:getX()
+    local squareY = square:getY()
+    local squareZ = square:getZ()
     if objects then
         for i=1,objects:size() do
 
@@ -423,29 +430,29 @@ function Advanced_trajectory.checkiswallordoor(square,bulletAngle,bulletPosition
                         -- - means player > sq
                         -- + means player < sq
                         if 
-                        (angle<=135 and angle>=90) and (playerPosY  < square:getY() or playerPosX  > square:getX()) or
-                        (angle<=90 and angle>=0) and (playerPosY  < square:getY() or playerPosX  < square:getX()) or
-                        (angle<=0 and angle>=-45) and (playerPosY  > square:getY() or playerPosX  < square:getX())
+                        (angle<=135 and angle>=90) and (playerPosY  < squareY or playerPosX  > squareX) or
+                        (angle<=90 and angle>=0) and (playerPosY  < squareY or playerPosX  < squareX) or
+                        (angle<=0 and angle>=-45) and (playerPosY  > squareY or playerPosX  < squareX)
                         then
                             --print("----Facing outside into wallNW----")
                             if nosfx then return true end
                             getSoundManager():PlayWorldSoundWav("BreakObject",square, 0.5, 2, 0.5, true);
 
-                            local spawnSquare = getWorld():getCell():getOrCreateGridSquare(square:getX() - offset, square:getY() - offset, square:getZ())
+                            local spawnSquare = getWorld():getCell():getOrCreateGridSquare(squareX - offset, squareY - offset, squareZ)
                             determineArrowSpawn(spawnSquare, true)
                             return true
                         end
 
                         if 
-                        (angle>=135 and angle<=180) and (playerPosY  < square:getY() or playerPosX  > square:getX()) or
-                        (angle>=-180 and angle<=-90) and (playerPosY  > square:getY() or playerPosX  > square:getX()) or
-                        (angle>=-90 and angle<=-45) and (playerPosY  > square:getY() or playerPosX  < square:getX()) 
+                        (angle>=135 and angle<=180) and (playerPosY  < squareY or playerPosX  > squareX) or
+                        (angle>=-180 and angle<=-90) and (playerPosY  > squareY or playerPosX  > squareX) or
+                        (angle>=-90 and angle<=-45) and (playerPosY  > squareY or playerPosX  < squareX) 
                         then
                             --print("----Facing inside into wallNW----")
                             if nosfx then return true end
                             getSoundManager():PlayWorldSoundWav("BreakObject",square, 0.5, 2, 0.5, true);
 
-                            local spawnSquare = getWorld():getCell():getOrCreateGridSquare(square:getX() + offset, square:getY() + offset, square:getZ())
+                            local spawnSquare = getWorld():getCell():getOrCreateGridSquare(squareX + offset, squareY + offset, squareZ)
                             determineArrowSpawn(spawnSquare, true)
                             return true
                         end
@@ -453,29 +460,29 @@ function Advanced_trajectory.checkiswallordoor(square,bulletAngle,bulletPosition
                         --print("++++Detected wallNW++++")
                     elseif wallSE then
                         if 
-                        (angle<=135 and angle>=90) and (playerPosY  < square:getY() or playerPosX  > square:getX()) or
-                        (angle<=90 and angle>=0) and (playerPosY  < square:getY() or playerPosX  < square:getX()) or
-                        (angle<=0 and angle>=-45) and (playerPosY  > square:getY() or playerPosX  < square:getX())
+                        (angle<=135 and angle>=90) and (playerPosY  < squareY or playerPosX  > squareX) or
+                        (angle<=90 and angle>=0) and (playerPosY  < squareY or playerPosX  < squareX) or
+                        (angle<=0 and angle>=-45) and (playerPosY  > squareY or playerPosX  < squareX)
                         then
                             --print("----Facing inside into wallSE----")
                             if nosfx then return true end
                             getSoundManager():PlayWorldSoundWav("BreakObject",square, 0.5, 2, 0.5, true);
 
-                            local spawnSquare = getWorld():getCell():getOrCreateGridSquare(square:getX() - offset, square:getY() - offset, square:getZ())
+                            local spawnSquare = getWorld():getCell():getOrCreateGridSquare(squareX - offset, squareY - offset, squareZ)
                             determineArrowSpawn(spawnSquare, true)
                             return true
                         end
 
                         if 
-                        (angle>=135 and angle<=180) and (playerPosY  < square:getY() or playerPosX  > square:getX()) or
-                        (angle>=-180 and angle<=-90) and (playerPosY  > square:getY() or playerPosX  > square:getX()) or
-                        (angle>=-90 and angle<=-45) and (playerPosY  > square:getY() or playerPosX  < square:getX()) 
+                        (angle>=135 and angle<=180) and (playerPosY  < squareY or playerPosX  > squareX) or
+                        (angle>=-180 and angle<=-90) and (playerPosY  > squareY or playerPosX  > squareX) or
+                        (angle>=-90 and angle<=-45) and (playerPosY  > squareY or playerPosX  < squareX) 
                         then
                             --print("----Facing outside into wallSE----")
                             if nosfx then return true end
                             getSoundManager():PlayWorldSoundWav("BreakObject",square, 0.5, 2, 0.5, true);
 
-                            local spawnSquare = getWorld():getCell():getOrCreateGridSquare(square:getX() + offset, square:getY() + offset, square:getZ())
+                            local spawnSquare = getWorld():getCell():getOrCreateGridSquare(squareX + offset, squareY + offset, squareZ)
                             determineArrowSpawn(spawnSquare, true)
                             return true
                         end
@@ -484,24 +491,24 @@ function Advanced_trajectory.checkiswallordoor(square,bulletAngle,bulletPosition
                     elseif wallN or (doorN and not locobject:IsOpen()) then
                         isAngleTrue = angle <=0 and angle >= -180
                         -- facing east into wallN
-                        if (isAngleTrue) and playerPosY  > square:getY() then
+                        if (isAngleTrue) and playerPosY  > squareY then
                             --print("----Facing EAST into wallN----")
                             if nosfx then return true end
                             getSoundManager():PlayWorldSoundWav("BreakObject",square, 0.5, 2, 0.5, true);
 
-                            local spawnSquare = getWorld():getCell():getOrCreateGridSquare(square:getX(), square:getY() + offset, square:getZ())
+                            local spawnSquare = getWorld():getCell():getOrCreateGridSquare(squareX, squareY + offset, squareZ)
                             determineArrowSpawn(spawnSquare, true)
                             return true
                         end
 
                         isAngleTrue = angle >=0 and angle <= 180
                         -- facing west into wallN
-                        if (isAngleTrue) and playerPosY < square:getY() then
+                        if (isAngleTrue) and playerPosY < squareY then
                             --print("----Facing WEST into wallN----")
                             if nosfx then return true end
                             getSoundManager():PlayWorldSoundWav("BreakObject",square, 0.5, 2, 0.5, true);
 
-                            local spawnSquare = getWorld():getCell():getOrCreateGridSquare(square:getX(), square:getY() - offset, square:getZ())
+                            local spawnSquare = getWorld():getCell():getOrCreateGridSquare(squareX, squareY - offset, squareZ)
                             determineArrowSpawn(spawnSquare, true)
                             return true
                         end
@@ -510,25 +517,25 @@ function Advanced_trajectory.checkiswallordoor(square,bulletAngle,bulletPosition
                     elseif wallW or (doorW and  not locobject:IsOpen()) then
                         isAngleTrue = (angle >=0 and angle <= 90) or (angle <=0 and angle >= -90)
                         -- facing south into wallW
-                        if (isAngleTrue) and playerPosX < square:getX() then
+                        if (isAngleTrue) and playerPosX < squareX then
                             --print("----Facing SOUTH into wallW----")
 
                             if nosfx then return true end
                             getSoundManager():PlayWorldSoundWav("BreakObject",square, 0.5, 2, 0.5, true);
 
-                            local spawnSquare = getWorld():getCell():getOrCreateGridSquare(square:getX() - offset, square:getY(), square:getZ())
+                            local spawnSquare = getWorld():getCell():getOrCreateGridSquare(squareX - offset, squareY, squareZ)
                             determineArrowSpawn(spawnSquare, true)
                             return true
                         end
 
                         isAngleTrue = (angle >=90 and angle <= 180) or (angle <=-90 and angle >= -180)
                         -- facing north into wallW
-                        if (isAngleTrue) and playerPosX > square:getX() then
+                        if (isAngleTrue) and playerPosX > squareX then
                             --print("----Facing NORTH into wallW----")
                             if nosfx then return true end
                             getSoundManager():PlayWorldSoundWav("BreakObject",square, 0.5, 2, 0.5, true);
 
-                            local spawnSquare = getWorld():getCell():getOrCreateGridSquare(square:getX() + offset, square:getY(), square:getZ())
+                            local spawnSquare = getWorld():getCell():getOrCreateGridSquare(squareX + offset, squareY, squareZ)
                             determineArrowSpawn(spawnSquare, true)
                             return true
                         end
@@ -558,7 +565,7 @@ function Advanced_trajectory.checkiswallordoor(square,bulletAngle,bulletPosition
     --     end
     -- end
     
-    if squarecar and ((squarecar:getX() -playerPosition[1] )^2  + (squarecar:getY() -playerPosition[2])^2)  >8 then
+    if squarecar and ((squarecar:getX() - playerPosX)^2  + (squarecar:getY() - playerPosY)^2) > 8 then
         if nosfx then return true end
 
         if ( (squarecar:getX() - bulletPosition[1])^2  + (squarecar:getY() - bulletPosition[2])^2 ) < 2.8  then
@@ -755,9 +762,15 @@ function Advanced_trajectory.OnPlayerUpdate()
 
         local maxaimnumModifier         = getSandboxOptions():getOptionByName("Advanced_trajectory.maxaimnum"):getValue() 
         local realMaxaimnum             = weaitem:getAimingTime() + (reversedLevel * maxaimnumModifier)
+        local maxaimnum = Advanced_trajectory.maxaimnum
 
         local minaimnumModifier = getSandboxOptions():getOptionByName("Advanced_trajectory.minaimnumModifier"):getValue() 
         local realMin           = (reversedLevel - 1) * minaimnumModifier
+        local minaimnum = Advanced_trajectory.minaimnum
+
+        local aimnum = Advanced_trajectory.aimnum
+        local alpha = Advanced_trajectory.alpha
+        local maxFocusCounter = Advanced_trajectory.maxFocusCounter
 
         -- aimbot level (sorta)
         if realLevel >= 10 then
@@ -784,7 +797,7 @@ function Advanced_trajectory.OnPlayerUpdate()
             canRunNGun = true
         end
 
-        Advanced_trajectory.maxaimnum   = realMaxaimnum
+        maxaimnum = realMaxaimnum
 
         --------------------------------------------------------------------------------
         ---FOCUS MECHANIC SECT (IF MINAIMNUM IS REACHED, start counting down to 0)---
@@ -843,7 +856,7 @@ function Advanced_trajectory.OnPlayerUpdate()
          -- Main purpose is to nerf lv 10 when exhausted
         if enduranceLv > 0 then    
             realMin = realMin + 6    
-            Advanced_trajectory.maxaimnum = Advanced_trajectory.maxaimnum + enduranceLv*2
+            maxaimnum = maxaimnum + enduranceLv*2
         end
         -----------------------------------
         --TRUE CROUCH/CRAWL (FIRST) SECT---
@@ -975,7 +988,7 @@ function Advanced_trajectory.OnPlayerUpdate()
         ----------------------
         local drunkMaxBloomModifier     = getSandboxOptions():getOptionByName("Advanced_trajectory.drunkMaxBloomModifier"):getValue() 
         local heavyMaxBloomModifier     = getSandboxOptions():getOptionByName("Advanced_trajectory.heavyMaxBloomModifier"):getValue() 
-        Advanced_trajectory.maxaimnum   = Advanced_trajectory.maxaimnum + (drunkLv*drunkMaxBloomModifier) + (heavyLv*heavyMaxBloomModifier)
+        maxaimnum   = maxaimnum + (drunkLv*drunkMaxBloomModifier) + (heavyLv*heavyMaxBloomModifier)
 
         ----------------------------------
         -- HYPER, HYPO, TIRED, PAIN SECT--
@@ -1021,18 +1034,18 @@ function Advanced_trajectory.OnPlayerUpdate()
         -- use gametime or else value goes wild (value would be added through framerate and not gametimewhich is not accurate)
         --print("coughEffect: ", coughEffect)
         if isSneezeCough == 2 then
-            if Advanced_trajectory.aimnum < Advanced_trajectory.maxaimnum then
-                Advanced_trajectory.aimnum = Advanced_trajectory.aimnum + coughModifier*gametimemul
+            if aimnum < maxaimnum then
+                aimnum = aimnum + coughModifier*gametimemul
             end
-            Advanced_trajectory.maxFocusCounter = 100
+            maxFocusCounter = 100
         end
 
         -- SNEEEZING: Reset aimnum
         if isSneezeCough == 1 then
-            if Advanced_trajectory.aimnum < Advanced_trajectory.maxaimnum then
-                Advanced_trajectory.aimnum = Advanced_trajectory.aimnum + 4*gametimemul
+            if aimnum < maxaimnum then
+                aimnum = aimnum + 4*gametimemul
             end
-            Advanced_trajectory.maxFocusCounter = 100
+            maxFocusCounter = 100
         end
 
         ------------------------ ------------------------ ------------------------ 
@@ -1043,15 +1056,15 @@ function Advanced_trajectory.OnPlayerUpdate()
         end
 
         -- if counter is not used, keep minaimnum as is
-        if Advanced_trajectory.maxFocusCounter >= 100 and Advanced_trajectory.minaimnum ~= realMin  then
-            Advanced_trajectory.minaimnum = Advanced_trajectory.minaimnum + 2*gametimemul
-            if Advanced_trajectory.minaimnum > realMin then
-                Advanced_trajectory.minaimnum = realMin
+        if maxFocusCounter >= 100 and minaimnum ~= realMin  then
+            minaimnum = minaimnum + 2*gametimemul
+            if minaimnum > realMin then
+                minaimnum = realMin
             end
         end
 
-        if Advanced_trajectory.minaimnum > Advanced_trajectory.maxaimnum then
-            Advanced_trajectory.minaimnum = Advanced_trajectory.maxaimnum
+        if minaimnum > maxaimnum then
+            minaimnum = maxaimnum
         end
         
         ----------------------------------
@@ -1060,9 +1073,9 @@ function Advanced_trajectory.OnPlayerUpdate()
         local reloadlevel = 11-player:getPerkLevel(Perks.Reload)
         local reloadEffectModifier =  getSandboxOptions():getOptionByName("Advanced_trajectory.reloadEffectModifier"):getValue() 
         if player:getVariableBoolean("isUnloading") or player:getVariableBoolean("isLoading") or player:getVariableBoolean("isLoadingMag") or player:getVariableBoolean("isRacking") then
-            Advanced_trajectory.aimnum = Advanced_trajectory.aimnum + constantTime*reloadEffectModifier*reloadlevel
-            Advanced_trajectory.alpha = Advanced_trajectory.alpha - gametimemul*0.1
-            Advanced_trajectory.maxFocusCounter = 100
+            aimnum = aimnum + constantTime*reloadEffectModifier*reloadlevel
+            alpha = alpha - gametimemul*0.1
+            maxFocusCounter = 100
         end    
 
         
@@ -1097,7 +1110,7 @@ function Advanced_trajectory.OnPlayerUpdate()
 
             if Advanced_trajectory.crouchCounter > 0 then
                 Advanced_trajectory.crouchCounter = Advanced_trajectory.crouchCounter - crouchCounterSpeed*constantTime
-                Advanced_trajectory.aimnum = Advanced_trajectory.aimnum + constantTime*crouchPenaltyEffect
+                aimnum = aimnum + constantTime*crouchPenaltyEffect
             end
 
             -- counter can not go below 0
@@ -1122,7 +1135,7 @@ function Advanced_trajectory.OnPlayerUpdate()
                     player:getStats():setEndurance(player:getStats():getEndurance() - effect)
                 end
 
-                Advanced_trajectory.maxFocusCounter = 100
+                maxFocusCounter = 100
             end
 
             --print("Crouch counter: ", Advanced_trajectory.crouchCounter)
@@ -1170,23 +1183,23 @@ function Advanced_trajectory.OnPlayerUpdate()
         local drunkActionEffectModifier = getSandboxOptions():getOptionByName("Advanced_trajectory.drunkActionEffectModifier"):getValue() 
         if player:getVariableBoolean("isMoving") then
             local totalMoveEffect = getSandboxOptions():getOptionByName("Advanced_trajectory.moveeffect"):getValue() * runNGunMultiplierBuff * ((drunkLv*drunkActionEffectModifier)+1) * (heavyLv * heavyTurnEffectModifier + 1)
-            Advanced_trajectory.aimnum = Advanced_trajectory.aimnum + gametimemul * totalMoveEffect
-            Advanced_trajectory.maxFocusCounter = 100
+            aimnum = aimnum + gametimemul * totalMoveEffect
+            maxFocusCounter = 100
         end
         
 
         local turningEffect = gametimemul * getSandboxOptions():getOptionByName("Advanced_trajectory.turningeffect"):getValue() * (drunkLv * drunkActionEffectModifier + 1) * (heavyLv * heavyTurnEffectModifier + 1)
         if player:getVariableBoolean("isTurning") then
             if Advanced_trajectory.isCrouch then
-                Advanced_trajectory.aimnum = Advanced_trajectory.aimnum + turningEffect * getSandboxOptions():getOptionByName("Advanced_trajectory.crouchTurnEffect"):getValue() * runNGunMultiplierBuff
+                aimnum = aimnum + turningEffect * getSandboxOptions():getOptionByName("Advanced_trajectory.crouchTurnEffect"):getValue() * runNGunMultiplierBuff
 
             elseif Advanced_trajectory.isCrawl  then
-                Advanced_trajectory.aimnum = Advanced_trajectory.aimnum + turningEffect * getSandboxOptions():getOptionByName("Advanced_trajectory.proneTurnEffect"):getValue()  * runNGunMultiplierBuff
+                aimnum = aimnum + turningEffect * getSandboxOptions():getOptionByName("Advanced_trajectory.proneTurnEffect"):getValue()  * runNGunMultiplierBuff
             
             else
-                Advanced_trajectory.aimnum = Advanced_trajectory.aimnum + turningEffect * runNGunMultiplierBuff
+                aimnum = aimnum + turningEffect * runNGunMultiplierBuff
             end
-            Advanced_trajectory.maxFocusCounter = 100
+            maxFocusCounter = 100
         end
 
         --------------------------------------------
@@ -1210,18 +1223,18 @@ function Advanced_trajectory.OnPlayerUpdate()
             reduceSpeed = minReduceSpeed
         end 
 
-        if Advanced_trajectory.aimnum > Advanced_trajectory.minaimnum then
-            Advanced_trajectory.aimnum = Advanced_trajectory.aimnum - gametimemul*reduceSpeed
+        if aimnum > minaimnum then
+            aimnum = aimnum - gametimemul*reduceSpeed
         end
         ----------------------------
         ------- AIMNUM LIMIT SECT---
         ----------------------------
-        if Advanced_trajectory.aimnum > Advanced_trajectory.maxaimnum then
-            Advanced_trajectory.aimnum = Advanced_trajectory.maxaimnum
+        if aimnum > maxaimnum then
+            aimnum = maxaimnum
         end
 
-        if Advanced_trajectory.aimnum < Advanced_trajectory.minaimnum then
-            Advanced_trajectory.aimnum = Advanced_trajectory.minaimnum
+        if aimnum < minaimnum then
+            aimnum = minaimnum
         end
         
         ---------------------------------------------------
@@ -1245,40 +1258,40 @@ function Advanced_trajectory.OnPlayerUpdate()
 
         -- crouching means no need to wait to get to 0 when below minaimnum (helpful when bursting)
         if hasFocusSkill then
-            if Advanced_trajectory.isCrouch and Advanced_trajectory.aimnum < (realLevel*1.5 - (recoilDelay*2)/10) then
-                    Advanced_trajectory.maxFocusCounter = 0
+            if Advanced_trajectory.isCrouch and aimnum < (realLevel*1.5 - (recoilDelay*2)/10) then
+                maxFocusCounter = 0
             
-            elseif Advanced_trajectory.isCrawl and Advanced_trajectory.aimnum < (realLevel*1.75 - (recoilDelay*2)/10) then
-                    Advanced_trajectory.maxFocusCounter = 0
+            elseif Advanced_trajectory.isCrawl and aimnum < (realLevel*1.75 - (recoilDelay*2)/10) then
+                maxFocusCounter = 0
             end
         end
 
         -- player unlocks max focus skill when reaching certain level
-        if Advanced_trajectory.aimnum <= Advanced_trajectory.minaimnum and Advanced_trajectory.maxFocusCounter > 0 and hasFocusSkill then
-            Advanced_trajectory.maxFocusCounter = Advanced_trajectory.maxFocusCounter - focusCounterSpeed*constantTime
+        if aimnum <= minaimnum and maxFocusCounter > 0 and hasFocusSkill then
+            maxFocusCounter = maxFocusCounter - focusCounterSpeed*constantTime
         end
 
         -- counter can not go below 0
-        if Advanced_trajectory.maxFocusCounter < 0 then
-            Advanced_trajectory.maxFocusCounter = 0
+        if maxFocusCounter < 0 then
+            maxFocusCounter = 0
         end
 
         -- if counter reaches 0, reduce minaimnum until its no longer greater than 0
-        if Advanced_trajectory.maxFocusCounter <= 0  and Advanced_trajectory.minaimnum > focusLimit then
-            Advanced_trajectory.minaimnum = Advanced_trajectory.minaimnum - gametimemul*maxFocusSpeed
+        if maxFocusCounter <= 0  and minaimnum > focusLimit then
+            minaimnum = minaimnum - gametimemul*maxFocusSpeed
         end
 
-        --print('maxFocusCounter: ', Advanced_trajectory.maxFocusCounter)
+        --print('maxFocusCounter: ', maxFocusCounter)
 
-        if focusLimit > Advanced_trajectory.maxaimnum then
-            focusLimit = Advanced_trajectory.maxaimnum
+        if focusLimit > maxaimnum then
+            focusLimit = maxaimnum
         end
 
-        if Advanced_trajectory.minaimnum < focusLimit then
-            Advanced_trajectory.minaimnum = Advanced_trajectory.minaimnum + gametimemul
+        if minaimnum < focusLimit then
+            minaimnum = minaimnum + gametimemul
 
-            if Advanced_trajectory.minaimnum > focusLimit then
-                Advanced_trajectory.minaimnum = focusLimit
+            if minaimnum > focusLimit then
+                minaimnum = focusLimit
             end
         end
 
@@ -1297,104 +1310,89 @@ function Advanced_trajectory.OnPlayerUpdate()
         local exhaleModifier3 = getSandboxOptions():getOptionByName("Advanced_trajectory.exhaleModifier3"):getValue() 
         local exhaleModifier4 = getSandboxOptions():getOptionByName("Advanced_trajectory.exhaleModifier4"):getValue() 
 
-        if enduranceLv > 0 and Advanced_trajectory.aimnum <= Advanced_trajectory.minaimnum+5+(enduranceLv*3) and Advanced_trajectory.inhaleCounter <= 0 and Advanced_trajectory.exhaleCounter <= 0 then
-            Advanced_trajectory.inhaleCounter = 100
+        local inhaleCounter = Advanced_trajectory.inhaleCounter
+        local exhaleCounter = Advanced_trajectory.exhaleCounter
+
+        if enduranceLv > 0 and aimnum <= minaimnum+5+(enduranceLv*3) and inhaleCounter <= 0 and exhaleCounter <= 0 then
+            inhaleCounter = 100
             reduceSpeed = reduceSpeed * (1 - enduranceLv*7/100)
         end
 
         -- inhale, count from 100 to 0
-        if Advanced_trajectory.inhaleCounter > 0 then
+        if inhaleCounter > 0 then
 
             -- three diff levels of inhale and exhale speed
             if enduranceLv == 1 then
-                Advanced_trajectory.inhaleCounter = Advanced_trajectory.inhaleCounter - inhaleModifier1*constantTime
+                inhaleCounter = inhaleCounter - inhaleModifier1*constantTime
             end
             if enduranceLv == 2 then
-                Advanced_trajectory.inhaleCounter = Advanced_trajectory.inhaleCounter - inhaleModifier2*constantTime
+                inhaleCounter = inhaleCounter - inhaleModifier2*constantTime
             end
             if enduranceLv == 3 then
-                Advanced_trajectory.inhaleCounter = Advanced_trajectory.inhaleCounter - inhaleModifier3*constantTime
+                inhaleCounter = inhaleCounter - inhaleModifier3*constantTime
             end
             if enduranceLv == 4 then
-                Advanced_trajectory.inhaleCounter = Advanced_trajectory.inhaleCounter - inhaleModifier4*constantTime
+                inhaleCounter = inhaleCounter - inhaleModifier4*constantTime
             end
 
-            Advanced_trajectory.aimnum = Advanced_trajectory.aimnum + enduranceBreathModifier * constantTime
+            aimnum = aimnum + enduranceBreathModifier * constantTime
         
             -- exhale, steady aim
-        elseif Advanced_trajectory.exhaleCounter > 0 then
+        elseif exhaleCounter > 0 then
 
             -- higher endurance level means less time to have steady aim
             -- three diff levels of inhale and exhale speed
             if enduranceLv == 1 then
-                Advanced_trajectory.exhaleCounter = Advanced_trajectory.exhaleCounter - exhaleModifier1*constantTime
+                exhaleCounter = exhaleCounter - exhaleModifier1*constantTime
             end
             if enduranceLv == 2 then
-                Advanced_trajectory.exhaleCounter = Advanced_trajectory.exhaleCounter - exhaleModifier2*constantTime
+                exhaleCounter = exhaleCounter - exhaleModifier2*constantTime
             end
             if enduranceLv == 3 then
-                Advanced_trajectory.exhaleCounter = Advanced_trajectory.exhaleCounter - exhaleModifier3*constantTime
+                exhaleCounter = exhaleCounter - exhaleModifier3*constantTime
             end
             if enduranceLv == 4 then
-                Advanced_trajectory.exhaleCounter = Advanced_trajectory.exhaleCounter - exhaleModifier4*constantTime
+                exhaleCounter = exhaleCounter - exhaleModifier4*constantTime
             end
 
-        elseif Advanced_trajectory.inhaleCounter <= 0 and Advanced_trajectory.exhaleCounter <= 0 then
-            Advanced_trajectory.exhaleCounter = 100
+        elseif inhaleCounter <= 0 and exhaleCounter <= 0 then
+            exhaleCounter = 100
         end
       
         if enduranceLv == 0 then
-            Advanced_trajectory.inhaleCounter = 0
-            Advanced_trajectory.exhaleCounter = 0
+            inhaleCounter = 0
+            exhaleCounter = 0
         end
 
-        --print("inhaleCounter / exhaleCounter: ", Advanced_trajectory.inhaleCounter, " / ", Advanced_trajectory.exhaleCounter)
-
-        -------------------------------
-        -------- PANIC (END) SECT-----
-        -------------------------------
-        -- needs to be between max and min or else crosshair just disappears if ur aim is dog
-        -- place after other minaimnum effects
-
-        --[[
-        local limit = 0
-        if panicLv == 4 then
-            limit = 10
-        elseif panicLv == 3 then
-            limit = Advanced_trajectory.maxaimnum * 0.25
-        else
-            limit = Advanced_trajectory.maxaimnum * 0.5
-        end
-
-        if panicLv > 1 then
-            if Advanced_trajectory.aimnum <= limit then
-                Advanced_trajectory.alpha = Advanced_trajectory.alpha + gametimemul*0.05
-            else
-                Advanced_trajectory.alpha = Advanced_trajectory.alpha - gametimemul*0.1
-            end
-        else
-            Advanced_trajectory.alpha = Advanced_trajectory.alpha + gametimemul*0.025
-        end
-        ]]
+        --print("inhaleCounter / exhaleCounter: ", inhaleCounter, " / ", exhaleCounter)
         
         -- Purpose is to keep crosshair visible
-        Advanced_trajectory.alpha = Advanced_trajectory.alpha + gametimemul*0.05
+        alpha = alpha + gametimemul*0.05
 
         local alphaMax = getSandboxOptions():getOptionByName("Advanced_trajectory.crosshairMaxTransparency"):getValue() 
 
-        if Advanced_trajectory.aimnum >= Advanced_trajectory.missMin and getSandboxOptions():getOptionByName("Advanced_trajectory.enableHitOrMiss"):getValue() then 
+        if aimnum >= Advanced_trajectory.missMin and getSandboxOptions():getOptionByName("Advanced_trajectory.enableHitOrMiss"):getValue() then 
             alphaMax = getSandboxOptions():getOptionByName("Advanced_trajectory.missMinTransparency"):getValue() 
         end
 
-        if Advanced_trajectory.alpha > alphaMax then
-            Advanced_trajectory.alpha = Advanced_trajectory.alpha - gametimemul*0.1
+        if alpha > alphaMax then
+            --alpha = alpha - gametimemul*0.1
+            alpha = alphaMax
         end
 
-        Advanced_trajectory.alpha = math.floor(Advanced_trajectory.alpha * 100) / 100
+        --alpha = math.floor(alpha * 100) / 100
 
-        if Advanced_trajectory.alpha < 0 then
-            Advanced_trajectory.alpha = 0
+        if alpha < 0 then
+            alpha = 0
         end
+
+        Advanced_trajectory.alpha = alpha
+        Advanced_trajectory.aimnum = aimnum
+        Advanced_trajectory.inhaleCounter = inhaleCounter
+        Advanced_trajectory.exhaleCounter = exhaleCounter
+        Advanced_trajectory.minaimnum = minaimnum
+        Advanced_trajectory.maxaimnum = maxaimnum
+        Advanced_trajectory.maxFocusCounter = maxFocusCounter
 
         --print("Trans/Alpha: ", Advanced_trajectory.alpha)
         --print("Shaky Effect: ", Advanced_trajectory.stressEffect + Advanced_trajectory.painEffect + Advanced_trajectory.panicEffect)
@@ -1449,7 +1447,7 @@ function Advanced_trajectory.OnPlayerUpdate()
         -- Initialize a flag to check if we are aiming at an object
         local isAimingObject = false
 
-        -- Loop through Z levels from 0 to 7
+        -- Loop through Z levels from 0 to 7 to search for targets
         for Z = 0, 7 do
             -- Calculate the distance difference between Z level and player's Z position
             local delDis = Z - playerZ
@@ -2276,7 +2274,8 @@ function determineHitOrMiss()
 end
 
 function getIsHoldingShotgun(weapon)
-    if (string.contains(weapon:getAmmoType() or "","Shotgun") or string.contains(weapon:getAmmoType() or "","shotgun") or string.contains(weapon:getAmmoType() or "","shell") or string.contains(weapon:getAmmoType() or "","Shell")) then
+    local ammoType = string.lower(weapon:getAmmoType())
+    if (string.contains(ammoType or "", "shotgun") or string.contains(ammoType or "", "shell")) then
         return true
     end
 
@@ -2468,17 +2467,20 @@ function Advanced_trajectory.OnWeaponSwing(character, handWeapon)
             tablez["isparabola"] = tablez[22][6]
         
             -- disabling enable range means guns don't work (no projectiles)
-        elseif getSandboxOptions():getOptionByName("Advanced_trajectory.Enablerange"):getValue() and handWeapon:getSubCategory() =="Firearm" then ----枪
+        elseif getSandboxOptions():getOptionByName("Advanced_trajectory.Enablerange"):getValue() and (handWeapon:getSubCategory() =="Firearm" or handWeapon:getSubCategory() =="BBGun") then ----枪
 
             local hideTracer = getSandboxOptions():getOptionByName("Advanced_trajectory.hideTracer"):getValue()
             --print("Tracer hidden: ", hideTracer)
 
             local offset = getSandboxOptions():getOptionByName("Advanced_trajectory.DebugOffset"):getValue()
 
+            --print("Range enabled...Weapon is Firearm.")
             if  getIsHoldingShotgun(handWeapon) then
                 local shotgunDistanceModifier = getSandboxOptions():getOptionByName("Advanced_trajectory.shotgunDistanceModifier"):getValue()
                 
                 tablez[9] = "Shotgun" --weapon name
+
+                --print("Weapon has shotgun type ammo.")
 
                 --wpn sndfx
                 if hideTracer then
@@ -2505,16 +2507,21 @@ function Advanced_trajectory.OnWeaponSwing(character, handWeapon)
 
                 isHoldingShotgun = true
             
-            elseif (string.contains(handWeapon:getAmmoType() or "", "Round") or string.contains(handWeapon:getAmmoType() or "", "round")) then 
+            elseif string.contains(handWeapon:getAmmoType() or "", "INCRound") or string.contains(handWeapon:getAmmoType() or "", "HERound") then 
                 -- The idea here is to solve issue of Brita's launchers spawning a bullet along with their grenade.
+                --print("Weapon has round type ammo (Brita grenades).")
                 return
             elseif Advanced_trajectory.hasFlameWeapon then 
                 -- Break bullet if flamethrower
+                --print("Weapon is flame type.")
                 return
             elseif ((handWeapon:hasTag("XBow") and not getSandboxOptions():getOptionByName("Advanced_trajectory.DebugEnableBow"):getValue()) or handWeapon:hasTag("Thrown")) then
                 -- Break bullet if bow
+                --print("Weapon is either bow or throwable nonexplosive.")
                 return
             else
+                --print("Weapon is a normal gun (revolver).")
+
                 tablez[9] = "revolver"
 
                 --wpn sndfx
@@ -2544,8 +2551,8 @@ function Advanced_trajectory.OnWeaponSwing(character, handWeapon)
                 isHoldingShotgun = false
             end
         else
-            return
-            
+            --print("Weapon is not firearm, but ", handWeapon:getSubCategory())
+            return      
         end
         
 
