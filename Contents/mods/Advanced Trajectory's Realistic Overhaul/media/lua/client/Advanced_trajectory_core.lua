@@ -2274,8 +2274,7 @@ function determineHitOrMiss()
 end
 
 function getIsHoldingShotgun(weapon)
-    local ammoType = string.lower(weapon:getAmmoType())
-    if (string.contains(ammoType or "", "shotgun") or string.contains(ammoType or "", "shell")) then
+    if (string.contains(weapon:getAmmoType() or "","Shotgun") or string.contains(weapon:getAmmoType() or "","shotgun") or string.contains(weapon:getAmmoType() or "","shell") or string.contains(weapon:getAmmoType() or "","Shell")) then
         return true
     end
 
