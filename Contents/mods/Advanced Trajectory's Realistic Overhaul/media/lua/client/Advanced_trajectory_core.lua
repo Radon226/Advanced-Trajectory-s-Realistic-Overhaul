@@ -52,6 +52,9 @@ Advanced_trajectory.FootShotDmgPlayerMultiplier = getSandboxOptions():getOptionB
 ----------------------------------------------------------------
 function Advanced_trajectory.itemremove(worlditem)
     if worlditem == nil then return end
+
+    --print("Type: ", worlditem:getType())
+
     -- worlditem:getWorldItem():getSquare():transmitRemoveItemFromSquare(worlditem:getWorldItem())
     worlditem:getWorldItem():removeFromSquare()
 end
@@ -220,14 +223,9 @@ function Advanced_trajectory.getShootzombie(bulletTable,damage,playerTable, miss
         local szY = sz:getY()
         local distance = entry.distance
 
-        local isOnZom = math.floor(playerTable[1]) == math.floor(szX) and math.floor(playerTable[2]) == math.floor(szY)
+        local isSteppedOn = isOnTopOfTarget(player, sz)
 
-        -- don't skip if player is on zombie that is prone (true)
-        local noSkip = sz:isProne() and isOnZom
-
-        --print("Is prone? ", isZomProne, " ||  Is on Zom? ", isOnZom, " || Don't skip? ", noSkip)
-
-        if isZombieBehind(playerTable[1], playerTable[2], bulletTable[4], szX, szY, hitRegThreshold) and not noSkip then
+        if isZombieBehind(playerTable[1], playerTable[2], bulletTable[4], szX, szY, hitRegThreshold) and not isSteppedOn then
             --print("**********Skip target behind.*************")
         else
             -- uses euclidian distance to find distance between target and bullet
@@ -252,21 +250,20 @@ function Advanced_trajectory.getShootzombie(bulletTable,damage,playerTable, miss
     end
 
     -- player table [0.4 mindistancemodifier]
-    for sz,bz in pairs(prtable) do
-        local szX = sz:getX()
-        local szY = sz:getY()
+    for pz,bz in pairs(prtable) do
+        local pzX = pz:getX()
+        local pzY = pz:getY()
 
-        if isZombieBehind(playerTable[1], playerTable[2], bulletTable[4], szX, szY, 0) then
+        local isSteppedOn = isOnTopOfTarget(player, pz)
+
+        if isZombieBehind(playerTable[1], playerTable[2], bulletTable[4], pzX, pzY, 0 and not isSteppedOn) then
             --print("**********Skip target behind.*************")
         else
 
-            --mindistance = math.sqrt((bulletTable[1] - sz:getX())^2 + (bulletTable[2] - sz:getY())^2)
-            mindistance = (bulletTable[1] - szX)^2 + (bulletTable[2] - szY)^2 
-            --print("Mindist <= mindistMod*dmg: ", mindistance, " <= ", playerMindistModifier * damage)
+            mindistance = (bulletTable[1] - pzX)^2 + (bulletTable[2] - pzY)^2 
             
             if mindistance < minpr[2] and (mindistance <= playerMindistModifier * damage) then
-                minpr = {sz,mindistance}
-                --print("Updated minpr")
+                minpr = {pz,mindistance}
             end
         end
     end
@@ -292,6 +289,22 @@ function getTargetDistanceFromPlayer(player, target)
     return distance
 end
 
+function isOnTopOfTarget(player, target)
+
+    --print("KnockedDown: ", target:isKnockedDown(), " || Prone: ", target:isProne())
+    if (not (target:isKnockedDown() or target:isProne())) then return false end
+    
+    local distance = getTargetDistanceFromPlayer(player, target)
+    --print("distance: ", distance)
+
+    if distance < 1 then 
+        return true
+    else
+        return false
+    end
+
+end
+
 -- Function to calculate the dot product of two vectors
 function findVectorDotProduct(x1, y1, x2, y2)
     return x1 * x2 + y1 * y2
@@ -308,8 +321,6 @@ function angleToVector(angle)
     return x, y
 end
 
-
--- Example usage
 function isZombieBehind(playerX, playerY, aimDir, zombieX, zombieY, threshold)
     local zombieXVector = zombieX - playerX
     local zombieYVector = zombieY - playerY
@@ -1888,6 +1899,8 @@ function Advanced_trajectory.checkontick()
 
     for kt, vt in pairs(tablenow) do
 
+        -- Remove bullet projectile to simulate it going from one point to another
+        -- If commented out, this will lead to a continous printing of projectiles at every tile it spawns (imagine a long trail of bullets)
         Advanced_trajectory.itemremove(vt[1])
 
         local tablenowz12_ = vt[12] * 0.35
@@ -2088,8 +2101,12 @@ function Advanced_trajectory.checkontick()
                 -------------------------------------
                 -- NOTES: if it's a non friendly player is shot at, determine damage done and which body part is affected
                 -- vt[19] is the player itself (you)
-                -- the player shot can not be the client player (you can't shoot you)
-                if not vt["nonsfx"] and Playershot and vt[19] and Playershot ~= vt[19] and (Faction.getPlayerFaction(Playershot)~=Faction.getPlayerFaction(vt[19]) or not Faction.getPlayerFaction(Playershot))     then
+
+                -- damage player if
+                -- the player shot is not the client player (you can't shoot you)
+                -- AND
+                -- the player shot is not in same faction as client player OR the player shot is not in a faction OR the player shot has faction PVP on OR client player has faction PVP on
+                if not vt["nonsfx"] and Playershot and vt[19] and Playershot ~= vt[19] and (Faction.getPlayerFaction(Playershot)~=Faction.getPlayerFaction(vt[19]) or not Faction.getPlayerFaction(Playershot) or Playershot:isFactionPVP() or vt[19]:isFactionPVP())     then
                     
                     --Playershot:setX(Playershot:getX()+0.15*vt[3][1])
                     --Playershot:setY(Playershot:getY()+0.15*vt[3][2])

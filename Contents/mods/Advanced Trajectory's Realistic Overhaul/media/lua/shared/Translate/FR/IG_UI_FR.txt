@@ -1,0 +1,10 @@
+IGUI_FR = {
+
+    IGUI_Headshot = "Headshot!",
+    IGUI_Bodyshot = "Corps!",
+    IGUI_Footshot = "Pied!",
+
+
+
+
+}
