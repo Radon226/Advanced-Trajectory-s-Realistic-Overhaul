@@ -123,7 +123,6 @@ function Advanced_trajectory.getShootzombie(bulletTable,damage,playerTable, miss
     end
 
     local player = getPlayer()
-    local isPlayerSafe = player:getSafety():isEnabled()
     
     local playerNum = player:getPlayerNum()
 
@@ -133,7 +132,6 @@ function Advanced_trajectory.getShootzombie(bulletTable,damage,playerTable, miss
 
     -- Define grid dimensions
     local gridMultiplier = getSandboxOptions():getOptionByName("Advanced_trajectory.DebugGridMultiplier"):getValue()    
-    local ignorePVPSafety = getSandboxOptions():getOptionByName("Advanced_trajectory.IgnorePVPSafety"):getValue()   
 
     -- minimum distance from bullet to target
     local mindistance = 0
@@ -170,7 +168,7 @@ function Advanced_trajectory.getShootzombie(bulletTable,damage,playerTable, miss
                     end
                     if instanceof(zombieOrPlayer, "IsoPlayer") then
                         --print("FOUND PLAYER SHOOTER/TARGET SAFE?: ", isPlayerSafe, " || ", zombieOrPlayer:getSafety():isEnabled())
-                        if (not isPlayerSafe or not zombieOrPlayer:getSafety():isEnabled()) or ignorePVPSafety then
+                        if allowPVP(player, zombieOrPlayer) then
                             --print("player registered for a meal [it's a bullet]")
                             prtable[zombieOrPlayer] = 1  -- Add to player table
                         end
@@ -193,7 +191,7 @@ function Advanced_trajectory.getShootzombie(bulletTable,damage,playerTable, miss
                     end
                     if instanceof(zombieOrPlayer, "IsoPlayer") then
                         --print("FOUND PLAYER SHOOTER/TARGET SAFE?: ", isPlayerSafe, " || ", zombieOrPlayer:getSafety():isEnabled())
-                        if (not isPlayerSafe or not zombieOrPlayer:getSafety():isEnabled()) or ignorePVPSafety then
+                        if allowPVP(player, zombieOrPlayer) then
                             --print("player registered for a meal [it's a bullet]")
                             prtable[zombieOrPlayer] = 1  -- Add to player table
                         end
@@ -225,7 +223,7 @@ function Advanced_trajectory.getShootzombie(bulletTable,damage,playerTable, miss
 
         local isSteppedOn = isOnTopOfTarget(player, sz)
 
-        if isZombieBehind(playerTable[1], playerTable[2], bulletTable[4], szX, szY, hitRegThreshold) and not isSteppedOn then
+        if isTargetBehind(playerTable[1], playerTable[2], bulletTable[4], szX, szY, hitRegThreshold) and not isSteppedOn then
             --print("**********Skip target behind.*************")
         else
             -- uses euclidian distance to find distance between target and bullet
@@ -256,7 +254,7 @@ function Advanced_trajectory.getShootzombie(bulletTable,damage,playerTable, miss
 
         local isSteppedOn = isOnTopOfTarget(player, pz)
 
-        if isZombieBehind(playerTable[1], playerTable[2], bulletTable[4], pzX, pzY, 0 and not isSteppedOn) then
+        if isTargetBehind(playerTable[1], playerTable[2], bulletTable[4], pzX, pzY, 0) and not isSteppedOn then
             --print("**********Skip target behind.*************")
         else
 
@@ -321,7 +319,7 @@ function angleToVector(angle)
     return x, y
 end
 
-function isZombieBehind(playerX, playerY, aimDir, zombieX, zombieY, threshold)
+function isTargetBehind(playerX, playerY, aimDir, zombieX, zombieY, threshold)
     local zombieXVector = zombieX - playerX
     local zombieYVector = zombieY - playerY
 
@@ -346,7 +344,7 @@ end
 ----------------------------------------------------
 --BULLET COLLISION WITH STATIC OBJECTS FUNC SECT---
 ----------------------------------------------------
--- checks the squares that the bullet travels
+-- checks the squares that the bullet travels, this means there's need to be a limit to how fast the bullet travels
 -- this function determines whether bullets should "break" meaning they stop, pretty much a collision checker
 -- bullet square, dirc, bullet offset, player offset, nonsfx
 function Advanced_trajectory.checkiswallordoor(square,bulletAngle,bulletPosition,playerPosition,nosfx)
@@ -1970,7 +1968,7 @@ function Advanced_trajectory.checkontick()
                     break
                 end
             
-            -- WHERE BULLET BBEAKS WHEN OUT OF RANGE. CHECKS IF REMAINING DISTANCE IS LESS THAN 0 AND WEAPON IS NOT GRENADE.
+            -- WHERE BULLET BREAKS WHEN OUT OF RANGE. CHECKS IF REMAINING DISTANCE IS LESS THAN 0 AND WEAPON IS NOT GRENADE.
             elseif vt[7]<0 and vt[9] ~= "Grenade"  then
 
                 if vt["wallcarmouse"] or vt["wallcarzombie"]then
@@ -2102,26 +2100,19 @@ function Advanced_trajectory.checkontick()
                 -- NOTES: if it's a non friendly player is shot at, determine damage done and which body part is affected
                 -- vt[19] is the player itself (you)
 
-                -- damage player if
-                -- the player shot is not the client player (you can't shoot you)
-                -- AND
-                -- the player shot is not in same faction as client player OR the player shot is not in a faction OR the player shot has faction PVP on OR client player has faction PVP on
-                if not vt["nonsfx"] and Playershot and vt[19] and Playershot ~= vt[19] and (Faction.getPlayerFaction(Playershot)~=Faction.getPlayerFaction(vt[19]) or not Faction.getPlayerFaction(Playershot) or Playershot:isFactionPVP() or vt[19]:isFactionPVP())     then
-                    
-                    --Playershot:setX(Playershot:getX()+0.15*vt[3][1])
-                    --Playershot:setY(Playershot:getY()+0.15*vt[3][2])
-                    Playershot:addBlood(100)
+                if not vt["nonsfx"] and Playershot and vt[19] then
+                        Playershot:addBlood(100)
 
-                    -- isClient() returns true if the code is being run in MP
-                    if isClient() then
-                        sendClientCommand("ATY_shotplayer", "true", {vt[19]:getOnlineID(), Playershot:getOnlineID(), damagepr, vt[6], Advanced_trajectory.HeadShotDmgPlayerMultiplier, Advanced_trajectory.BodyShotDmgPlayerMultiplier, Advanced_trajectory.FootShotDmgPlayerMultiplier})
-                    else
-                        damagePlayershot(Playershot, damagepr, vt[6], Advanced_trajectory.HeadShotDmgPlayerMultiplier, Advanced_trajectory.BodyShotDmgPlayerMultiplier, Advanced_trajectory.FootShotDmgPlayerMultiplier)
-                    end
+                        -- isClient() returns true if the code is being run in MP
+                        if isClient() then
+                            sendClientCommand("ATY_shotplayer", "true", {vt[19]:getOnlineID(), Playershot:getOnlineID(), damagepr, vt[6], Advanced_trajectory.HeadShotDmgPlayerMultiplier, Advanced_trajectory.BodyShotDmgPlayerMultiplier, Advanced_trajectory.FootShotDmgPlayerMultiplier})
+                        else
+                            damagePlayershot(Playershot, damagepr, vt[6], Advanced_trajectory.HeadShotDmgPlayerMultiplier, Advanced_trajectory.BodyShotDmgPlayerMultiplier, Advanced_trajectory.FootShotDmgPlayerMultiplier)
+                        end
 
-                    Advanced_trajectory.itemremove(vt[1])
-                    tablenow[kt]=nil
-                    break
+                        Advanced_trajectory.itemremove(vt[1])
+                        tablenow[kt]=nil
+                        break
                 end
 
                 -------------------------------------
@@ -2255,6 +2246,60 @@ function Advanced_trajectory.checkontick()
 end
 
 Events.OnTick.Add(Advanced_trajectory.checkontick)
+
+    
+function allowPVP(player, target)
+    -- allow PVP if
+    -- 1) target is not the client player (you can't shoot you)
+    -- 2) target or player does not have PVP safety enabled
+    -- 3) target is not in the same faction as player
+    -- 4) faction PVP is enabled for either target or player
+    -- 5) sandbox option IgnorePVPSafety is on
+
+    -- if either players are somehow null, return false
+    if not player or not target then 
+        return false 
+    end
+    
+    -- return false if player is the target
+    if player == target then 
+        return false 
+    end
+
+    local ignorePVPSafety = getSandboxOptions():getOptionByName("Advanced_trajectory.IgnorePVPSafety"):getValue()  
+
+    if ignorePVPSafety then 
+        return true
+    end
+
+    -- if safety is on for BOTH players, then PVP is not allowed
+    if player:getSafety():isEnabled() and target:getSafety():isEnabled() then 
+        return false
+    end
+
+    local playerFaction = Faction.getPlayerFaction(player)
+    local targetFaction = Faction.getPlayerFaction(target)
+
+    if not playerFaction or not targetFaction then
+        return true
+    end
+
+    local playerFactionPvp = player:isFactionPvp()
+    local targetFactionPvp = target:isFactionPvp()
+    
+    -- allow PVP if player and target is in the same faction and faction PVP is on
+    if playerFaction == targetFaction then
+        if playerFactionPvp or targetFactionPvp then
+            return true
+        end
+    end
+
+    if playerFaction ~= targetFaction then
+        return true
+    end
+
+    return false
+end
 
 function getMissMin(aimingLevel, weapon)
     local buff = 0
