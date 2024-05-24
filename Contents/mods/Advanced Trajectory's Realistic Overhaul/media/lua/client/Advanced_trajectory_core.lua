@@ -288,7 +288,6 @@ function getTargetDistanceFromPlayer(player, target)
 end
 
 function isOnTopOfTarget(player, target)
-
     --print("KnockedDown: ", target:isKnockedDown(), " || Prone: ", target:isProne())
     if (not (target:isKnockedDown() or target:isProne())) then return false end
     
@@ -347,7 +346,7 @@ end
 -- checks the squares that the bullet travels, this means there's need to be a limit to how fast the bullet travels
 -- this function determines whether bullets should "break" meaning they stop, pretty much a collision checker
 -- bullet square, dirc, bullet offset, player offset, nonsfx
-function Advanced_trajectory.checkiswallordoor(square,bulletAngle,bulletPosition,playerPosition,nosfx)
+function Advanced_trajectory.checkiswallordoor(square, bulletAngle, bulletPosition, playerPosition, nosfx)
     --[[
     local bulletPosFloorX = math.floor(bulletPosition[1])
     local bulletPosFloorY = math.floor(bulletPosition[2])
@@ -559,22 +558,25 @@ function Advanced_trajectory.checkiswallordoor(square,bulletAngle,bulletPosition
     end
 
     local player = getPlayer()
+
+    -- get player's current position, not initial parameter
+    local playerCurrPosX = player:getX()
+    local playerCurrPosY = player:getY()
+
     local playervehicle 
     if player then
         playervehicle = player:getVehicle()
     end
 
     local squarecar = playervehicle or square:getVehicleContainer()
-    -- local squarecar2
-    -- local player = getPlayer()
-    -- if player then
-    --     local vehsq = player:getCurrentSquare()
-    --     if vehsq then
-    --         squarecar2 = vehsq:getVehicleContainer()
-    --     end
-    -- end
+
+    if squarecar then
+        print("car,player distance: ", (squarecar:getX() - playerCurrPosX)^2  + (squarecar:getY() - playerCurrPosY)^2)
+    end
     
-    if squarecar and ((squarecar:getX() - playerPosX)^2  + (squarecar:getY() - playerPosY)^2) > 8 then
+    -- if square has car and player is over a distance away from car, check distance between bullet and car and damage car if close enough
+    -- the reason for the initial distance check is to allow the player to shoot targets beyond the car while taking cover next to the car, otherwise have bullet collide with car
+    if squarecar and ((squarecar:getX() - playerCurrPosX)^2  + (squarecar:getY() - playerCurrPosY)^2) > 8 then
         if nosfx then return true end
 
         if ( (squarecar:getX() - bulletPosition[1])^2  + (squarecar:getY() - bulletPosition[2])^2 ) < 2.8  then
@@ -1862,9 +1864,9 @@ function getDistanceFromPlayer(x, y)
     return distance
 end
 
------------------------------------
------BODY PART LOGIC FUNC SECT-----
------------------------------------
+-------------------------------------------
+-----GENERAL COLLISION LOGIC FUNC SECT-----
+-------------------------------------------
 function Advanced_trajectory.checkontick()
 
     Advanced_trajectory.boomontick()
@@ -2133,7 +2135,6 @@ function Advanced_trajectory.checkontick()
                         end
                     end
                     
-
                     if vt["wallcarzombie"] or vt[9] == "Grenade"then
 
                         vt[22]["zombie"] = Zombie
