@@ -108,7 +108,7 @@ NOTES:  - bulletTable (position table of offsets xyz {})
         - damage 1+angleoff = head || 2 = body || 3 = foot
         - shooter (client player (you) shooting)
 ]]
-function Advanced_trajectory.getShootzombie(bulletTable,damage,playerTable, missedShot)
+function Advanced_trajectory.getShootzombie(bulletTable, damage, playerTable, missedShot)
 
     -- Initialize tables to store zombies and players
     local zbtable = {}  -- zombie table
@@ -569,10 +569,6 @@ function Advanced_trajectory.checkiswallordoor(square, bulletAngle, bulletPositi
     end
 
     local squarecar = playervehicle or square:getVehicleContainer()
-
-    if squarecar then
-        print("car,player distance: ", (squarecar:getX() - playerCurrPosX)^2  + (squarecar:getY() - playerCurrPosY)^2)
-    end
     
     -- if square has car and player is over a distance away from car, check distance between bullet and car and damage car if close enough
     -- the reason for the initial distance check is to allow the player to shoot targets beyond the car while taking cover next to the car, otherwise have bullet collide with car
@@ -747,7 +743,8 @@ function Advanced_trajectory.OnPlayerUpdate()
     end
 
     if player:isAiming() and instanceof(weaitem,"HandWeapon") and not weaitem:hasTag("Thrown") and not Advanced_trajectory.hasFlameWeapon and not (weaitem:hasTag("XBow") and not getSandboxOptions():getOptionByName("Advanced_trajectory.DebugEnableBow"):getValue()) and (((weaitem:isRanged() and getSandboxOptions():getOptionByName("Advanced_trajectory.Enablerange"):getValue()) or (weaitem:getSwingAnim() =="Throw" and getSandboxOptions():getOptionByName("Advanced_trajectory.Enablethrow"):getValue())) or Advanced_trajectory.Advanced_trajectory[weaitem:getFullType()]) then
-        --print(player:getForwardDirection():getDirection()*360/(2*math.pi))
+        
+        -- print("Forward Dir: ", player:getForwardDirection():getDirection()*360/(2*math.pi))
         -- print(getPlayer():getCoopPVP())
 
         if getSandboxOptions():getOptionByName("Advanced_trajectory.showOutlines"):getValue() then
@@ -1617,15 +1614,15 @@ function checkBowAndCrossbow(player, Zombie)
     end
 end
 
-function displayDamageOnZom(damagezb, Zombie)
+function displayDamageOnZom(zombie, damagezb)
     local damagea = TextDrawObject.new()
     damagea:setDefaultColors(1,1,0.1,0.7)
     damagea:setOutlineColors(0,0,0,1)
     damagea:ReadString(UIFont.Middle, "-" ..tostring(math.floor(damagezb*100)), -1)
-    local sx = IsoUtils.XToScreen(Zombie:getX(), Zombie:getY(), Zombie:getZ(), 0);
-    local sy = IsoUtils.YToScreen(Zombie:getX(), Zombie:getY(), Zombie:getZ(), 0);
-    sx = sx - IsoCamera.getOffX() - Zombie:getOffsetX();
-    sy = sy - IsoCamera.getOffY() - Zombie:getOffsetY();
+    local sx = IsoUtils.XToScreen(zombie:getX(), zombie:getY(), zombie:getZ(), 0);
+    local sy = IsoUtils.YToScreen(zombie:getX(), zombie:getY(), zombie:getZ(), 0);
+    sx = sx - IsoCamera.getOffX() - zombie:getOffsetX();
+    sy = sy - IsoCamera.getOffY() - zombie:getOffsetY();
     sy = sy - 64
     sx = sx / getCore():getZoom(0)
     sy = sy / getCore():getZoom(0)
@@ -1634,10 +1631,10 @@ function displayDamageOnZom(damagezb, Zombie)
     table.insert(Advanced_trajectory.damagedisplayer,{60,damagea,sx,sy,sx,sy})
 end
 
-function searchAndDmgClothing(player, shotpart)
+function searchAndDmgClothing(playerShot, shotpart)
 
     local hasBulletProof= false
-    local playerWornInv = player:getWornItems();
+    local playerWornInv = playerShot:getWornItems();
 
     -- use this to compare shot part and covered part
     local nameShotPart = BodyPartType.getDisplayName(shotpart)
@@ -1701,7 +1698,7 @@ function searchAndDmgClothing(player, shotpart)
             -- hole is added only if the shot part initially had no hole. added hole means damage to clothing
             -- decided to add holes only so players can still wear their battlescarred clothing
             if item:getHolesNumber() < item:getNbrOfCoveredParts() then
-                player:addHole(shotBloodPart, true)
+                playerShot:addHole(shotBloodPart, true)
             end
 
             --print(item:getName(), "'s MaxCondition / Curr: ", item:getConditionMax(), " / ", item:getCondition())
@@ -1710,12 +1707,12 @@ function searchAndDmgClothing(player, shotpart)
     end
 
     if getSandboxOptions():getOptionByName("Advanced_trajectory.DebugSayShotPart"):getValue() then
-        player:Say("Ow! My " .. nameShotPart .. "!")
+        playerShot:Say("Ow! My " .. nameShotPart .. "!")
     end
 end
 
 -- function is here for testing through voodoo
-function damagePlayershot(player, damage, baseGunDmg, headShotDmg, bodyShotDmg, footShotDmg)
+function damagePlayershot(playerShot, damage, baseGunDmg, headShotDmg, bodyShotDmg, footShotDmg)
     local highShot = {
         BodyPartType.Head, BodyPartType.Head,
         BodyPartType.Neck
@@ -1777,13 +1774,14 @@ function damagePlayershot(player, damage, baseGunDmg, headShotDmg, bodyShotDmg, 
     end
 
     --print("DmgMult / BaseDmg: ", damage, " / ", baseGunDmg)
-    searchAndDmgClothing(player, shotpart)
+    searchAndDmgClothing(playerShot, shotpart)
     
-    local bodypart = player:getBodyDamage():getBodyPart(shotpart)
+    local bodypart = playerShot:getBodyDamage():getBodyPart(shotpart)
+    local nameShotPart = BodyPartType.getDisplayName(shotpart)
 
     -- float (part, isBite, isBullet)
     -- bulletdefense is usually 100
-    local defense = player:getBodyPartClothingDefense(shotpart:index(),false,true)
+    local defense = playerShot:getBodyPartClothingDefense(shotpart:index(),false,true)
 
     --print("BodyPartClothingDefense: ", defense)
 
@@ -1818,9 +1816,20 @@ function damagePlayershot(player, damage, baseGunDmg, headShotDmg, bodyShotDmg, 
         defense = maxDefense
     end
 
-    local playerDamageDealt = baseGunDmg*damage*(1-defense)
+    local playerDamageDealt = baseGunDmg * damage * (1 - defense)
 
-    player:getBodyDamage():ReduceGeneralHealth(playerDamageDealt)
+    playerShot:getBodyDamage():ReduceGeneralHealth(playerDamageDealt)
+
+    local stats = playerShot:getStats()
+	local pain = math.min(stats:getPain() + playerShot:getBodyDamage():getInitialBitePain() * BodyPartType.getPainModifyer(shotpart:index()), 100)
+	stats:setPain(pain)
+
+    playerShot:updateMovementRates()
+    playerShot:getBodyDamage():Update()
+
+    playerShot:addBlood(50)
+
+    return nameShotPart, playerDamageDealt
 end
 
 function determineArrowSpawn(square, isBroken)
@@ -2103,7 +2112,6 @@ function Advanced_trajectory.checkontick()
                 -- vt[19] is the player itself (you)
 
                 if not vt["nonsfx"] and Playershot and vt[19] then
-                        Playershot:addBlood(100)
 
                         -- isClient() returns true if the code is being run in MP
                         if isClient() then
@@ -2122,7 +2130,7 @@ function Advanced_trajectory.checkontick()
                 -------------------------------------
                 if Zombie and Zombie:isAlive() then
 
-                    -- If zombies are alive, announce the body part it hits if the advanced trajectory option is enabled
+                    -- If zombies are alive, announce the body part it hits if callshot is enabled
                     if vt[19] and getSandboxOptions():getOptionByName("Advanced_trajectory.callshot"):getValue() then
                         vt[19]:Say(getText(saywhat))
                     end
@@ -2176,13 +2184,10 @@ function Advanced_trajectory.checkontick()
 
                         -- display damage done to zombie from bullet 
                         if getSandboxOptions():getOptionByName("ATY_damagedisplay"):getValue() then
-                            displayDamageOnZom(damagezb, Zombie)
+                            displayDamageOnZom(Zombie, damagezb)
                         end
 
-                        -- subtract health from zombie 
-                        Zombie:setHealth(Zombie:getHealth()-damagezb)
-                        Zombie:setHitReaction("Shot")
-                        Zombie:addBlood(getSandboxOptions():getOptionByName("AT_Blood"):getValue())
+                        damageZombie(Zombie, damagezb)
                         
                         -- if zombie's health is very low, just kill it (recall full health is over 140) and give xp like usual
                         if Zombie:getHealth() <= 0.1 then                           
@@ -2247,6 +2252,12 @@ function Advanced_trajectory.checkontick()
 end
 
 Events.OnTick.Add(Advanced_trajectory.checkontick)
+
+function damageZombie(zombie, damage) 
+    zombie:setHealth(zombie:getHealth() - damage)
+    zombie:setHitReaction("Shot")
+    zombie:addBlood(getSandboxOptions():getOptionByName("AT_Blood"):getValue())
+end
 
     
 function allowPVP(player, target)
