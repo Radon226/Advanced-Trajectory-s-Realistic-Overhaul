@@ -100,6 +100,152 @@ function Advanced_trajectory.twotable(table2)
     return table1
 end
 
+local function getTargetDistanceFromPlayer(player, target)
+    local playerX = player:getX()
+    local playerY = player:getY()
+
+    local targetX = target:getX()
+    local targetY = target:getY()
+
+    local distance = math.sqrt((playerX - targetX)^2 + (playerY - targetY)^2)
+
+    return distance
+end
+
+local function isOnTopOfTarget(player, target)
+    --print("KnockedDown: ", target:isKnockedDown(), " || Prone: ", target:isProne())
+    if (not (target:isKnockedDown() or target:isProne())) then return false end
+    
+    local distance = getTargetDistanceFromPlayer(player, target)
+    --print("distance: ", distance)
+
+    if distance < 1 then 
+        return true
+    else
+        return false
+    end
+end
+
+-- Function to calculate the dot product of two vectors
+local function findVectorDotProduct(x1, y1, x2, y2)
+    return x1 * x2 + y1 * y2
+end
+
+local function angleToVector(angle)
+    -- Convert angle to radians (Lua's math library uses radians)
+    local radians = math.rad(angle)
+
+    -- Calculate the x and y components of the vector
+    local x = math.cos(radians)
+    local y = math.sin(radians)
+
+    return x, y
+end
+
+local function isTargetBehind(playerX, playerY, aimDir, zombieX, zombieY, threshold)
+    local zombieXVector = zombieX - playerX
+    local zombieYVector = zombieY - playerY
+
+    local aimDirX, aimDirY = angleToVector(aimDir)
+
+    local dotProduct = findVectorDotProduct(aimDirX, aimDirY, zombieXVector, zombieYVector)
+
+    --print("DotProd: ", dotProduct, " > Thresh: ", threshold)
+
+    -- Check if the zombie is behind the character
+    if dotProduct > threshold then
+        -- Zombie is in front of the character, allow shooting
+        return false
+    else
+        -- Zombie is behind the character, ignore or handle differently
+        return true
+    end
+end
+
+local function determineArrowSpawn(square, isBroken)
+    local player = getPlayer()
+    local weaitem = player:getPrimaryHandItem()
+
+    if weaitem == nil then return end
+
+    local proj  = ""
+    local isBow = false
+
+    -- check if player has a bow
+    if string.contains(weaitem:getAmmoType() or "","Arrow_Fiberglass") then
+        proj  = InventoryItemFactory.CreateItem("Arrow_Fiberglass")
+        isBow = true
+    end
+
+    if string.contains(weaitem:getAmmoType() or "","Bolt_Bear") then
+        proj  = InventoryItemFactory.CreateItem("Bolt_Bear")
+        isBow = true
+    end
+
+
+    if isBow then
+        --print("Spawned broken arrow.")
+        if (isBroken) then
+            proj  = InventoryItemFactory.CreateItem(proj:getModData().Break)
+        end
+        
+        square:AddWorldInventoryItem(proj, 0, 0, 0.0)
+    end
+end
+
+local function allowPVP(player, target)
+    -- allow PVP if
+    -- 1) target is not the client player (you can't shoot you)
+    -- 2) target or player does not have PVP safety enabled
+    -- 3) target is not in the same faction as player
+    -- 4) faction PVP is enabled for either target or player
+    -- 5) sandbox option IgnorePVPSafety is on
+
+    -- if either players are somehow null, return false
+    if not player or not target then 
+        return false 
+    end
+    
+    -- return false if player is the target
+    if player == target then 
+        return false 
+    end
+
+    local ignorePVPSafety = getSandboxOptions():getOptionByName("Advanced_trajectory.IgnorePVPSafety"):getValue()  
+
+    if ignorePVPSafety then 
+        return true
+    end
+
+    -- if safety is on for BOTH players, then PVP is not allowed
+    if player:getSafety():isEnabled() and target:getSafety():isEnabled() then 
+        return false
+    end
+
+    local playerFaction = Faction.getPlayerFaction(player)
+    local targetFaction = Faction.getPlayerFaction(target)
+
+    if not playerFaction or not targetFaction then
+        return true
+    end
+
+    local playerFactionPvp = player:isFactionPvp()
+    local targetFactionPvp = target:isFactionPvp()
+    
+    -- allow PVP if player and target is in the same faction and faction PVP is on
+    if playerFaction == targetFaction then
+        if playerFactionPvp or targetFactionPvp then
+            return true
+        end
+    end
+
+    if playerFaction ~= targetFaction then
+        return true
+    end
+
+    return false
+end
+
 ----------------------------------------------------
 --BULLET HIT ZOMBIE/PLAYER DETECTION ?? FUNC SECT---
 ----------------------------------------------------
@@ -274,71 +420,6 @@ function Advanced_trajectory.getShootzombie(bulletTable, damage, playerTable, mi
     return minzb[1],minpr[1]
 
 end
-
-function getTargetDistanceFromPlayer(player, target)
-    local playerX = player:getX()
-    local playerY = player:getY()
-
-    local targetX = target:getX()
-    local targetY = target:getY()
-
-    local distance = math.sqrt((playerX - targetX)^2 + (playerY - targetY)^2)
-
-    return distance
-end
-
-function isOnTopOfTarget(player, target)
-    --print("KnockedDown: ", target:isKnockedDown(), " || Prone: ", target:isProne())
-    if (not (target:isKnockedDown() or target:isProne())) then return false end
-    
-    local distance = getTargetDistanceFromPlayer(player, target)
-    --print("distance: ", distance)
-
-    if distance < 1 then 
-        return true
-    else
-        return false
-    end
-
-end
-
--- Function to calculate the dot product of two vectors
-function findVectorDotProduct(x1, y1, x2, y2)
-    return x1 * x2 + y1 * y2
-end
-
-function angleToVector(angle)
-    -- Convert angle to radians (Lua's math library uses radians)
-    local radians = math.rad(angle)
-
-    -- Calculate the x and y components of the vector
-    local x = math.cos(radians)
-    local y = math.sin(radians)
-
-    return x, y
-end
-
-function isTargetBehind(playerX, playerY, aimDir, zombieX, zombieY, threshold)
-    local zombieXVector = zombieX - playerX
-    local zombieYVector = zombieY - playerY
-
-    local aimDirX, aimDirY = angleToVector(aimDir)
-
-    local dotProduct = findVectorDotProduct(aimDirX, aimDirY, zombieXVector, zombieYVector)
-
-    --print("DotProd: ", dotProduct, " > Thresh: ", threshold)
-
-    -- Check if the zombie is behind the character
-    if dotProduct > threshold then
-        -- Zombie is in front of the character, allow shooting
-        return false
-    else
-        -- Zombie is behind the character, ignore or handle differently
-        return true
-    end
-end
-
-
 
 ----------------------------------------------------
 --BULLET COLLISION WITH STATIC OBJECTS FUNC SECT---
@@ -670,7 +751,7 @@ end
 --ATTACHMENT EFFECTS FUNC SECT-----
 -----------------------------------
 -- Consider vanilla AND brita's into account
-function Advanced_trajectory.getAttachmentEffects(weapon)  
+local function getAttachmentEffects(weapon)  
     local scope     = weapon:getScope()         -- scopes/reddots/sights
     local canon     = weapon:getCanon()         -- britas: bayonets, barrels, chokes
     local stock     = weapon:getStock()         -- stocks, lasers
@@ -728,6 +809,65 @@ function Advanced_trajectory.getAttachmentEffects(weapon)
     return effectsTable
 end
 
+local function getIsHoldingShotgun(weapon)
+    if (string.contains(weapon:getAmmoType() or "","Shotgun") or string.contains(weapon:getAmmoType() or "","shotgun") or string.contains(weapon:getAmmoType() or "","shell") or string.contains(weapon:getAmmoType() or "","Shell")) then
+        return true
+    end
+
+    return false
+end
+
+local function getMissMin(aimingLevel, weapon)
+    local buff = 0
+    if getIsHoldingShotgun(weapon) then
+        buff = getSandboxOptions():getOptionByName("Advanced_trajectory.shotgunHitBuff"):getValue()
+    end
+
+    local hitLevelScaling = getSandboxOptions():getOptionByName("Advanced_trajectory.hitLevelScaling"):getValue()
+
+    Advanced_trajectory.missMin = getSandboxOptions():getOptionByName("Advanced_trajectory.missMin"):getValue() + aimingLevel*hitLevelScaling + buff
+end
+
+local function determineHitOrMiss() 
+    local player = getPlayer()
+
+    local missMax = getSandboxOptions():getOptionByName("Advanced_trajectory.missMax"):getValue()
+
+    local randNum = ZombRandFloat(Advanced_trajectory.missMin, missMax) 
+
+    local enableAnnounce = getSandboxOptions():getOptionByName("Advanced_trajectory.announceHitOrMiss"):getValue()
+    if Advanced_trajectory.aimnumBeforeShot > randNum then
+        --Advanced_trajectory.missedShot = true
+        if enableAnnounce then
+            player:Say(getText("Missed: " .. Advanced_trajectory.aimnumBeforeShot .. " > " .. randNum))
+        end
+        return true
+    else
+        --Advanced_trajectory.missedShot = false
+        if enableAnnounce then
+            player:Say(getText("Hit: " .. Advanced_trajectory.aimnumBeforeShot .. " <= " .. randNum))
+        end
+        return false
+    end
+end
+
+
+local function getTargetDistance(player)
+    local mouseX = getMouseXScaled()
+    local mouseY = getMouseYScaled()
+
+    local playerX = math.floor(player:getX())
+    local playerY = math.floor(player:getY())
+    local playerZ = math.floor(player:getZ())
+    
+    local wx, wy = ISCoordConversion.ToWorld(mouseX, mouseY, playerZ)
+    wx, wy = math.floor(wx) + 2, math.floor(wy) + 2
+
+    Advanced_trajectory.targetDistance = (math.sqrt((playerX - wx)^2 + (playerY - wy)^2))
+
+    --print("Player X/Y || MouseX/Y: ", playerX," / ",playerY, " || ", wx," / ",wy)
+    --print("Target Distance: ", Advanced_trajectory.targetDistance)
+end
 
 -----------------------------------
 --AIMNUM/BLOOM LOGIC FUNC SECT---
@@ -754,7 +894,7 @@ function Advanced_trajectory.OnPlayerUpdate()
         end
 
 
-        local modEffectsTable = Advanced_trajectory.getAttachmentEffects(weaitem)  
+        local modEffectsTable = getAttachmentEffects(weaitem)  
         --print("Rs: ", modEffectsTable[1], " / Fc: ", modEffectsTable[2], " / Re: ", modEffectsTable[3], " / Ra: ", modEffectsTable[4], " / A:", modEffectsTable[5])
 
         Mouse.setCursorVisible(false)
@@ -1086,7 +1226,6 @@ function Advanced_trajectory.OnPlayerUpdate()
             maxFocusCounter = 100
         end    
 
-        
 
         ----------------------------
         -----PENALIZE CROUCH SECT---
@@ -1537,26 +1676,9 @@ function Advanced_trajectory.OnPlayerUpdate()
     
 end
 
-function getTargetDistance(player)
-        local mouseX = getMouseXScaled()
-        local mouseY = getMouseYScaled()
-
-        local playerX = math.floor(player:getX())
-        local playerY = math.floor(player:getY())
-        local playerZ = math.floor(player:getZ())
-        
-        local wx, wy = ISCoordConversion.ToWorld(mouseX, mouseY, playerZ)
-        wx, wy = math.floor(wx) + 2, math.floor(wy) + 2
-
-        Advanced_trajectory.targetDistance = (math.sqrt((playerX - wx)^2 + (playerY - wy)^2))
-
-        --print("Player X/Y || MouseX/Y: ", playerX," / ",playerY, " || ", wx," / ",wy)
-        --print("Target Distance: ", Advanced_trajectory.targetDistance)
-end
-
 Advanced_trajectory.damagedisplayer = {}
 
-function checkBowAndCrossbow(player, Zombie)
+local function checkBowAndCrossbow(player, Zombie)
     ------------------------------------------------------------------------------
     ------COMPATABILITY FOR BRITA'S BOWS AND CROSSBOWS (CREDITS TO LISOLA/BRITA)---------
     ------------------------------------------------------------------------------
@@ -1614,7 +1736,7 @@ function checkBowAndCrossbow(player, Zombie)
     end
 end
 
-function displayDamageOnZom(zombie, damagezb)
+local function displayDamageOnZom(zombie, damagezb)
     local damagea = TextDrawObject.new()
     damagea:setDefaultColors(1,1,0.1,0.7)
     damagea:setOutlineColors(0,0,0,1)
@@ -1631,7 +1753,7 @@ function displayDamageOnZom(zombie, damagezb)
     table.insert(Advanced_trajectory.damagedisplayer,{60,damagea,sx,sy,sx,sy})
 end
 
-function searchAndDmgClothing(playerShot, shotpart)
+local function searchAndDmgClothing(playerShot, shotpart)
 
     local hasBulletProof= false
     local playerWornInv = playerShot:getWornItems();
@@ -1832,45 +1954,10 @@ function damagePlayershot(playerShot, damage, baseGunDmg, headShotDmg, bodyShotD
     return nameShotPart, playerDamageDealt
 end
 
-function determineArrowSpawn(square, isBroken)
-    local player = getPlayer()
-    local weaitem = player:getPrimaryHandItem()
-
-    if weaitem == nil then return end
-
-    local proj  = ""
-    local isBow = false
-
-    -- check if player has a bow
-    if string.contains(weaitem:getAmmoType() or "","Arrow_Fiberglass") then
-        proj  = InventoryItemFactory.CreateItem("Arrow_Fiberglass")
-        isBow = true
-    end
-
-    if string.contains(weaitem:getAmmoType() or "","Bolt_Bear") then
-        proj  = InventoryItemFactory.CreateItem("Bolt_Bear")
-        isBow = true
-    end
-
-
-    if isBow then
-        --print("Spawned broken arrow.")
-        if (isBroken) then
-            proj  = InventoryItemFactory.CreateItem(proj:getModData().Break)
-        end
-        
-        square:AddWorldInventoryItem(proj, 0, 0, 0.0)
-    end
-end
-
-function getDistanceFromPlayer(x, y) 
-    local player = getPlayer()
-    local playerX = player:getX()
-    local playerY = player:getY()
-
-    local distance = math.sqrt((playerX - x)^2 + (playerY - y)^2)
-
-    return distance
+local function damageZombie(zombie, damage) 
+    zombie:setHealth(zombie:getHealth() - damage)
+    zombie:setHitReaction("Shot")
+    zombie:addBlood(getSandboxOptions():getOptionByName("AT_Blood"):getValue())
 end
 
 -------------------------------------------
@@ -2253,108 +2340,6 @@ end
 
 Events.OnTick.Add(Advanced_trajectory.checkontick)
 
-function damageZombie(zombie, damage) 
-    zombie:setHealth(zombie:getHealth() - damage)
-    zombie:setHitReaction("Shot")
-    zombie:addBlood(getSandboxOptions():getOptionByName("AT_Blood"):getValue())
-end
-
-    
-function allowPVP(player, target)
-    -- allow PVP if
-    -- 1) target is not the client player (you can't shoot you)
-    -- 2) target or player does not have PVP safety enabled
-    -- 3) target is not in the same faction as player
-    -- 4) faction PVP is enabled for either target or player
-    -- 5) sandbox option IgnorePVPSafety is on
-
-    -- if either players are somehow null, return false
-    if not player or not target then 
-        return false 
-    end
-    
-    -- return false if player is the target
-    if player == target then 
-        return false 
-    end
-
-    local ignorePVPSafety = getSandboxOptions():getOptionByName("Advanced_trajectory.IgnorePVPSafety"):getValue()  
-
-    if ignorePVPSafety then 
-        return true
-    end
-
-    -- if safety is on for BOTH players, then PVP is not allowed
-    if player:getSafety():isEnabled() and target:getSafety():isEnabled() then 
-        return false
-    end
-
-    local playerFaction = Faction.getPlayerFaction(player)
-    local targetFaction = Faction.getPlayerFaction(target)
-
-    if not playerFaction or not targetFaction then
-        return true
-    end
-
-    local playerFactionPvp = player:isFactionPvp()
-    local targetFactionPvp = target:isFactionPvp()
-    
-    -- allow PVP if player and target is in the same faction and faction PVP is on
-    if playerFaction == targetFaction then
-        if playerFactionPvp or targetFactionPvp then
-            return true
-        end
-    end
-
-    if playerFaction ~= targetFaction then
-        return true
-    end
-
-    return false
-end
-
-function getMissMin(aimingLevel, weapon)
-    local buff = 0
-    if getIsHoldingShotgun(weapon) then
-        buff = getSandboxOptions():getOptionByName("Advanced_trajectory.shotgunHitBuff"):getValue()
-    end
-
-    local hitLevelScaling = getSandboxOptions():getOptionByName("Advanced_trajectory.hitLevelScaling"):getValue()
-
-    Advanced_trajectory.missMin = getSandboxOptions():getOptionByName("Advanced_trajectory.missMin"):getValue() + aimingLevel*hitLevelScaling + buff
-end
-
-function determineHitOrMiss() 
-    local player = getPlayer()
-
-    local missMax = getSandboxOptions():getOptionByName("Advanced_trajectory.missMax"):getValue()
-
-    local randNum = ZombRandFloat(Advanced_trajectory.missMin, missMax) 
-
-    local enableAnnounce = getSandboxOptions():getOptionByName("Advanced_trajectory.announceHitOrMiss"):getValue()
-    if Advanced_trajectory.aimnumBeforeShot > randNum then
-        --Advanced_trajectory.missedShot = true
-        if enableAnnounce then
-            player:Say(getText("Missed: " .. Advanced_trajectory.aimnumBeforeShot .. " > " .. randNum))
-        end
-        return true
-    else
-        --Advanced_trajectory.missedShot = false
-        if enableAnnounce then
-            player:Say(getText("Hit: " .. Advanced_trajectory.aimnumBeforeShot .. " <= " .. randNum))
-        end
-        return false
-    end
-end
-
-function getIsHoldingShotgun(weapon)
-    if (string.contains(weapon:getAmmoType() or "","Shotgun") or string.contains(weapon:getAmmoType() or "","shotgun") or string.contains(weapon:getAmmoType() or "","shell") or string.contains(weapon:getAmmoType() or "","Shell")) then
-        return true
-    end
-
-    return false
-end
-
 -----------------------------------
 --SHOOTING PROJECTILE FUNC SECT---
 -----------------------------------
@@ -2365,7 +2350,7 @@ function Advanced_trajectory.OnWeaponSwing(character, handWeapon)
     end
 
     local playerLevel = character:getPerkLevel(Perks.Aiming)
-    local modEffectsTable = Advanced_trajectory.getAttachmentEffects(handWeapon)  
+    local modEffectsTable = getAttachmentEffects(handWeapon)  
 
     -- print(character)
     local item
