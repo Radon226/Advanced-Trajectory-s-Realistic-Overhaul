@@ -1,4 +1,4 @@
-require "Advanced_trajectory_core"
+local Advanced_trajectory = require "Advanced_trajectory_core"
 
 
 Advanced_trajectory.panel = ISPanel:derive("Advanced_trajectory.panel")
@@ -70,9 +70,6 @@ function Advanced_trajectory.panel:prerender()
     self:drawTextureScaled(self.texturetable[2], (self.width/2 +multiper -texturescal/2)    + ZombRand(shakyEffect), (self.height/2 -texturescal/2)             + ZombRand(shakyEffect),  texturescal, texturescal, transparency, AR, AG, AB)
     self:drawTextureScaled(self.texturetable[3], (self.width/2 -texturescal/2)              - ZombRand(shakyEffect), (self.height/2 + multiper-texturescal/2)   - ZombRand(shakyEffect),  texturescal, texturescal, transparency, AR, AG, AB)
     self:drawTextureScaled(self.texturetable[4], (self.width/2 -multiper -texturescal/2)    - ZombRand(shakyEffect), (self.height/2-texturescal/2)              - ZombRand(shakyEffect),  texturescal, texturescal, transparency, AR, AG, AB)
- 
-    
-
 end
 
 function Advanced_trajectory.panel:onMouseUp(x, y)
