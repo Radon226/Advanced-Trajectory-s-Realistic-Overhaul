@@ -12,7 +12,7 @@ tasergun[12] = 0.125
 tasergun[13] = false
 tasergun[14] = "Base.aty_revolversfx"
 
-Advanced_trajectory.Advanced_trajectory["Base.Taser"] = tasergun
+Advanced_trajectory.FullWeaponTypes["Base.Taser"] = tasergun
 
 local function OnGameStart()
     -- add compat to taser mod from Ae

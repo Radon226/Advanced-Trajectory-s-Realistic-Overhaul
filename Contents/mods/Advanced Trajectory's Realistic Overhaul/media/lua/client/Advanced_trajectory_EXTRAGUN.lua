@@ -38,4 +38,4 @@ mygun[11] = true
 mygun[12] = 16
 mygun[14] = "Base.revolversfx"
 
-Advanced_trajectory.Advanced_trajectory["Base.examplegun"] = mygun
+Advanced_trajectory.FullWeaponTypes["Base.examplegun"] = mygun

@@ -7,7 +7,7 @@ local function damagePlayershotPVP(player, playerShot, damage, baseGunDmg, headS
 
     --print("DamagePlayershotPVP - ", "playerShot:", playerShot, " damagepr:", damage, " firearmdamage:", baseGunDmg)
 
-    local nameShotPart, playerDamageDealt = Advanced_trajectory.damagePlayershot(playerShot, damage, baseGunDmg, headShotDmg, bodyShotDmg, footShotDmg)
+    local nameShotPart, playerDamageDealt = Advanced_trajectory.Advanced_trajectory.damagePlayershot(playerShot, damage, baseGunDmg, headShotDmg, bodyShotDmg, footShotDmg)
 
     local isDead = false
     if playerShot:getHealth() < 1 or playerShot:isDead() == true then

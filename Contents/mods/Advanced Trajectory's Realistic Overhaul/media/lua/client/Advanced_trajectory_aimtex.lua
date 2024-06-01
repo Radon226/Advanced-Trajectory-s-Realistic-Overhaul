@@ -1,4 +1,4 @@
-local Advanced_trajectory = require "Advanced_trajectory_core"
+require "Advanced_trajectory_core"
 
 
 Advanced_trajectory.panel = ISPanel:derive("Advanced_trajectory.panel")
