@@ -1,51 +1,47 @@
-Advanced_trajectory                     = {}
-Advanced_trajectory.table               = {}
-Advanced_trajectory.boomtable           = {}
-Advanced_trajectory.aimcursor           = nil
-Advanced_trajectory.aimcursorsq         = nil
-Advanced_trajectory.panel               = {}
-Advanced_trajectory.panel.instance      = nil
-Advanced_trajectory.aimnum              = 100
-Advanced_trajectory.aimnumBeforeShot    = 0
-Advanced_trajectory.maxaimnum           = 100
-Advanced_trajectory.minaimnum           = 0
+local Advanced_trajectory = {
+    table               = {},
+    boomtable           = {},
+    aimcursor           = nil,
+    aimcursorsq         = nil,
+    panel               = {
+        instance = nil
+    },
 
-Advanced_trajectory.targetDistance      = 0
-Advanced_trajectory.isOverDistanceLimit = false
+    -- bloom
+    aimnum              = 100,
+    aimnumBeforeShot    = 0,
+    maxaimnum           = 100,
+    minaimnum           = 0,
+    
+    targetDistance      = 0,
+    isOverDistanceLimit = false,
+    
+    inhaleCounter       = 0,
+    exhaleCounter       = 0,
+    maxFocusCounter     = 100,
+    aimrate             = 0,
+    missMin             = 0,
+    
+    crouchCounter       = 100,
+    isCrouch            = false,
+    isCrawl             = false,
+    
+    hasFlameWeapon      = false,
+    
+    -- for aimtex
+    alpha           = 0,
+    stressEffect    = 0,
+    painEffect      = 0,
+    panicEffect     = 0,
+    
+    aimtexwtable    = {},
+    aimtexdistance  = 0, -- weapons containing crosshairs
+    
+    -- for weapon mods to add compatability
+    FullWeaponTypes = {},
 
-Advanced_trajectory.inhaleCounter       = 0
-Advanced_trajectory.exhaleCounter       = 0
-Advanced_trajectory.maxFocusCounter     = 100
-Advanced_trajectory.aimrate             = 0
-Advanced_trajectory.missMin             = 0
-
-Advanced_trajectory.crouchCounter       = 100
-Advanced_trajectory.isCrouch            = false
-Advanced_trajectory.isCrawl             = false
-
-Advanced_trajectory.hasFlameWeapon      = false
-
--- for aimtex
-Advanced_trajectory.alpha           = 0
-Advanced_trajectory.stressEffect    = 0
-Advanced_trajectory.painEffect      = 0
-Advanced_trajectory.panicEffect     = 0
-
-Advanced_trajectory.aimtexwtable    = {}
-Advanced_trajectory.aimtexdistance  = 0 -- Weapons containing crosshairs
-
-Advanced_trajectory.FullWeaponTypes = {}
-
--- DmgZom are the damage multipliers for zombies
-Advanced_trajectory.HeadShotDmgZomMultiplier = getSandboxOptions():getOptionByName("Advanced_trajectory.headShotDmgZomMultiplier"):getValue()
-Advanced_trajectory.BodyShotDmgZomMultiplier = getSandboxOptions():getOptionByName("Advanced_trajectory.bodyShotDmgZomMultiplier"):getValue()
-Advanced_trajectory.FootShotDmgZomMultiplier = getSandboxOptions():getOptionByName("Advanced_trajectory.footShotDmgZomMultiplier"):getValue()
-
--- DmgPlayer are the damage multipliers for players
-Advanced_trajectory.HeadShotDmgPlayerMultiplier = getSandboxOptions():getOptionByName("Advanced_trajectory.headShotDmgPlayerMultiplier"):getValue()
-Advanced_trajectory.BodyShotDmgPlayerMultiplier = getSandboxOptions():getOptionByName("Advanced_trajectory.bodyShotDmgPlayerMultiplier"):getValue()
-Advanced_trajectory.FootShotDmgPlayerMultiplier = getSandboxOptions():getOptionByName("Advanced_trajectory.footShotDmgPlayerMultiplier"):getValue()
-
+    damagedisplayer = {}
+}
 
 ----------------------------------------------------------------
 --REMOVE ITEM (ex. bullet projectile when collide) FUNC SECT---
@@ -62,8 +58,12 @@ end
 -------------------------
 --MATH FLOOR FUNC SECT---
 -------------------------
-function Advanced_trajectory.mathfloor(number)
-    return number - math.floor(number)
+local function mathfloor(number)
+    return math.floor(number)
+end
+
+local function advMathFloor(number)
+    return number - mathfloor(number)
 end
 
 -----------------------------
@@ -72,7 +72,7 @@ end
 function Advanced_trajectory.additemsfx(square,itemname,x,y,z)
     if square:getZ() > 7 then return end
     local iteminv = InventoryItemFactory.CreateItem(itemname)
-    local itemin = IsoWorldInventoryObject.new(iteminv,square,Advanced_trajectory.mathfloor(x),Advanced_trajectory.mathfloor(y),Advanced_trajectory.mathfloor(z));
+    local itemin = IsoWorldInventoryObject.new(iteminv, square, advMathFloor(x), advMathFloor(y), advMathFloor(z));
     iteminv:setWorldItem(itemin)
     square:getWorldObjects():add(itemin)
     square:getObjects():add(itemin)
@@ -90,11 +90,11 @@ end
 -------------------------
 --TABLE ?? FUNC SECT---
 -------------------------
-function Advanced_trajectory.twotable(table2)
+local function copyTable(table2)
     local table1={}
 
     for i,k in pairs(table2) do
-        table1[i]=table2[i]
+        table1[i] = table2[i]
     end
     -- print(table1)
     return table1
@@ -127,11 +127,11 @@ function Advanced_trajectory.isOnTopOfTarget(player, target)
 end
 
 -- Function to calculate the dot product of two vectors
-function Advanced_trajectory.findVectorDotProduct(x1, y1, x2, y2)
+local function findVectorDotProduct(x1, y1, x2, y2)
     return x1 * x2 + y1 * y2
 end
 
-function Advanced_trajectory.angleToVector(angle)
+local function angleToVector(angle)
     -- Convert angle to radians (Lua's math library uses radians)
     local radians = math.rad(angle)
 
@@ -146,9 +146,9 @@ function Advanced_trajectory.isTargetBehind(playerX, playerY, aimDir, zombieX, z
     local zombieXVector = zombieX - playerX
     local zombieYVector = zombieY - playerY
 
-    local aimDirX, aimDirY = Advanced_trajectory.angleToVector(aimDir)
+    local aimDirX, aimDirY = angleToVector(aimDir)
 
-    local dotProduct = Advanced_trajectory.findVectorDotProduct(aimDirX, aimDirY, zombieXVector, zombieYVector)
+    local dotProduct = findVectorDotProduct(aimDirX, aimDirY, zombieXVector, zombieYVector)
 
     --print("DotProd: ", dotProduct, " > Thresh: ", threshold)
 
@@ -254,7 +254,7 @@ NOTES:  - bulletTable (position table of offsets xyz {})
         - damage 1+angleoff = head || 2 = body || 3 = foot
         - shooter (client player (you) shooting)
 ]]
-function Advanced_trajectory.getShootZombie(bulletTable, damage, playerTable, missedShot)
+function Advanced_trajectory.getShootZombie(bulletTable, damage, playerTable)
 
     -- Initialize tables to store zombies and players
     local zbtable = {}  -- zombie table
@@ -264,37 +264,44 @@ function Advanced_trajectory.getShootZombie(bulletTable, damage, playerTable, mi
     local minzb = {false, 1}
     local minpr = {false, 1}
 
-    if missedShot then
-        return minzb[1],minpr[1]
-    end
-
     local player = getPlayer()
-    
     local playerNum = player:getPlayerNum()
 
-    local playerDir = player:getForwardDirection():getDirection()*360/(2*math.pi)
-    --print("Bullet pos: ", math.floor(bulletTable[1]), " | ", math.floor(bulletTable[2]))
-    --print("Player pos: ", math.floor(playerTable[1]), " | ", math.floor(playerTable[2]))
+    --print("Bullet pos: ", mathfloor(bulletTable[1]), " | ", mathfloor(bulletTable[2]))
+    --print("Player pos: ", mathfloor(playerTable[1]), " | ", mathfloor(playerTable[2]))
 
     -- Define grid dimensions
     local gridMultiplier = getSandboxOptions():getOptionByName("Advanced_trajectory.DebugGridMultiplier"):getValue()    
 
-    -- minimum distance from bullet to target
-    local mindistance = 0
+    --[[
+    local bulletPosX = bulletTable[1]
+    local bulletPosY = bulletTable[2]
+    local bulletPosZ = bulletTable[3]
+    local playerPosZ = playerTable[3]
+    ]]
+    
+    local function getGridSq(x, y, z)
+        return getCell():getGridSquare(x, y, z)
+    end
 
-    local prevDistanceFromPlayer = 99
+    local function canSeeSq(sq, playerNum)
+        return sq:isCanSee(playerNum)
+    end
 
+    local function canSeeSq(sq)
+        return sq:getMovingObjects()
+    end
+  
     -- Loop through a 3x3 grid centered around the bullet
-    for kz = -1, 1 do  -- X position
-        for vz = -1, 1 do  -- Y position
+    for xCell = -1, 1 do  -- X position
+        for yCell = -1, 1 do  -- Y position
             
             -- Calculate the coordinates for the current grid square
-            local x = bulletTable[1] + kz * gridMultiplier
-            local y = bulletTable[2] + vz * gridMultiplier
-            local z = bulletTable[3]
+            local x = bulletTable[1] + xCell * gridMultiplier
+            local y = bulletTable[2] + yCell * gridMultiplier
 
             -- Get the grid square at the calculated coordinates
-            local sq = getCell():getGridSquare(x, y, z)
+            local sq = getCell():getGridSquare(x, y, bulletTable[3])
 
             -- Check if the grid square is valid and can be seen by the player
             if sq and sq:isCanSee(playerNum) then
@@ -322,7 +329,7 @@ function Advanced_trajectory.getShootZombie(bulletTable, damage, playerTable, mi
                 end
 
             -- make exception if bullet and player are on the same floor to prevent issue with blindness
-            elseif sq and math.floor(bulletTable[3]) == math.floor(playerTable[3]) then
+            elseif sq and mathfloor(bulletTable[3]) == mathfloor(bulletTable[3]) then
                 local movingObjects = sq:getMovingObjects()
 
                 for zz = 1, movingObjects:size() do
@@ -347,7 +354,15 @@ function Advanced_trajectory.getShootZombie(bulletTable, damage, playerTable, mi
         end
     end
 
-    --print("*********END**********")
+
+    -- if tables are empty then just return
+    if #zbtable == 0 and #prtable == 0 then 
+        return false, false 
+    end
+
+    -- minimum distance from bullet to target
+    local mindistance = 0
+    local prevDistanceFromPlayer = 99
 
     local zomMindistModifier = getSandboxOptions():getOptionByName("Advanced_trajectory.DebugZomMindistCondition"):getValue()
     local playerMindistModifier = getSandboxOptions():getOptionByName("Advanced_trajectory.DebugPlayerMindistCondition"):getValue()
@@ -418,7 +433,6 @@ function Advanced_trajectory.getShootZombie(bulletTable, damage, playerTable, mi
 
     -- returns BOOL on whether zombie or player was hit
     return minzb[1],minpr[1]
-
 end
 
 function Advanced_trajectory.checkBulletCarCollision(square, bulletPos)
@@ -460,12 +474,12 @@ end
 -- bullet square, dirc, bullet offset, player offset, nonsfx
 function Advanced_trajectory.checkSurfaceCollision(square, bulletAngle, bulletPos, playerPos, nosfx)
     --[[
-    local bulletPosFloorX = math.floor(bulletPos[1])
-    local bulletPosFloorY = math.floor(bulletPos[2])
+    local bulletPosFloorX = mathfloor(bulletPos[1])
+    local bulletPosFloorY = mathfloor(bulletPos[2])
 
-    local playerPosFloorX = math.floor(playerPos[1])
-    local playerPosFloorY = math.floor(playerPos[2])
-    local playerPosFloorZ = math.floor(playerPos[3])
+    local playerPosFloorX = mathfloor(playerPos[1])
+    local playerPosFloorY = mathfloor(playerPos[2])
+    local playerPosFloorZ = mathfloor(playerPos[3])
 
     local bulletPosX = bulletPos[1]
     local bulletPosY = bulletPos[2]
@@ -877,12 +891,12 @@ function Advanced_trajectory.getTargetDistance(player)
     local mouseX = getMouseXScaled()
     local mouseY = getMouseYScaled()
 
-    local playerX = math.floor(player:getX())
-    local playerY = math.floor(player:getY())
-    local playerZ = math.floor(player:getZ())
+    local playerX = mathfloor(player:getX())
+    local playerY = mathfloor(player:getY())
+    local playerZ = mathfloor(player:getZ())
     
     local wx, wy = ISCoordConversion.ToWorld(mouseX, mouseY, playerZ)
-    wx, wy = math.floor(wx) + 2, math.floor(wy) + 2
+    wx, wy = mathfloor(wx) + 2, mathfloor(wy) + 2
 
     Advanced_trajectory.targetDistance = (math.sqrt((playerX - wx)^2 + (playerY - wy)^2))
 
@@ -1054,7 +1068,7 @@ function Advanced_trajectory.OnPlayerUpdate()
             maxDistance = maxDistance * shotgunDistanceModifier
         end
 
-        maxDistance = math.floor(modEffectsTable[4] + maxDistance)
+        maxDistance = mathfloor(modEffectsTable[4] + maxDistance)
         
         --local distanceLimit = (maxDistance * distanceLimitPenalty) + ((maxDistance * (1-distanceLimitPenalty)) * realLevel/10)
         local distanceLimit = maxDistance * realLevel/10
@@ -1548,7 +1562,7 @@ function Advanced_trajectory.OnPlayerUpdate()
             alpha = alphaMax
         end
 
-        --alpha = math.floor(alpha * 100) / 100
+        --alpha = mathfloor(alpha * 100) / 100
 
         if alpha < 0 then
             alpha = 0
@@ -1607,9 +1621,9 @@ function Advanced_trajectory.OnPlayerUpdate()
         local mouseY = getMouseYScaled()
 
         -- Get the player's Z position and player number
-        local playerZ = math.floor(player:getZ())
-        local playerX = math.floor(player:getX())
-        local playerY = math.floor(player:getY())
+        local playerZ = mathfloor(player:getZ())
+        local playerX = mathfloor(player:getX())
+        local playerY = mathfloor(player:getY())
         local playerNum = player:getPlayerNum()
 
         -- Initialize a flag to check if we are aiming at an object
@@ -1622,7 +1636,7 @@ function Advanced_trajectory.OnPlayerUpdate()
 
             -- Calculate world coordinates adjusted for the Z level
             local wx, wy = ISCoordConversion.ToWorld(mouseX - 3 * delDis, mouseY - 3 * delDis, Z)
-            wx, wy = math.floor(wx), math.floor(wy)
+            wx, wy = mathfloor(wx), mathfloor(wy)
 
             -- Get the current world cell
             local cell = getWorld():getCell()
@@ -1697,8 +1711,6 @@ function Advanced_trajectory.OnPlayerUpdate()
     
 end
 
-Advanced_trajectory.damagedisplayer = {}
-
 function Advanced_trajectory.checkBowAndCrossbow(player, Zombie)
     ------------------------------------------------------------------------------
     ------COMPATABILITY FOR BRITA'S BOWS AND CROSSBOWS (CREDITS TO LISOLA/BRITA)---------
@@ -1761,7 +1773,7 @@ function Advanced_trajectory.displayDamageOnZom(zombie, damagezb)
     local damagea = TextDrawObject.new()
     damagea:setDefaultColors(1,1,0.1,0.7)
     damagea:setOutlineColors(0,0,0,1)
-    damagea:ReadString(UIFont.Middle, "-" ..tostring(math.floor(damagezb*100)), -1)
+    damagea:ReadString(UIFont.Middle, "-" ..tostring(mathfloor(damagezb*100)), -1)
     local sx = IsoUtils.XToScreen(zombie:getX(), zombie:getY(), zombie:getZ(), 0);
     local sy = IsoUtils.YToScreen(zombie:getX(), zombie:getY(), zombie:getZ(), 0);
     sx = sx - IsoCamera.getOffX() - zombie:getOffsetX();
@@ -2130,9 +2142,9 @@ end
 function Advanced_trajectory.dealWithPlayerShot(table, playerShot, damage)
     -- isClient() returns true if the code is being run in MP
     if isClient() then
-        sendClientCommand("ATY_shotplayer", "true", {table.player:getOnlineID(), playerShot:getOnlineID(), damage, table.damage, Advanced_trajectory.HeadShotDmgPlayerMultiplier, Advanced_trajectory.BodyShotDmgPlayerMultiplier, Advanced_trajectory.FootShotDmgPlayerMultiplier})
+        sendClientCommand("ATY_shotplayer", "true", {table.player:getOnlineID(), playerShot:getOnlineID(), damage, table.damage, Advanced_trajectory.headShotDmgPlayerMultiplier, Advanced_trajectory.bodyShotDmgPlayerMultiplier, Advanced_trajectory.footShotDmgPlayerMultiplier})
     else
-        Advanced_trajectory.damagePlayershot(playerShot, damage, table.damage, Advanced_trajectory.HeadShotDmgPlayerMultiplier, Advanced_trajectory.BodyShotDmgPlayerMultiplier, Advanced_trajectory.FootShotDmgPlayerMultiplier)
+        Advanced_trajectory.damagePlayershot(playerShot, damage, table.damage, Advanced_trajectory.headShotDmgPlayerMultiplier, Advanced_trajectory.bodyShotDmgPlayerMultiplier, Advanced_trajectory.footShotDmgPlayerMultiplier)
     end
 end
 
@@ -2145,8 +2157,6 @@ function Advanced_trajectory.dealWithTargetShot(table, tableIndx)
     local playerPosX = table.playerPos[1]
     local playerPosY = table.playerPos[2]
     local playerPosZ = table.playerPos[3]
-
-    local missedShot = table["missedShot"]
 
     local bulletDir         = table.bulletDir
     local bulletPosChange   = 0
@@ -2163,7 +2173,7 @@ function Advanced_trajectory.dealWithTargetShot(table, tableIndx)
     --print('bulletDir: ', bulletDir)
     --print('bulletPosChange: ', bulletPosChange)
 
-    local admindel      = table["animlevels"] - math.floor(bulletPosZ)
+    local admindel      = table["animlevels"] - mathfloor(bulletPosZ)
     local shootLevel    = bulletPosZ + admindel
 
     if table["isparabola"] then
@@ -2186,17 +2196,27 @@ function Advanced_trajectory.dealWithTargetShot(table, tableIndx)
     local playerTable = {playerPosX, playerPosY, playerPosZ}
 
     -- returns object zombie and player that was shot
-    local Zombie, Playershot =  getShootZombie(bulletTable, 1 + bulletPosChange, playerTable, missedShot)
+    local Zombie, Playershot            =  getShootZombie(bulletTable, 1 + bulletPosChange, playerTable)
+
+    -- DmgZom are the damage multipliers for zombies
+    local headShotDmgZomMultiplier      = getSandboxOptions():getOptionByName("Advanced_trajectory.headShotDmgZomMultiplier"):getValue()
+    local bodyShotDmgZomMultiplier      = getSandboxOptions():getOptionByName("Advanced_trajectory.bodyShotDmgZomMultiplier"):getValue()
+    local footShotDmgZomMultiplier      = getSandboxOptions():getOptionByName("Advanced_trajectory.footShotDmgZomMultiplier"):getValue()
+    
+    -- DmgPlayer are the damage multipliers for players
+    local headShotDmgPlayerMultiplier   = getSandboxOptions():getOptionByName("Advanced_trajectory.headShotDmgPlayerMultiplier"):getValue()
+    local bodyShotDmgPlayerMultiplier   = getSandboxOptions():getOptionByName("Advanced_trajectory.bodyShotDmgPlayerMultiplier"):getValue()
+    local footShotDmgPlayerMultiplier   = getSandboxOptions():getOptionByName("Advanced_trajectory.footShotDmgPlayerMultiplier"):getValue()
 
     -- steady aim wins the game, else bodyshot damage 
     if Zombie or PlayerShot then
         if Advanced_trajectory.aimnumBeforeShot <= 5 then
-            damagezb = Advanced_trajectory.HeadShotDmgZomMultiplier            -- zombie headshot aka strong headshot
-            damagepr = Advanced_trajectory.HeadShotDmgPlayerMultiplier         -- player headshot aka strong headshot
+            damagezb = headShotDmgZomMultiplier            -- zombie headshot aka strong headshot
+            damagepr = headShotDmgPlayerMultiplier         -- player headshot aka strong headshot
             saywhat = "IGUI_Headshot (STRONG): " .. Advanced_trajectory.aimnumBeforeShot
         else
-            damagezb = Advanced_trajectory.BodyShotDmgZomMultiplier            -- zombie bodyshot aka weak headshot
-            damagepr = Advanced_trajectory.BodyShotDmgPlayerMultiplier         -- player bodyshot aka weak headshot
+            damagezb = bodyShotDmgZomMultiplier            -- zombie bodyshot aka weak headshot
+            damagepr = bodyShotDmgPlayerMultiplier         -- player bodyshot aka weak headshot
             saywhat = "IGUI_Headshot (WEAK): " .. Advanced_trajectory.aimnumBeforeShot
         end
     end
@@ -2206,21 +2226,27 @@ function Advanced_trajectory.dealWithTargetShot(table, tableIndx)
         bulletTable[1]      = bulletPosX + bulletChange
         bulletTable[2]      = bulletPosY + bulletChange
 
-        Zombie, Playershot = getShootZombie(bulletTable, 2, playerTable, missedShot)
-        damagezb = Advanced_trajectory.BodyShotDmgZomMultiplier            -- zombie bodyshot
-        damagepr = Advanced_trajectory.BodyShotDmgPlayerMultiplier         -- player bodyshot
-        saywhat = "IGUI_Bodyshot"
+        Zombie, Playershot = getShootZombie(bulletTable, 2, playerTable)
+
+        if Zombie or Playershot then 
+            damagezb = bodyShotDmgZomMultiplier            -- zombie bodyshot
+            damagepr = bodyShotDmgPlayerMultiplier         -- player bodyshot
+            saywhat = "IGUI_Bodyshot"
+        end
     end
 
-    if not Zombie and not Playershot and not not getSandboxOptions():getOptionByName("Advanced_trajectory.DebugRemoveFootHitbox"):getValue() then
+    if not Zombie and not Playershot and not getSandboxOptions():getOptionByName("Advanced_trajectory.DebugRemoveFootHitbox"):getValue() then
         local bulletChange  = -1.8 + bulletPosChange*0.9 + admindel
         bulletTable[1]      = bulletPosX + bulletChange
         bulletTable[2]      = bulletPosY + bulletChange
 
-        Zombie, Playershot = getShootZombie(bulletTable, 3, playerTable, missedShot)
-        damagezb = Advanced_trajectory.FootShotDmgZomMultiplier            -- zombie footshot
-        damagepr = Advanced_trajectory.FootShotDmgPlayerMultiplier         -- player footshot
-        saywhat = "IGUI_Footshot"
+        Zombie, Playershot = getShootZombie(bulletTable, 3, playerTable)
+
+        if Zombie or Playershot then
+            damagezb = footShotDmgZomMultiplier            -- zombie footshot
+            damagepr = footShotDmgPlayerMultiplier         -- player footshot
+            saywhat = "IGUI_Footshot"
+        end
     end
     
     --[[
@@ -2250,9 +2276,9 @@ function Advanced_trajectory.dealWithTargetShot(table, tableIndx)
 
         if getSandboxOptions():getOptionByName("Advanced_trajectory.DebugEnableVoodoo"):getValue() then
             if isClient() then
-                sendClientCommand("ATY_shotplayer", "true", {table.player:getOnlineID(), table.player:getOnlineID(), damagezb, table.damage * 0.1, Advanced_trajectory.HeadShotDmgZomMultiplier, Advanced_trajectory.BodyShotDmgZomMultiplier, Advanced_trajectory.FootShotDmgZomMultiplier})
+                sendClientCommand("ATY_shotplayer", "true", {table.player:getOnlineID(), table.player:getOnlineID(), damagezb, table.damage * 0.1, headShotDmgZomMultiplier, bodyShotDmgZomMultiplier, footShotDmgZomMultiplier})
             else
-                Advanced_trajectory.damagePlayershot(table.player, damagezb, table.damage * 0.1, Advanced_trajectory.HeadShotDmgZomMultiplier, Advanced_trajectory.BodyShotDmgZomMultiplier, Advanced_trajectory.FootShotDmgZomMultiplier)
+                Advanced_trajectory.damagePlayershot(table.player, damagezb, table.damage * 0.1, headShotDmgZomMultiplier, bodyShotDmgZomMultiplier, footShotDmgZomMultiplier)
             end
         end
 
@@ -2285,19 +2311,22 @@ function Advanced_trajectory.updateProjectiles()
 
         local currTablez12_ = table.bulletSpeed * 0.35
 
+        local bulletPosX = table.bulletPos[1]
+        local bulletPosY = table.bulletPos[2]
+        local bulletPosZ = table.bulletPos[3]
+
         -- update to square that bullet is currently on
         if Advanced_trajectory.aimlevels then
-            table.square = getWorld():getCell():getOrCreateGridSquare(table.bulletPos[1], table.bulletPos[2], Advanced_trajectory.aimlevels)
+            table.square = getWorld():getCell():getOrCreateGridSquare(bulletPosX, bulletPosY, Advanced_trajectory.aimlevels)
         else
-            table.square = getWorld():getCell():getOrCreateGridSquare(table.bulletPos[1], table.bulletPos[2], table.bulletPos[3])
+            table.square = getWorld():getCell():getOrCreateGridSquare(bulletPosX, bulletPosY, bulletPosZ)
         end
 
-        table.throwinfo["pos"] = {Advanced_trajectory.mathfloor(table.bulletPos[1]), Advanced_trajectory.mathfloor(table.bulletPos[2])}
+        table.throwinfo["pos"] = {advMathFloor(bulletPosX), advMathFloor(bulletPosY)}
 
         if table.square then
 
             local blowUp = Advanced_trajectory.blowUp
-            local mathfloor = Advanced_trajectory.mathfloor
 
             -----------------------------------------------
             --CHECK IF PROJECTILE COLLIDED WITH WALL/DOOR--
@@ -2306,7 +2335,7 @@ function Advanced_trajectory.updateProjectiles()
                 --print("***********Bullet collided with wall.************")
                 --print("Wallcarmouse: ", table["wallcarmouse"])
                 --print("Wallcarzombie: ", table["wallcarzombie"])
-                --print("Cell: ", table.bulletPos[1],", ",table.bulletPos[2],", ",table.bulletPos[3])
+                --print("Cell: ", bulletPosX,", ",bulletPosY, ", ", bulletPosZ)
 
                 -- if grenade type, then blow it up when collided
                 if  table.weaponName =="Grenade" or table["wallcarmouse"] or table["wallcarzombie"] then
@@ -2321,15 +2350,15 @@ function Advanced_trajectory.updateProjectiles()
             end
 
             -- reassign square so visual offset of bullet doesn't go whack
-            if getWorld():getCell():getOrCreateGridSquare(table.bulletPos[1], table.bulletPos[2], table.bulletPos[3]) then
-                table.square = getWorld():getCell():getOrCreateGridSquare(table.bulletPos[1], table.bulletPos[2], table.bulletPos[3])
+            if getWorld():getCell():getOrCreateGridSquare(bulletPosX, bulletPosY, bulletPosZ) then
+                table.square = getWorld():getCell():getOrCreateGridSquare(bulletPosX, bulletPosY, bulletPosZ) 
             end
 
-            table.item = Advanced_trajectory.additemsfx(table.square, table.projectileType .. tostring(table.winddir), mathfloor(table.bulletPos[1]), mathfloor(table.bulletPos[2]), mathfloor(table.bulletPos[3]))
+            table.item = Advanced_trajectory.additemsfx(table.square, table.projectileType .. tostring(table.winddir), advMathFloor(bulletPosX), advMathFloor(bulletPosY), advMathFloor(bulletPosZ))
 
-            local spnumber  = (table.dirVector[1]^2 + table.dirVector[2]^2)^0.5 * currTablez12_
-            table.bulletDist  = table.bulletDist - spnumber
-            table.currDist    = table.currDist + spnumber
+            local spnumber      = (table.dirVector[1]^2 + table.dirVector[2]^2)^0.5 * currTablez12_
+            table.bulletDist    = table.bulletDist - spnumber
+            table.currDist      = table.currDist + spnumber
 
             -- NOT SURE WHAT WEAPON THIS CHECKS SINCE THERE ARE NO FLAMETHROWERS IN VANILLA
             if table.weaponName == "flamethrower" then
@@ -2338,7 +2367,11 @@ function Advanced_trajectory.updateProjectiles()
                 if table.currDist > 3 then
                     table.currDist    = 0
                     table.count       = table.count + 1
-                    table.bulletPos   = Advanced_trajectory.twotable(table.playerPos)
+                    
+                    table.bulletPos   = copyTable(table.playerPos)
+                    bulletPosX = table.bulletPos[1]
+                    bulletPosY = table.bulletPos[2]
+                    bulletPosZ = table.bulletPos[3]
                 end
 
                 -- print(table.count)
@@ -2370,14 +2403,14 @@ function Advanced_trajectory.updateProjectiles()
                 table.item:setWorldZRotation(table.bulletDir)
             end
 
-            table.bulletPos[1] = table.bulletPos[1]+currTablez12_ * table.dirVector[1]
-            table.bulletPos[2] = table.bulletPos[2]+currTablez12_ * table.dirVector[2]
+            bulletPosX = bulletPosX + currTablez12_ * table.dirVector[1]
+            bulletPosY = bulletPosY + currTablez12_ * table.dirVector[2]
 
             -- BREAKS GRENADE/THROWABLES 
             if  table["isparabola"]  then
-                table.bulletPos[3] = 0.5 - table["isparabola"] * table.currDist * (table.currDist - table.distanceConst)
+                bulletPosZ = 0.5 - table["isparabola"] * table.currDist * (table.currDist - table.distanceConst)
                 
-                if table.bulletPos[3]<=0.3  then
+                if bulletPosZ <= 0.3  then
                     blowUp(table)
                     currTable[indx] = Advanced_trajectory.removeBulletData(table.item) 
                     --print("Broke bullet PARABOLA")
@@ -2386,9 +2419,13 @@ function Advanced_trajectory.updateProjectiles()
                 end
             end
 
+            table.bulletPos = {bulletPosX, bulletPosY, bulletPosZ}
+
             -- NOTES IMPORTANT, WORK HERE: Headshot, Bodypart, Footpart
             if  (table.weaponName ~= "Grenade" or (table.throwinfo[8]or 0) > 0 or table["wallcarzombie"]) and  not table["wallcarmouse"] then
-                if Advanced_trajectory.dealWithTargetShot(table, indx) then break end
+                if not table["missedShot"] and Advanced_trajectory.dealWithTargetShot(table, indx) then
+                    break
+                end
             end  
         end
     end
@@ -2488,7 +2525,7 @@ function Advanced_trajectory.OnWeaponSwing(character, handWeapon)
     }
 
     projectilePlayerData["boomsfx"] = {}
-    projectilePlayerData["animlevels"] = Advanced_trajectory.aimlevels or math.floor(projectilePlayerData.bulletPos[3])
+    projectilePlayerData["animlevels"] = Advanced_trajectory.aimlevels or mathfloor(projectilePlayerData.bulletPos[3])
 
     projectilePlayerData.throwinfo = {
         handWeapon:getSmokeRange(),
@@ -2756,7 +2793,7 @@ function Advanced_trajectory.OnWeaponSwing(character, handWeapon)
                 sendClientCommand("ATY_shotsfx","true",{projectilePlayerData, character:getOnlineID()})
             end
             projectilePlayerData["nonsfx"] = nil
-            table.insert(Advanced_trajectory.table,Advanced_trajectory.twotable(projectilePlayerData))
+            table.insert(Advanced_trajectory.table, copyTable(projectilePlayerData))
         end
     else
 
@@ -2770,7 +2807,7 @@ function Advanced_trajectory.OnWeaponSwing(character, handWeapon)
             projectilePlayerData["missedShot"] = Advanced_trajectory.determineHitOrMiss() 
         end
 
-        table.insert(Advanced_trajectory.table,Advanced_trajectory.twotable(projectilePlayerData))
+        table.insert(Advanced_trajectory.table, copyTable(projectilePlayerData))
         if isClient() then
             projectilePlayerData["nonsfx"] = 1
             sendClientCommand("ATY_shotsfx","true",{projectilePlayerData,character:getOnlineID()})
@@ -2851,4 +2888,6 @@ end
 Events.OnWeaponSwingHitPoint.Add(Advanced_trajectory.OnWeaponSwing)
 
 --function Advanced_trajectory.OnWeaponSwing(character, handWeapon)
+
+return Advanced_trajectory
 

@@ -1,4 +1,4 @@
-require "Advanced_trajectory_core"
+local Advanced_trajectory = require "Advanced_trajectory_core"
 
 --范例 添加特殊的枪械
 

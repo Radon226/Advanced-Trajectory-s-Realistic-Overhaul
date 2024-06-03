@@ -1,4 +1,4 @@
-local Advanved_trajectory = require "Advanced_trajectory_core"
+local Advanced_trajectory = require "Advanced_trajectory_core"
 
 -------------------------------
 --DAMAGE PLAYER THAT WAS SHOT--
