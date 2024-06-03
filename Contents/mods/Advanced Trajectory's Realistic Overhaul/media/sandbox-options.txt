@@ -114,16 +114,6 @@ option Advanced_trajectory.DebugPlayerMindistCondition
 	translation = Advanced_trajectoryDebugPlayerMindistCondition,
 }
 
-option Advanced_trajectory.DebugGridMultiplier
-{
-	type = double,
-	min = 0,
-	max = 10,
-	default = 0.5,
-	page = Advanced_trajectory_debug,
-	translation = Advanced_trajectoryDebugGridMultiplier,
-}
-
 option Advanced_trajectory.DebugEnableBow
 {
 	type = boolean,
