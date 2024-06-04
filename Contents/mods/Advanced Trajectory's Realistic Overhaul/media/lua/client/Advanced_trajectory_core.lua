@@ -267,85 +267,100 @@ function Advanced_trajectory.getShootZombie(bulletTable, playerTable)
     local player = getPlayer()
     local playerNum = player:getPlayerNum()
 
-    local bulletPosX = bulletTable.x[1]
-    local bulletPosY = bulletTable.y[1]
+    --local bulletPosX = bulletTable.x[1]
+    --local bulletPosY = bulletTable.y[1]
     local bulletPosZ = bulletTable.z
     local playerPosZ = playerTable[3]
 
     local getTargetDistanceFromPlayer = Advanced_trajectory.getTargetDistanceFromPlayer
     local allowPVP = Advanced_trajectory.allowPVP
 
+    local gridMultiplier = 0.5
+    local cell = getWorld():getCell()
+
+    local damageIndx = 0
+
     -- Loop through a 3x3 grid centered around the bullet and find targets that exist in the grid
     -- Reduce call for getCell() as much as possible
-    for xCell = -1, 1 do        -- X position
-        for yCell = -1, 1 do    -- Y position
+    for i = 1, 3 do
+        for xCell = -1, 1 do        -- X position
+            for yCell = -1, 1 do    -- Y position
 
-            -- Calculate the coordinates for the current grid square
-            local x = bulletPosX + xCell 
-            local y = bulletPosY + yCell 
+                -- Calculate the coordinates for the current grid square
+                local x = bulletTable.x[i] + xCell * gridMultiplier
+                local y = bulletTable.y[i] + yCell * gridMultiplier
 
-            -- Get the grid square at the calculated coordinates
-            local sq = getCell():getGridSquare(x, y, bulletPosZ)
+                -- Get the grid square at the calculated coordinates
+                local sq = cell:getGridSquare(x, y, bulletPosZ)
 
-            -- Check if the grid square is valid and can be seen by the player
-            if sq and sq:isCanSee(playerNum) then
-                local movingObjects = sq:getMovingObjects()
+                -- Check if the grid square is valid and can be seen by the player
+                if sq and sq:isCanSee(playerNum) then
+                    local movingObjects = sq:getMovingObjects()
 
-                -- Iterate through moving objects in the grid square
-                for zz = 1, movingObjects:size() do
-                    local zombieOrPlayer = movingObjects:get(zz - 1)
+                    -- Iterate through moving objects in the grid square
+                    for zz = 1, movingObjects:size() do
+                        local zombieOrPlayer = movingObjects:get(zz - 1)
 
-                    -- Check if the object is an IsoZombie or IsoPlayer
-                    if instanceof(zombieOrPlayer, "IsoZombie") then
-                        if zombieOrPlayer:getHealth() > 0 then
-                            local entry = { entity = zombieOrPlayer, distance = getTargetDistanceFromPlayer(player, zombieOrPlayer)}
-                            table.insert(zbtable, entry)
+                        -- Check if the object is an IsoZombie or IsoPlayer
+                        if instanceof(zombieOrPlayer, "IsoZombie") then
+                            if zombieOrPlayer:getHealth() > 0 then
+                                local entry = { entity = zombieOrPlayer, distance = getTargetDistanceFromPlayer(player, zombieOrPlayer)}
+                                table.insert(zbtable, entry)
+                            end
+                        end
+                        if instanceof(zombieOrPlayer, "IsoPlayer") then
+                            if allowPVP(player, zombieOrPlayer) then
+                                prtable[zombieOrPlayer] = 1  -- Add to player table
+                            end
                         end
                     end
-                    if instanceof(zombieOrPlayer, "IsoPlayer") then
-                        if allowPVP(player, zombieOrPlayer) then
-                            prtable[zombieOrPlayer] = 1  -- Add to player table
+
+                -- make exception if bullet and player are on the same floor to prevent issue with blindness
+                elseif sq and mathfloor(bulletPosZ) == mathfloor(playerPosZ) then
+                    local movingObjects = sq:getMovingObjects()
+
+                    for zz = 1, movingObjects:size() do
+                        local zombieOrPlayer = movingObjects:get(zz - 1)
+
+                        if instanceof(zombieOrPlayer, "IsoZombie") then
+                            --zbtable[zombieOrPlayer] = 1 
+                            if zombieOrPlayer:getHealth() > 0 then
+                                local entry = { entity = zombieOrPlayer, distance = getTargetDistanceFromPlayer(player, zombieOrPlayer)}
+                                table.insert(zbtable, entry)
+                            end
                         end
-                    end
-                end
-
-            -- make exception if bullet and player are on the same floor to prevent issue with blindness
-            elseif sq and mathfloor(bulletPosZ) == mathfloor(playerPosZ) then
-                local movingObjects = sq:getMovingObjects()
-
-                for zz = 1, movingObjects:size() do
-                    local zombieOrPlayer = movingObjects:get(zz - 1)
-
-                    if instanceof(zombieOrPlayer, "IsoZombie") then
-                        --zbtable[zombieOrPlayer] = 1 
-                        if zombieOrPlayer:getHealth() > 0 then
-                            local entry = { entity = zombieOrPlayer, distance = getTargetDistanceFromPlayer(player, zombieOrPlayer)}
-                            table.insert(zbtable, entry)
-                        end
-                    end
-                    if instanceof(zombieOrPlayer, "IsoPlayer") then
-                        --print("FOUND PLAYER SHOOTER/TARGET SAFE?: ", isPlayerSafe, " || ", zombieOrPlayer:getSafety():isEnabled())
-                        if allowPVP(player, zombieOrPlayer) then
-                            --print("player registered for a meal [it's a bullet]")
-                            prtable[zombieOrPlayer] = 1  -- Add to player table
+                        if instanceof(zombieOrPlayer, "IsoPlayer") then
+                            --print("FOUND PLAYER SHOOTER/TARGET SAFE?: ", isPlayerSafe, " || ", zombieOrPlayer:getSafety():isEnabled())
+                            if allowPVP(player, zombieOrPlayer) then
+                                --print("player registered for a meal [it's a bullet]")
+                                prtable[zombieOrPlayer] = 1  -- Add to player table
+                            end
                         end
                     end
                 end
             end
         end
+
+        if #zbtable > 0 or #prtable > 0 then 
+            damageIndx = i
+            break
+        end
+
+        zbtable = {}
+        prtable = {}
     end
 
 
     -- if tables are empty then just return
     if #zbtable == 0 and #prtable == 0 then 
-        return false, false, 0  
+        return false, false, damageIndx
     end
+
+    print(damageIndx)
 
     -- minimum distance from bullet to target
     local mindistance = 0
     local prevDistanceFromPlayer = 99
-
-    local damageIndx = 1
 
     local zomMindistModifier = getSandboxOptions():getOptionByName("Advanced_trajectory.DebugZomMindistCondition"):getValue()
     local playerMindistModifier = getSandboxOptions():getOptionByName("Advanced_trajectory.DebugPlayerMindistCondition"):getValue()
@@ -357,7 +372,7 @@ function Advanced_trajectory.getShootZombie(bulletTable, playerTable)
     table.sort(zbtable, function(a, b) return a.distance < b.distance end)
     
     --print('-----------START-------------------')
-    -- goes through zombie table which contains a number of zombies found in the half 3x3 grid
+    -- goes through zombie table which contains a number of zombies found in the 3x3 grid
     -- Target collision
     for i, entry in pairs(zbtable) do
         local sz = entry.entity
@@ -370,18 +385,15 @@ function Advanced_trajectory.getShootZombie(bulletTable, playerTable)
         if Advanced_trajectory.isTargetBehind(playerTable[1], playerTable[2], bulletTable.dir, szX, szY, hitRegThreshold) and not isSteppedOn then
             --print("**********Skip target behind.*************")
         else
-            for i = 1, 3 do 
-                -- uses euclidian distance (but without the square root) to find distance between target and bullet
-                mindistance = (bulletPosX - szX)^2 + (bulletPosY - szY)^2 
+            -- uses euclidian distance (but without the square root) to find distance between target and bullet
+            mindistance = (bulletTable.x[damageIndx] - szX)^2 + (bulletTable.y[damageIndx] - szY)^2 
 
-                if distance < prevDistanceFromPlayer then
-                    prevDistanceFromPlayer = distance
+            if distance < prevDistanceFromPlayer then
+                prevDistanceFromPlayer = distance
 
-                    -- damage 1+angleoff = head || 2 = body || 3 = foot
-                    if mindistance < minzb[2] and (mindistance <= zomMindistModifier * bulletTable.dmg[i]) then
-                        minzb = {sz,mindistance}
-                        damageIndx = i
-                    end
+                -- damage 1+angleoff = head || 2 = body || 3 = foot
+                if mindistance < minzb[2] and (mindistance <= zomMindistModifier * bulletTable.dmg[damageIndx]) then
+                    minzb = {sz,mindistance}
                 end
             end
         end
@@ -397,13 +409,10 @@ function Advanced_trajectory.getShootZombie(bulletTable, playerTable)
         if Advanced_trajectory.isTargetBehind(playerTable[1], playerTable[2], bulletTable.dir, pzX, pzY, 0) and not isSteppedOn then
             --print("**********Skip target behind.*************")
         else
-            for i=1, 3 do
-                mindistance = (bulletPosX - pzX)^2 + (bulletPosY - pzY)^2 
-                
-                if mindistance < minpr[2] and (mindistance <= playerMindistModifier * bulletTable.dmg[i]) then
-                    minpr = {pz,mindistance}
-                    damageIndx = i
-                end
+            mindistance = (bulletTable.x[damageIndx] - pzX)^2 + (bulletTable.y[damageIndx] - pzY)^2 
+            
+            if mindistance < minpr[2] and (mindistance <= playerMindistModifier * bulletTable.dmg[damageIndx]) then
+                minpr = {pz,mindistance}
             end
         end
     end
@@ -868,7 +877,7 @@ function Advanced_trajectory.determineHitOrMiss()
 end
 
 
-function Advanced_trajectory.getTargetDistance(player)
+function Advanced_trajectory.getDistanceFromMouseToPlayer(player)
     local mouseX = getMouseXScaled()
     local mouseY = getMouseYScaled()
 
@@ -879,7 +888,7 @@ function Advanced_trajectory.getTargetDistance(player)
     local wx, wy = ISCoordConversion.ToWorld(mouseX, mouseY, playerZ)
     wx, wy = mathfloor(wx) + 2, mathfloor(wy) + 2
 
-    Advanced_trajectory.targetDistance = (math.sqrt((playerX - wx)^2 + (playerY - wy)^2))
+    return (math.sqrt((playerX - wx)^2 + (playerY - wy)^2))
 
     --print("Player X/Y || MouseX/Y: ", playerX," / ",playerY, " || ", wx," / ",wy)
     --print("Target Distance: ", Advanced_trajectory.targetDistance)
@@ -894,7 +903,7 @@ function Advanced_trajectory.OnPlayerUpdate()
     if not player then return end
     local weaitem = player:getPrimaryHandItem()
 
-    if player:isAiming() and instanceof(weaitem,"HandWeapon") then
+    if player:isAiming() and instanceof(weaitem, "HandWeapon") then
         Advanced_trajectory.hasFlameWeapon = string.contains(weaitem:getAmmoType() or "","FlameFuel")
     end
 
@@ -1036,7 +1045,6 @@ function Advanced_trajectory.OnPlayerUpdate()
         --------------------------------
         ---TARGET DISTANCE LIMIT SECT---
         --------------------------------
-        Advanced_trajectory.getTargetDistance(player)
         local enableDistanceLimitPenalty  = getSandboxOptions():getOptionByName("Advanced_trajectory.enableDistanceLimitPenalty"):getValue() 
         local distanceFocusPenalty  = getSandboxOptions():getOptionByName("Advanced_trajectory.distanceFocusPenalty"):getValue() 
  
@@ -1054,7 +1062,7 @@ function Advanced_trajectory.OnPlayerUpdate()
         --local distanceLimit = (maxDistance * distanceLimitPenalty) + ((maxDistance * (1-distanceLimitPenalty)) * realLevel/10)
         local distanceLimit = maxDistance * realLevel/10
         
-        local targetDist = Advanced_trajectory.targetDistance
+        local targetDist = Advanced_trajectory.getDistanceFromMouseToPlayer(player)
 
         --print("target / maxDistance / limit: ", targetDist, " || ", maxDistance, " || ", distanceLimit)
 
