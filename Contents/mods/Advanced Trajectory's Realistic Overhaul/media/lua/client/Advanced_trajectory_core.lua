@@ -900,16 +900,19 @@ end
 function Advanced_trajectory.OnPlayerUpdate()
 
     local player = getPlayer() 
-    if not player then return end
-    local weaitem = player:getPrimaryHandItem()
 
-    if player:isAiming() and instanceof(weaitem, "HandWeapon") then
+    if not player then return end
+
+    local weaitem = player:getPrimaryHandItem()
+    local isAiming = player:isAiming()
+    local hasGun = instanceof(weaitem, "HandWeapon") 
+
+    if isAiming and hasGun then
         Advanced_trajectory.hasFlameWeapon = string.contains(weaitem:getAmmoType() or "","FlameFuel")
     end
 
-    if player:isAiming() and instanceof(weaitem,"HandWeapon") and not weaitem:hasTag("Thrown") and not Advanced_trajectory.hasFlameWeapon and not (weaitem:hasTag("XBow") and not getSandboxOptions():getOptionByName("Advanced_trajectory.DebugEnableBow"):getValue()) and (((weaitem:isRanged() and getSandboxOptions():getOptionByName("Advanced_trajectory.Enablerange"):getValue()) or (weaitem:getSwingAnim() =="Throw" and getSandboxOptions():getOptionByName("Advanced_trajectory.Enablethrow"):getValue())) or Advanced_trajectory.FullWeaponTypes[weaitem:getFullType()]) then
-        
-        -- print("Forward Dir: ", player:getForwardDirection():getDirection()*360/(2*math.pi))
+    if isAiming and hasGun and not weaitem:hasTag("Thrown") and not Advanced_trajectory.hasFlameWeapon and not (weaitem:hasTag("XBow") and not getSandboxOptions():getOptionByName("Advanced_trajectory.DebugEnableBow"):getValue()) and (((weaitem:isRanged() and getSandboxOptions():getOptionByName("Advanced_trajectory.Enablerange"):getValue()) or (weaitem:getSwingAnim() =="Throw" and getSandboxOptions():getOptionByName("Advanced_trajectory.Enablethrow"):getValue())) or Advanced_trajectory.FullWeaponTypes[weaitem:getFullType()]) then
+
         -- print(getPlayer():getCoopPVP())
 
         if getSandboxOptions():getOptionByName("Advanced_trajectory.showOutlines"):getValue() then
@@ -927,7 +930,7 @@ function Advanced_trajectory.OnPlayerUpdate()
         ------------------------
         --AIMNUM SCALING SECT---
         ------------------------
-        local reversedLevel = 11-player:getPerkLevel(Perks.Aiming)  -- 11 to 1 
+        local reversedLevel = 11 - player:getPerkLevel(Perks.Aiming)  -- 11 to 1 
         local realLevel     = player:getPerkLevel(Perks.Aiming)     -- 0 to 10
 
         local gametimemul   = getGameTime():getMultiplier() * 16 / (reversedLevel + 10)
@@ -1074,7 +1077,7 @@ function Advanced_trajectory.OnPlayerUpdate()
         end
 
 
-
+        
         -- PANIC SECT -- 
         ----------------
         -- panic causes shakiness and penalty for aiming at farther targets is increased
@@ -2447,7 +2450,7 @@ function Advanced_trajectory.OnWeaponSwing(character, handWeapon)
     local playerLevel = character:getPerkLevel(Perks.Aiming)
     local modEffectsTable = Advanced_trajectory.getAttachmentEffects(handWeapon)  
 
-    local ispass =false
+    local ispass = false
 
     -- direction from -pi to pi OR -180 to 180 deg
     -- N (top left corner): pi,-pi  (180, -180)
