@@ -217,6 +217,14 @@ function Advanced_trajectory.allowPVP(player, target)
         return true
     end
 
+    if (getSandboxOptions():getOptionByName("ATY_nonpvp_protect"):getValue() and NonPvpZone.getNonPvpZone(target:getX(), target:getY())) then 
+        return false
+    end
+
+    if (getSandboxOptions():getOptionByName("ATY_safezone_protect"):getValue() and SafeHouse.getSafeHouse(target:getCurrentSquare())) then 
+        return false
+    end
+
     -- if safety is on for BOTH players, then PVP is not allowed
     if player:getSafety():isEnabled() and target:getSafety():isEnabled() then 
         return false
@@ -280,9 +288,14 @@ function Advanced_trajectory.getShootZombie(bulletTable, playerTable)
 
     local damageIndx = 0
 
+    local maxLoopNum = 3
+    if getSandboxOptions():getOptionByName("Advanced_trajectory.enablePerformanceMode"):getValue() then
+        maxLoopNum = 1
+    end
+
     -- Loop through a 3x3 grid centered around the bullet and find targets that exist in the grid
     -- Reduce call for getCell() as much as possible
-    for i = 1, 3 do
+    for i = 1, maxLoopNum do
         for xCell = -1, 1 do        -- X position
             for yCell = -1, 1 do    -- Y position
 

@@ -15,6 +15,9 @@ Sandbox_EN = {
 	Sandbox_Advanced_trajectoryaimpoint_tooltip = "Show or hide crosshair.",
 	Sandbox_Advanced_trajectoryhideTracer = "Hide Tracer",
 	Sandbox_Advanced_trajectoryshowOutlines = "Show Outlines (need vanilla outlines checked)",
+
+	Sandbox_Advanced_trajectoryenablePerformanceMode = "Enable Performance Mode",
+	Sandbox_Advanced_trajectoryenablePerformanceMode_tooltip = "Check this if you want more performance when shooting lots of bullets. Be aware this will make target hitboxes smaller.",
 	
 	Sandbox_Advanced_trajectorycallshot = "Report Attacking Part / Callshot",
 	Sandbox_Advanced_trajectorycallshot_tooltip = "For debugging, character says what body part was shot.",

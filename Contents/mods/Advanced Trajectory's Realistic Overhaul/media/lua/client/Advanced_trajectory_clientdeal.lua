@@ -45,7 +45,7 @@ local function Advanced_trajectory_OnServerCommand(module, command, arguments)
 
         --if playershotOnlineID ~= clientPlayershot:getOnlineID() then return end
 
-        if (getSandboxOptions():getOptionByName("ATY_nonpvp_protect"):getValue() and NonPvpZone.getNonPvpZone(clientPlayershot:getX(), clientPlayershot:getY())) or (getSandboxOptions():getOptionByName("ATY_safezone_protect"):getValue() and SafeHouse.getSafeHouse(clientPlayershot:getCurrentSquare())) then return end
+        --if (Sandbox_options.nonPvpZoneProtect and NonPvpZone.getNonPvpZone(clientPlayershot:getX(), clientPlayershot:getY())) or (Sandbox_options.safezoneProtect and SafeHouse.getSafeHouse(clientPlayershot:getCurrentSquare())) then return end
         -- print(NonPvpZone.getNonPvpZone(getPlayer():getX(), getPlayer():getY()))
         -- print(SafeHouse.getSafeHouse(getPlayer():getCurrentSquare()))
 
