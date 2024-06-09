@@ -369,7 +369,7 @@ function Advanced_trajectory.getShootZombie(bulletTable, playerTable)
         return false, false, damageIndx
     end
 
-    print(damageIndx)
+    -- print(damageIndx)
 
     -- minimum distance from bullet to target
     local mindistance = 0
@@ -467,6 +467,8 @@ function Advanced_trajectory.checkBulletCarCollision(square, bulletPos)
             return true
         end 
     end
+
+    return false
 end
 
 ----------------------------------------------------
@@ -687,7 +689,7 @@ function Advanced_trajectory.checkSurfaceCollision(square, bulletAngle, bulletPo
         end
     end
 
-    Advanced_trajectory.checkBulletCarCollision(square, bulletPos)
+    return Advanced_trajectory.checkBulletCarCollision(square, bulletPos)
 end
 
 -----------------------------------
@@ -2551,7 +2553,7 @@ function Advanced_trajectory.OnWeaponSwing(character, handWeapon)
     local isspweapon = Advanced_trajectory.FullWeaponTypes[handWeapon:getFullType()] 
     if isspweapon then
         for projDataIndx, value in pairs(isspweapon) do
-            print('projDataIndx: ', projDataIndx, ' || value: ', value)
+            -- print('projDataIndx: ', projDataIndx, ' || value: ', value)
             if projDataIndx == 4 then
                 -- value 1-3 is bullet pos x,y,z
                 projectilePlayerData.bulletPos[1] = projectilePlayerData.bulletPos[1] + value[1] * projectilePlayerData.dirVector[1]

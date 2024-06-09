@@ -8,7 +8,7 @@ option Advanced_trajectory.showOutlines
 {type = boolean,default = false,page = Advanced_trajectory,translation = Advanced_trajectoryshowOutlines,}
 
 option Advanced_trajectory.enablePerformanceMode
-{type = boolean,default = false,page = Advanced_trajectory,translation = Advanced_trajectoryenablePerformanceMode,}
+{type = boolean,default = true,page = Advanced_trajectory,translation = Advanced_trajectoryenablePerformanceMode,}
 
 option Advanced_trajectory.hideTracer
 {type = boolean,default = false,page = Advanced_trajectory,translation = Advanced_trajectoryhideTracer,}
