@@ -15,6 +15,10 @@ local Advanced_trajectory = {
     
     targetDistance      = 0,
     isOverDistanceLimit = false,
+    isOverCarAimLimit   = false,
+
+    upperCarAimBound    = 0, 
+    lowerCarAimBound    = 0, 
     
     inhaleCounter       = 0,
     exhaleCounter       = 0,
@@ -401,6 +405,11 @@ function Advanced_trajectory.getShootZombie(bulletTable, playerTable)
             -- uses euclidian distance (but without the square root) to find distance between target and bullet
             mindistance = (bulletTable.x[damageIndx] - szX)^2 + (bulletTable.y[damageIndx] - szY)^2 
 
+            if isSteppedOn then 
+                minzb = {sz,mindistance}
+                break
+            end
+
             if distance < prevDistanceFromPlayer then
                 prevDistanceFromPlayer = distance
 
@@ -423,6 +432,11 @@ function Advanced_trajectory.getShootZombie(bulletTable, playerTable)
             --print("**********Skip target behind.*************")
         else
             mindistance = (bulletTable.x[damageIndx] - pzX)^2 + (bulletTable.y[damageIndx] - pzY)^2 
+
+            if isSteppedOn then 
+                minpr = {pz,mindistance}
+                break
+            end
             
             if mindistance < minpr[2] and (mindistance <= playerMindistModifier * bulletTable.dmg[damageIndx]) then
                 minpr = {pz,mindistance}
@@ -733,10 +747,74 @@ function Advanced_trajectory.boomontick()
     end
 end
 
+function Advanced_trajectory.limitCarAim(player) 
+    if player:isSeatedInVehicle() then
+        local playerForwardVector = player:getForwardDirection()
+        playerForwardVector:normalize()
+
+        local vehicle       = player:getVehicle()
+        local vehicleScript = vehicle:getScript()/
+
+        --convert forward vector 3 to vector 2
+        local vehicleForwardVector3f    = vehicle:getForwardVector(BaseVehicle.allocVector3f())
+        local vehForwardVec             = BaseVehicle.allocVector2()
+        local upperBoundVec             = BaseVehicle.allocVector2()
+        local lowerBoundVec             = BaseVehicle.allocVector2()
+
+        vehForwardVec:set(vehicleForwardVector3f:x(), vehicleForwardVector3f:z())
+        upperBoundVec:set(vehicleForwardVector3f:x(), vehicleForwardVector3f:z())
+        lowerBoundVec:set(vehicleForwardVector3f:x(), vehicleForwardVector3f:z())
+        
+        local seat          = vehicle:getSeat(player)
+        local seatPosX      = vehicleScript:getAreaById(vehicle:getPassengerArea(seat)):getX()
+        local angleBoundCar = getSandboxOptions():getOptionByName("Advanced_trajectory.angleBoundCar"):getValue()
+
+        local angleFwrd = 90
+        local angleUp   = angleFwrd - angleBoundCar
+        local angleLow  = angleFwrd + angleBoundCar
+
+        -- if on right side seat, rotate vehicle's forward vector 90 degrees to the right
+        if seatPosX > 0 then 
+            angleFwrd = -90 
+            angleUp   = angleFwrd + angleBoundCar
+            angleLow  = angleFwrd - angleBoundCar
+        end
+
+        vehForwardVec:rotate(math.rad(angleFwrd))
+        upperBoundVec:rotate(math.rad(angleUp))
+        lowerBoundVec:rotate(math.rad(angleLow))
+
+        vehForwardVec:normalize()
+        upperBoundVec:normalize()
+        lowerBoundVec:normalize()
+
+        -- find angle between player and vehicle forward vectors
+        local dotProd = playerForwardVector:dot(vehForwardVec)
+
+        Advanced_trajectory.upperCarAimBound = upperBoundVec
+        Advanced_trajectory.lowerCarAimBound = lowerBoundVec
+        
+        if dotProd < getSandboxOptions():getOptionByName("Advanced_trajectory.carDotProdLimit"):getValue() then
+            Advanced_trajectory.isOverCarAimLimit = true
+        else
+            Advanced_trajectory.isOverCarAimLimit = false
+        end
+
+        BaseVehicle.releaseVector2(lowerBoundVec)
+        BaseVehicle.releaseVector2(upperBoundVec)
+        BaseVehicle.releaseVector2(vehForwardVec)
+        BaseVehicle.releaseVector3f(vehicleForwardVector3f)
+
+        --local isSmallCar = vehicle:getScript():isSmallVehicle()
+        --local vehicleMass = vehicle:getScript():getMass()
+        --print('Small?: ', isSmallCar, ' || Mass: ', vehicleMass)
+    end
+end
+
 -----------------------------------
 --EXPLOSION FX ?? FUNC SECT---
 -----------------------------------
-function Advanced_trajectory.boomsfx(sq,sfxName,sfxNum,ticindxime)
+function Advanced_trajectory.boomsfx(sq, sfxName, sfxNum, ticindxime)
     -- print(sq)
     local sfxname       = sfxName or "Base.theMH_MkII_SFX"
     local sfxnum        = sfxNum or 12
@@ -1059,6 +1137,9 @@ function Advanced_trajectory.OnPlayerUpdate()
         if player:getVariableBoolean("isCrawling") and not hasFocusSkill then
             realMin = realMin - 25
         end
+
+        Advanced_trajectory.isOverCarAimLimit = false
+        Advanced_trajectory.limitCarAim(player) 
 
         --------------------------------
         ---TARGET DISTANCE LIMIT SECT---
@@ -2441,24 +2522,12 @@ function Advanced_trajectory.updateProjectiles()
     -- Advanced_trajectory.table =  currTable
 end
 
--------------------------------------------
------GENERAL COLLISION LOGIC FUNC SECT-----
--------------------------------------------
-function Advanced_trajectory.checkontick()
-    Advanced_trajectory.boomontick()
-    Advanced_trajectory.OnPlayerUpdate()
-    Advanced_trajectory.drawDamageText()
-    Advanced_trajectory.updateProjectiles()
-end
-
-Events.OnTick.Add(Advanced_trajectory.checkontick)
-
 -----------------------------------
 --SHOOTING PROJECTILE FUNC SECT---
 -----------------------------------
 function Advanced_trajectory.OnWeaponSwing(character, handWeapon)
     
-    if getSandboxOptions():getOptionByName("Advanced_trajectory.showOutlines"):getValue() and instanceof(handWeapon,"HandWeapon") and not handWeapon:hasTag("Thrown") and not Advanced_trajectory.hasFlameWeapon and not (handWeapon:hasTag("XBow") and not getSandboxOptions():getOptionByName("Advanced_trajectory.DebugEnableBow"):getValue()) and (handWeapon:isRanged() and getSandboxOptions():getOptionByName("Advanced_trajectory.Enablerange"):getValue()) then
+    if getSandboxOptions():getOptionByName("Advanced_trajectory.showOutlines"):getValue() and instanceof(handWeapon, "HandWeapon") and not handWeapon:hasTag("Thrown") and not Advanced_trajectory.hasFlameWeapon and not (handWeapon:hasTag("XBow") and not getSandboxOptions():getOptionByName("Advanced_trajectory.DebugEnableBow"):getValue()) and (handWeapon:isRanged() and getSandboxOptions():getOptionByName("Advanced_trajectory.Enablerange"):getValue()) then
         handWeapon:setMaxHitCount(getSandboxOptions():getOptionByName("Advanced_trajectory.DebugHitCountShoot"):getValue())
     end
 
@@ -2472,7 +2541,33 @@ function Advanced_trajectory.OnWeaponSwing(character, handWeapon)
     -- W (bottom left): pi/2 (90)
     -- E (top right): -pi/2 (-90)
     -- S (bottom right corner): 0
-    local playerDir = player:getForwardDirection():getDirection()
+
+    -- get player fwrd dir vector
+    local playerDir = character:getForwardDirection()
+
+    if character:isSeatedInVehicle() and Advanced_trajectory.isOverCarAimLimit then
+        playerDir:normalize()
+
+        local upperBound    = Advanced_trajectory.upperCarAimBound
+        local lowerBound    = Advanced_trajectory.lowerCarAimBound
+
+        local dotPlayUp     = playerDir:dot(upperBound)
+        local dotPlayLow    = playerDir:dot(lowerBound)
+
+        local dotProdLimit = getSandboxOptions():getOptionByName("Advanced_trajectory.carDotProdLimit"):getValue()
+
+        if dotPlayUp > -dotProdLimit then 
+            playerDir = upperBound
+
+        elseif dotPlayLow > -dotProdLimit then 
+            playerDir = lowerBound
+
+        else
+            playerDir = upperBound
+        end        
+    end
+
+    playerDir = playerDir:getDirection()
 
     -- bullet position 
     local spawnOffset = getSandboxOptions():getOptionByName("Advanced_trajectory.DebugSpawnOffset"):getValue()
@@ -2887,14 +2982,22 @@ function Advanced_trajectory.OnWeaponSwing(character, handWeapon)
     --print("Total / Recoil / Exponential: ", totalRecoil, " || ", recoil, " || ", exponentialRecoil)
 
     Advanced_trajectory.aimnum = Advanced_trajectory.aimnum + totalRecoil
-    Advanced_trajectory.maxFocusCounter = 100
-
-    
+    Advanced_trajectory.maxFocusCounter = 100    
 end
 
-Events.OnWeaponSwingHitPoint.Add(Advanced_trajectory.OnWeaponSwing)
+---------------------------------
+-----UPDATE EVERY FRAME SECT-----
+---------------------------------
+function Advanced_trajectory.checkontick()
+    Advanced_trajectory.boomontick()
+    Advanced_trajectory.OnPlayerUpdate()
+    Advanced_trajectory.drawDamageText()
+    Advanced_trajectory.updateProjectiles()
+end
 
---function Advanced_trajectory.OnWeaponSwing(character, handWeapon)
+Events.OnTick.Add(Advanced_trajectory.checkontick)
+
+Events.OnWeaponSwingHitPoint.Add(Advanced_trajectory.OnWeaponSwing)
 
 return Advanced_trajectory
 

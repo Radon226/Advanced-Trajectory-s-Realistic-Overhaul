@@ -59,6 +59,10 @@ function Advanced_trajectory.panel:prerender()
         AR,AG,AB = getSandboxOptions():getOptionByName("Advanced_trajectory.crosshairRedLimit"):getValue(), getSandboxOptions():getOptionByName("Advanced_trajectory.crosshairGreenLimit"):getValue() , getSandboxOptions():getOptionByName("Advanced_trajectory.crosshairBlueLimit"):getValue() 
     end
 
+    if Advanced_trajectory.isOverCarAimLimit then
+        AR,AG,AB = 0.9, 0.1, 0.1
+    end
+
     local transparency  = Advanced_trajectory.alpha
 
     local shakyEffect   = Advanced_trajectory.stressEffect + Advanced_trajectory.painEffect + Advanced_trajectory.panicEffect
