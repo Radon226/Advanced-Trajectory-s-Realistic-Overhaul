@@ -271,6 +271,7 @@ function Advanced_trajectory.getShootZombie(bulletTable, playerTable)
     -- Initialize tables to store zombies and players
     local zbtable = {}  -- zombie table
     local prtable = {}  -- player table
+    local zbSet = {}
 
     -- is target in bullet cell? mindistance = 1
     local minzb = {false, 1}
@@ -297,6 +298,8 @@ function Advanced_trajectory.getShootZombie(bulletTable, playerTable)
         maxLoopNum = 1
     end
 
+    local playerCount = 0
+
     -- Loop through a 3x3 grid centered around the bullet and find targets that exist in the grid
     -- Reduce call for getCell() as much as possible
     for i = 1, maxLoopNum do
@@ -320,14 +323,19 @@ function Advanced_trajectory.getShootZombie(bulletTable, playerTable)
 
                         -- Check if the object is an IsoZombie or IsoPlayer
                         if instanceof(zombieOrPlayer, "IsoZombie") then
-                            if zombieOrPlayer:getHealth() > 0 then
+                            -- check health and zombie dupes
+                            if zombieOrPlayer:getHealth() > 0 and not zbSet[zombieOrPlayer] then
                                 local entry = { entity = zombieOrPlayer, distance = getTargetDistanceFromPlayer(player, zombieOrPlayer)}
                                 table.insert(zbtable, entry)
+                                zbSet[zombieOrPlayer] = true
                             end
                         end
                         if instanceof(zombieOrPlayer, "IsoPlayer") then
-                            if allowPVP(player, zombieOrPlayer) then
-                                prtable[zombieOrPlayer] = 1  -- Add to player table
+                            --print("FOUND PLAYER TARGET")
+                            if allowPVP(player, zombieOrPlayer) and not prtable[zombieOrPlayer] then
+                                --print("player registered for a meal [it's a bullet]")
+                                prtable[zombieOrPlayer] = true 
+                                playerCount = playerCount + 1
                             end
                         end
                     end
@@ -340,17 +348,16 @@ function Advanced_trajectory.getShootZombie(bulletTable, playerTable)
                         local zombieOrPlayer = movingObjects:get(zz - 1)
 
                         if instanceof(zombieOrPlayer, "IsoZombie") then
-                            --zbtable[zombieOrPlayer] = 1 
-                            if zombieOrPlayer:getHealth() > 0 then
+                            if zombieOrPlayer:getHealth() > 0 and not zbSet[zombieOrPlayer] then
                                 local entry = { entity = zombieOrPlayer, distance = getTargetDistanceFromPlayer(player, zombieOrPlayer)}
                                 table.insert(zbtable, entry)
+                                zbSet[zombieOrPlayer] = true
                             end
                         end
                         if instanceof(zombieOrPlayer, "IsoPlayer") then
-                            --print("FOUND PLAYER SHOOTER/TARGET SAFE?: ", isPlayerSafe, " || ", zombieOrPlayer:getSafety():isEnabled())
-                            if allowPVP(player, zombieOrPlayer) then
-                                --print("player registered for a meal [it's a bullet]")
-                                prtable[zombieOrPlayer] = 1  -- Add to player table
+                            if allowPVP(player, zombieOrPlayer) and not prtable[zombieOrPlayer] then
+                                prtable[zombieOrPlayer] = true
+                                playerCount = playerCount + 1
                             end
                         end
                     end
@@ -358,18 +365,18 @@ function Advanced_trajectory.getShootZombie(bulletTable, playerTable)
             end
         end
 
-        if #zbtable > 0 or #prtable > 0 then 
+        if #zbtable > 0 or playerCount > 0 then 
             damageIndx = i
             break
         end
 
         zbtable = {}
         prtable = {}
+        playerCount = 0
     end
 
-
     -- if tables are empty then just return
-    if #zbtable == 0 and #prtable == 0 then 
+    if #zbtable == 0 and playerCount == 0 then 
         return false, false, damageIndx
     end
 
@@ -422,7 +429,7 @@ function Advanced_trajectory.getShootZombie(bulletTable, playerTable)
     end
 
     -- player table [0.4 mindistancemodifier]
-    for pz,bz in pairs(prtable) do
+    for pz, _ in pairs(prtable) do
         local pzX = pz:getX()
         local pzY = pz:getY()
 
@@ -449,35 +456,55 @@ function Advanced_trajectory.getShootZombie(bulletTable, playerTable)
     --print('-----------END-------------------')
 
     -- returns BOOL on whether zombie or player was hit
-    return minzb[1],minpr[1], damageIndx
+    return minzb[1], minpr[1], damageIndx
 end
 
-function Advanced_trajectory.checkBulletCarCollision(square, bulletPos)
+function Advanced_trajectory.checkBulletCarCollision(square, bulletPos, bulletDamage, tableIndx)
     local player = getPlayer()
 
     -- get player's current position, not initial parameter
     local playerCurrPosX = player:getX()
     local playerCurrPosY = player:getY()
 
-    local playervehicle 
+    local playerVehicle 
     if player then
-        playervehicle = player:getVehicle()
+        playerVehicle = player:getVehicle()
     end
 
-    local squarecar = playervehicle or square:getVehicleContainer()
+    -- retrieve BaseVehicle obj
+    local vehicle = playerVehicle or square:getVehicleContainer()
     
     -- if square has car and player is over a distance away from car, check distance between bullet and car and damage car if close enough
     -- the reason for the initial distance check is to allow the player to shoot targets beyond the car while taking cover next to the car, otherwise have bullet collide with car
-    if squarecar and ((squarecar:getX() - playerCurrPosX)^2  + (squarecar:getY() - playerCurrPosY)^2) > 8 then
+    if vehicle and ((vehicle:getX() - playerCurrPosX)^2  + (vehicle:getY() - playerCurrPosY)^2) > 8 then
         if nosfx then return true end
 
-        if ( (squarecar:getX() - bulletPos[1])^2  + (squarecar:getY() - bulletPos[2])^2 ) < 2.8  then
+        if ((vehicle:getX() - bulletPos[1])^2  + (vehicle:getY() - bulletPos[2])^2 ) < 2.8  then
+            
             if getSandboxOptions():getOptionByName("AT_VehicleDamageenable"):getValue() then
-                squarecar:HitByVehicle(squarecar, 0.3)
+                local damage = bulletDamage * 0.5
+
+                vehicle:HitByVehicle(vehicle, damage)
+
+                Advanced_trajectory.determineArrowSpawn(square, true)
+
+                local bulletTable = Advanced_trajectory.table[tableIndx]
+                local penCount = bulletTable["penCount"]
+
+                print("---Hit vehicle---")
+                print("Damage: ", damage, " || Pen: ", penCount)
+
+                if penCount and penCount > 0 and ZombRand(5 + damage) > 6.4 then 
+                    bulletTable["penCount"] = penCount - 1
+                    bulletTable.damage      = bulletTable.damage * 0.5
+
+                    print("no break")
+                    Advanced_trajectory.itemremove(bulletTable.item)
+                    return false 
+                end
             end
 
-            Advanced_trajectory.determineArrowSpawn(square, true)
-
+            print("yes break")
             return true
         end 
     end
@@ -491,7 +518,7 @@ end
 -- checks the squares that the bullet travels, this means there's need to be a limit to how fast the bullet travels
 -- this function determines whether bullets should "break" meaning they stop, pretty much a collision checker
 -- bullet square, dirc, bullet offset, player offset, nonsfx
-function Advanced_trajectory.checkSurfaceCollision(square, bulletAngle, bulletPos, playerPos, nosfx)
+function Advanced_trajectory.checkSurfaceCollision(square, bulletAngle, bulletPos, playerPos, nosfx, bulletDamage, tableIndx)
     --[[
     local bulletPosFloorX = mathfloor(bulletPos[1])
     local bulletPosFloorY = mathfloor(bulletPos[2])
@@ -703,7 +730,7 @@ function Advanced_trajectory.checkSurfaceCollision(square, bulletAngle, bulletPo
         end
     end
 
-    return Advanced_trajectory.checkBulletCarCollision(square, bulletPos)
+    return Advanced_trajectory.checkBulletCarCollision(square, bulletPos, bulletDamage, tableIndx)
 end
 
 -----------------------------------
@@ -753,7 +780,7 @@ function Advanced_trajectory.limitCarAim(player)
         playerForwardVector:normalize()
 
         local vehicle       = player:getVehicle()
-        local vehicleScript = vehicle:getScript()/
+        local vehicleScript = vehicle:getScript()
 
         --convert forward vector 3 to vector 2
         local vehicleForwardVector3f    = vehicle:getForwardVector(BaseVehicle.allocVector3f())
@@ -804,10 +831,6 @@ function Advanced_trajectory.limitCarAim(player)
         BaseVehicle.releaseVector2(upperBoundVec)
         BaseVehicle.releaseVector2(vehForwardVec)
         BaseVehicle.releaseVector3f(vehicleForwardVector3f)
-
-        --local isSmallCar = vehicle:getScript():isSmallVehicle()
-        --local vehicleMass = vehicle:getScript():getMass()
-        --print('Small?: ', isSmallCar, ' || Mass: ', vehicleMass)
     end
 end
 
@@ -2151,18 +2174,18 @@ end
 
 function Advanced_trajectory.dealWithBulletPen(table, tableIndx)
     -- set penetration to 1 if null, subtract after zombie is hit
-    if not table["ThroNumber"] then 
-        table["ThroNumber"] = 1 
+    if not table["penCount"] then 
+        table["penCount"] = 1 
     end
 
-    table["ThroNumber"] = table["ThroNumber"] - 1
+    table["penCount"] = table["penCount"] - 1
 
     -- reduce damage after penetration
     local penDmgReduction = getSandboxOptions():getOptionByName("Advanced_trajectory.penDamageReductionMultiplier"):getValue()
     table.damage = penDmgReduction * table.damage
 
     -- break if iscantthrough and penetration is 0
-    if not table.canPenetrate and (table["ThroNumber"] <= 0) then
+    if not table.canPenetrate and (table["penCount"] <= 0) then
         Advanced_trajectory.table[tableIndx] = nil
         --print("Broke bullet PENETRATION")
 
@@ -2230,11 +2253,16 @@ function Advanced_trajectory.dealWithZombieShot(table, tableIndx, zombie, damage
 end
 
 function Advanced_trajectory.dealWithPlayerShot(table, playerShot, damage)
+
+    local headShotDmgPlayerMultiplier   = getSandboxOptions():getOptionByName("Advanced_trajectory.headShotDmgPlayerMultiplier"):getValue()
+    local bodyShotDmgPlayerMultiplier   = getSandboxOptions():getOptionByName("Advanced_trajectory.bodyShotDmgPlayerMultiplier"):getValue()
+    local footShotDmgPlayerMultiplier   = getSandboxOptions():getOptionByName("Advanced_trajectory.footShotDmgPlayerMultiplier"):getValue()
+
     -- isClient() returns true if the code is being run in MP
     if isClient() then
-        sendClientCommand("ATY_shotplayer", "true", {table.player:getOnlineID(), playerShot:getOnlineID(), damage, table.damage, Advanced_trajectory.headShotDmgPlayerMultiplier, Advanced_trajectory.bodyShotDmgPlayerMultiplier, Advanced_trajectory.footShotDmgPlayerMultiplier})
+        sendClientCommand("ATY_shotplayer", "true", {table.player:getOnlineID(), playerShot:getOnlineID(), damage, table.damage, headShotDmgPlayerMultiplier, bodyShotDmgPlayerMultiplier, footShotDmgPlayerMultiplier})
     else
-        Advanced_trajectory.damagePlayershot(playerShot, damage, table.damage, Advanced_trajectory.headShotDmgPlayerMultiplier, Advanced_trajectory.bodyShotDmgPlayerMultiplier, Advanced_trajectory.footShotDmgPlayerMultiplier)
+        Advanced_trajectory.damagePlayershot(playerShot, damage, table.damage, headShotDmgPlayerMultiplier, bodyShotDmgPlayerMultiplier, footShotDmgPlayerMultiplier)
     end
 end
 
@@ -2312,8 +2340,8 @@ function Advanced_trajectory.dealWithTargetShot(table, tableIndx)
 
     local saywhat   = ""
 
-    -- steady aim wins the game, else bodyshot damage 
-    if Zombie or PlayerShot then
+    if Zombie or Playershot then
+
         if limb == 1 then
             if Advanced_trajectory.aimnumBeforeShot <= 5 then
                 damagezb = headShotDmgZomMultiplier            -- zombie headshot aka strong headshot
@@ -2364,11 +2392,7 @@ function Advanced_trajectory.dealWithTargetShot(table, tableIndx)
         end
 
         if getSandboxOptions():getOptionByName("Advanced_trajectory.DebugEnableVoodoo"):getValue() then
-            if isClient() then
-                sendClientCommand("ATY_shotplayer", "true", {table.player:getOnlineID(), table.player:getOnlineID(), damagezb, table.damage * 0.1, headShotDmgZomMultiplier, bodyShotDmgZomMultiplier, footShotDmgZomMultiplier})
-            else
-                Advanced_trajectory.damagePlayershot(table.player, damagezb, table.damage * 0.1, headShotDmgZomMultiplier, bodyShotDmgZomMultiplier, footShotDmgZomMultiplier)
-            end
+            Advanced_trajectory.dealWithPlayerShot(table, table.player, damagepr)
         end
 
         if Advanced_trajectory.dealWithZombieShot(table, tableIndx, Zombie, damagezb) then return true end
@@ -2419,7 +2443,7 @@ function Advanced_trajectory.updateProjectiles()
             -----------------------------------------------
             --CHECK IF PROJECTILE COLLIDED WITH WALL/DOOR--
             -----------------------------------------------
-            if Advanced_trajectory.checkSurfaceCollision(table.square, table.bulletDir, table.bulletPos, table.playerPos, table["nonsfx"]) and not table.canPassThroughWall then
+            if Advanced_trajectory.checkSurfaceCollision(table.square, table.bulletDir, table.bulletPos, table.playerPos, table["nonsfx"], table.damage, indx) and not table.canPassThroughWall then
                 --print("***********Bullet collided with wall.************")
                 --print("Wallcarmouse: ", table["wallcarmouse"])
                 --print("Wallcarzombie: ", table["wallcarzombie"])
@@ -2642,7 +2666,7 @@ function Advanced_trajectory.OnWeaponSwing(character, handWeapon)
 
     projectilePlayerData.throwinfo[7] = handWeapon:getExplosionSound()
 
-    projectilePlayerData["ThroNumber"] = 1
+    projectilePlayerData["penCount"] = 1
 
 
     local isspweapon = Advanced_trajectory.FullWeaponTypes[handWeapon:getFullType()] 
@@ -2777,9 +2801,9 @@ function Advanced_trajectory.OnWeaponSwing(character, handWeapon)
 
                 -- determines number of zombies it can hit with one bullet (pen), if enabled set to stat. Else it will be set to 1 in checkontick.
                 if getSandboxOptions():getOptionByName("Advanced_trajectory.enableBulletPenFlesh"):getValue() then
-                    projectilePlayerData["ThroNumber"] = ScriptManager.instance:getItem(handWeapon:getFullType()):getMaxHitCount()
+                    projectilePlayerData["penCount"] = ScriptManager.instance:getItem(handWeapon:getFullType()):getMaxHitCount()
                 else
-                    projectilePlayerData["ThroNumber"] = 1
+                    projectilePlayerData["penCount"] = 1
                 end
 
                 isHoldingShotgun = false

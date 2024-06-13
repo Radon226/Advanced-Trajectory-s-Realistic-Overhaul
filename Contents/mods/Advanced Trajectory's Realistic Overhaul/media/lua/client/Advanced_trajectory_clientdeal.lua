@@ -5,17 +5,16 @@ local Advanced_trajectory = require "Advanced_trajectory_core"
 --------------------------------
 local function damagePlayershotPVP(player, playerShot, damage, baseGunDmg, headShotDmg, bodyShotDmg, footShotDmg, playerOnlineID, playershotOnlineID)
 
-    --print("DamagePlayershotPVP - ", "playerShot:", playerShot, " damagepr:", damage, " firearmdamage:", baseGunDmg)
+    --print("playerShot:", playerShot, " damagepr:", damage, " firearmdamage:", baseGunDmg)
 
-    local nameShotPart, playerDamageDealt = Advanced_trajectory.Advanced_trajectory.damagePlayershot(playerShot, damage, baseGunDmg, headShotDmg, bodyShotDmg, footShotDmg)
+    local nameShotPart, playerDamageDealt = Advanced_trajectory.damagePlayershot(playerShot, damage, baseGunDmg, headShotDmg, bodyShotDmg, footShotDmg)
 
     local isDead = false
     if playerShot:getHealth() < 1 or playerShot:isDead() == true then
-        print(playerShot:getUsername() ," is most likely dead.")
+        --print(playerShot:getUsername() ," is most likely dead.")
         isDead = true
     end
-
-    --Advanced_trajectory.writePVPLog({player, playerShot, nameShotPart, damage, baseGunDmg, playerDamageDealt, isDead})   
+  
     sendClientCommand("ATY_writePVPLog", "true", {playerOnlineID, playershotOnlineID, nameShotPart, damage, baseGunDmg, playerDamageDealt, isDead})
 end
 
@@ -23,8 +22,8 @@ end
 local function Advanced_trajectory_OnServerCommand(module, command, arguments)
 
     local clientPlayershot = getPlayer()
-    if not clientPlayershot then return end
 
+    if not clientPlayershot then return end
 
     ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     -- sendClientCommand("ATY_shotplayer", "true", {vt[19]:getOnlineID(), Playershot:getOnlineID(), damagepr, vt[6], Advanced_trajectory.HeadShotDmgPlayerMultiplier, Advanced_trajectory.BodyShotDmgPlayerMultiplier, Advanced_trajectory.FootShotDmgPlayerMultiplier})--
