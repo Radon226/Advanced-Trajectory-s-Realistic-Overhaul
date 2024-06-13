@@ -494,7 +494,7 @@ function Advanced_trajectory.checkBulletCarCollision(square, bulletPos, bulletDa
                 print("---Hit vehicle---")
                 print("Damage: ", damage, " || Pen: ", penCount)
 
-                if penCount and penCount > 0 and ZombRand(5 + damage) > 6.4 then 
+                if penCount and penCount > 1 then 
                     bulletTable["penCount"] = penCount - 1
                     bulletTable.damage      = bulletTable.damage * 0.5
 
@@ -2175,7 +2175,7 @@ end
 function Advanced_trajectory.dealWithBulletPen(table, tableIndx)
     -- set penetration to 1 if null, subtract after zombie is hit
     if not table["penCount"] then 
-        table["penCount"] = 1 
+        table["penCount"] = 1
     end
 
     table["penCount"] = table["penCount"] - 1
@@ -2456,6 +2456,8 @@ function Advanced_trajectory.updateProjectiles()
 
                 -- collided so remove bullet and make empty table that held data for that bullet
                 currTable[indx] = Advanced_trajectory.removeBulletData(table.item) 
+
+                print("Break bullet")
 
                 -- projectile is removed so break out of for loop and move to next projectile data table
                 break
