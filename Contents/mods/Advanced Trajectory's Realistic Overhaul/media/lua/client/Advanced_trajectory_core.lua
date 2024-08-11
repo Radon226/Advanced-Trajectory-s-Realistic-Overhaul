@@ -797,58 +797,55 @@ function Advanced_trajectory.boomontick()
 
     for indx, tableSfx in pairs(currTable) do
         for kz, vz in pairs(tableSfx.item) do
-            Advanced_trajectory.itemremove(tableSfx.item[tableSfx.nowsfxnum - tableSfx.offset])
+            Advanced_trajectory.itemremove(tableSfx.item[tableSfx.nowSfxNum - tableSfx.offset])
         end
 
-        if tableSfx.nowsfxnum > tableSfx.sfxnum + tableSfx.offset then
+        if tableSfx.nowSfxNum > tableSfx.sfxNum + tableSfx.offset then
             currTable[indx] = nil
             break
         end
 
-        if tableSfx.nowsfxnum == 1 and tableSfx.sfxcount == 0 then 
+        if tableSfx.nowSfxNum == 1 and tableSfx.sfxCount == 0 then 
 
-            local itemornone = Advanced_trajectory.additemsfx(tableSfx.square, tableSfx.sfxname..tostring(tableSfx.nowsfxnum), tableSfx.pos[1], tableSfx.pos[2], tableSfx.pos[3])
+            local itemOrNone = Advanced_trajectory.additemsfx(tableSfx.square, tableSfx.sfxName..tostring(tableSfx.nowSfxNum), tableSfx.pos[1], tableSfx.pos[2], tableSfx.pos[3])
 
             -- nil error when inserting a value to table.item
-            table.insert(tableSfx.item, itemornone)
-            tableSfx.nowsfxnum = tableSfx.nowsfxnum + 1
+            table.insert(tableSfx.item, itemOrNone)
+            tableSfx.nowSfxNum = tableSfx.nowSfxNum + 1
 
-        elseif tableSfx.sfxcount > tableSfx.ticindxime and tableSfx.nowsfxnum <= tableSfx.sfxnum then
+        elseif tableSfx.sfxCount > tableSfx.ticIndxime and tableSfx.nowSfxNum <= tableSfx.sfxNum then
 
-            tableSfx.sfxcount = 0
-            local itemornone = Advanced_trajectory.additemsfx(tableSfx.square, tableSfx.sfxname..tostring(tableSfx.nowsfxnum), tableSfx.pos[1], tableSfx.pos[2], tableSfx.pos[3])
-            table.insert(tableSfx.item, itemornone)
-            tableSfx.nowsfxnum = tableSfx.nowsfxnum + 1
+            tableSfx.sfxCount = 0
+            local itemOrNone = Advanced_trajectory.additemsfx(tableSfx.square, tableSfx.sfxName..tostring(tableSfx.nowSfxNum), tableSfx.pos[1], tableSfx.pos[2], tableSfx.pos[3])
+            table.insert(tableSfx.item, itemOrNone)
+            tableSfx.nowSfxNum = tableSfx.nowSfxNum + 1
 
-        elseif tableSfx.sfxcount > tableSfx.ticindxime then
+        elseif tableSfx.sfxCount > tableSfx.ticIndxime then
 
-            tableSfx.sfxcount = 0 
-            tableSfx.nowsfxnum = tableSfx.nowsfxnum + 1
+            tableSfx.sfxCount = 0 
+            tableSfx.nowSfxNum = tableSfx.nowSfxNum + 1
 
         end
             
-        tableSfx.sfxcount = tableSfx.sfxcount + getGameTime():getMultiplier()
+        tableSfx.sfxCount = tableSfx.sfxCount + getGameTime():getMultiplier()
     end
 end
 
 -----------------------------------
 --EXPLOSION FX ?? FUNC SECT---
 -----------------------------------
-function Advanced_trajectory.boomsfx(sq, sfxName, sfxNum, ticindxime)
+function Advanced_trajectory.boomsfx(sq, sfxName, sfxNum, ticIndxime)
     local tableSfx = {
-        sfxname     = sfxName or "Base.theMH_MkII_SFX",     ---1
-        sfxnum      = sfxNum or 12,                         ---2
-        nowsfxnum   = 1,                                    ---3
+        sfxName     = sfxName or "Base.theMH_MkII_SFX",     ---1
+        sfxNum      = sfxNum or 12,                         ---2
+        nowSfxNum   = 1,                                    ---3
         pos         = {sq:getX(), sq:getY() ,sq:getZ()},    ---4
         square      = sq,                                   ---5
-        ticindxime  = ticindxime or 3.5,                    ---6
-        sfxcount    = 0,                                    ---7
+        ticIndxime  = ticIndxime or 3.5,                    ---6
+        sfxCount    = 0,                                    ---7
         func        = function() return end,                ---8
-        varz1       = nil,                                  ---9
-        varz2       = nil,                                  ---10
-        varz3       = nil,                                  ---11
         item        = {},                                   ---12
-        offset      = 3                                     ---13滞后 ???
+        offset      = 3                                     ---13 滞后/lag ???
     }
 
     table.insert(Advanced_trajectory.boomtable, tableSfx)
