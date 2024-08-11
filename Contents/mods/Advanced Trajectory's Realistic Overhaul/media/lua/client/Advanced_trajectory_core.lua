@@ -70,27 +70,6 @@ local function advMathFloor(number)
     return number - mathfloor(number)
 end
 
------------------------------
---ADD TEXTURE FX FUNC SECT---
------------------------------
-function Advanced_trajectory.additemsfx(square,itemname,x,y,z)
-    if square:getZ() > 7 then return end
-    local iteminv = InventoryItemFactory.CreateItem(itemname)
-    local itemin = IsoWorldInventoryObject.new(iteminv, square, advMathFloor(x), advMathFloor(y), advMathFloor(z));
-    iteminv:setWorldItem(itemin)
-    square:getWorldObjects():add(itemin)
-    square:getObjects():add(itemin)
-    local chunk = square:getChunk()
-    
-    if chunk then
-        square:getChunk():recalcHashCodeObjects()
-    else return end
-    -- iteminv:setAutoAge();
-    -- itemin:setKeyId(iteminv:getKeyId());
-    -- itemin:setName(iteminv:getName());
-    return iteminv
-end
-
 -------------------------
 --TABLE ?? FUNC SECT---
 -------------------------
@@ -313,19 +292,19 @@ local function collidedWithTargetHitbox(targetX, targetY, bulletTable, target)
     return false
 end
 
-local function sortTableByDistance(table) 
+local function sortTableByDistance(targetTable) 
     -- table.sort uses quicksort which means O(N log N) in best/avg case scenario
     -- insertion sort algorithm is best since data would be nearly sorted (dataset usually small as well). Time complexity would be O(N) and space would be O(1).
-    for i=2, #table do 
-        local temp = table[i]
+    for i = 2, #targetTable do 
+        local temp = targetTable[i]
         local j = i - 1
 
-        while (j >= 1 and temp.distanceFromPlayer < table[j].distanceFromPlayer) do
-            table[j+1] = table[j]
+        while (j >= 1 and temp.distanceFromPlayer < targetTable[j].distanceFromPlayer) do
+            targetTable[j+1] = targetTable[j]
             j = j - 1
         end
 
-        table[j + 1] = temp
+        targetTable[j + 1] = temp
     end
 end
 
@@ -788,45 +767,91 @@ function Advanced_trajectory.checkSurfaceCollision(square, bulletDir, bulletPos,
     return Advanced_trajectory.checkBulletCarCollision(square, bulletPos, bulletDamage, tableIndx)
 end
 
------------------------------------
---EXPLOSION LOGIC ?? FUNC SECT---
------------------------------------
+-----------------------------
+--ADD TEXTURE FX FUNC SECT---
+-----------------------------
+function Advanced_trajectory.additemsfx(square, itemname, x, y, z)
+    if square:getZ() > 7 then return end
+    local iteminv = InventoryItemFactory.CreateItem(itemname)
+    local itemin = IsoWorldInventoryObject.new(iteminv, square, advMathFloor(x), advMathFloor(y), advMathFloor(z));
+    iteminv:setWorldItem(itemin)
+    square:getWorldObjects():add(itemin)
+    square:getObjects():add(itemin)
+    local chunk = square:getChunk()
+    
+    if chunk then
+        square:getChunk():recalcHashCodeObjects()
+    else return end
+    -- iteminv:setAutoAge();
+    -- itemin:setKeyId(iteminv:getKeyId());
+    -- itemin:setName(iteminv:getName());
+    return iteminv
+end
+
+----------------------------------------------
+--EXPLOSION SPECIAL EFFECTS LOGIC FUNC SECT---
+----------------------------------------------
 function Advanced_trajectory.boomontick()
 
     local currTable = Advanced_trajectory.boomtable
 
-    for indx, table in pairs(currTable) do
-        for kz,vz in pairs(table[12]) do
-            Advanced_trajectory.itemremove(table[12][table[3] - table[13]])
+    for indx, tableSfx in pairs(currTable) do
+        for kz, vz in pairs(tableSfx.item) do
+            Advanced_trajectory.itemremove(tableSfx.item[tableSfx.nowsfxnum - tableSfx.offset])
         end
 
-        if table[3] > table[2] + table[13] then
+        if tableSfx.nowsfxnum > tableSfx.sfxnum + tableSfx.offset then
             currTable[indx] = nil
             break
         end
 
-        if table[3] == 1 and  table[7] == 0 then 
+        if tableSfx.nowsfxnum == 1 and tableSfx.sfxcount == 0 then 
 
-            local itemornone = Advanced_trajectory.additemsfx(table[5], table[1]..tostring(table[3]), table[4][1], table[4][2], table[4][3])
-            table.insert(table[12], itemornone)
-            table[3] = table[3] + 1
+            local itemornone = Advanced_trajectory.additemsfx(tableSfx.square, tableSfx.sfxname..tostring(tableSfx.nowsfxnum), tableSfx.pos[1], tableSfx.pos[2], tableSfx.pos[3])
 
-        elseif table[7] > table[6] and table[3] <= table[2] then
+            -- nil error when inserting a value to table.item
+            table.insert(tableSfx.item, itemornone)
+            tableSfx.nowsfxnum = tableSfx.nowsfxnum + 1
 
-            table[7] = 0
-            local itemornone = Advanced_trajectory.additemsfx(table[5], table[1]..tostring(table[3]), table[4][1], table[4][2], table[4][3])
-            table.insert(table[12], itemornone)
-            table[3] = table[3] + 1
+        elseif tableSfx.sfxcount > tableSfx.ticindxime and tableSfx.nowsfxnum <= tableSfx.sfxnum then
 
-        elseif table[7] > table[6] then
+            tableSfx.sfxcount = 0
+            local itemornone = Advanced_trajectory.additemsfx(tableSfx.square, tableSfx.sfxname..tostring(tableSfx.nowsfxnum), tableSfx.pos[1], tableSfx.pos[2], tableSfx.pos[3])
+            table.insert(tableSfx.item, itemornone)
+            tableSfx.nowsfxnum = tableSfx.nowsfxnum + 1
 
-            table[7] = 0 
-            table[3] = table[3] + 1
+        elseif tableSfx.sfxcount > tableSfx.ticindxime then
+
+            tableSfx.sfxcount = 0 
+            tableSfx.nowsfxnum = tableSfx.nowsfxnum + 1
 
         end
             
-        table[7] = table[7] + getGameTime():getMultiplier()
+        tableSfx.sfxcount = tableSfx.sfxcount + getGameTime():getMultiplier()
     end
+end
+
+-----------------------------------
+--EXPLOSION FX ?? FUNC SECT---
+-----------------------------------
+function Advanced_trajectory.boomsfx(sq, sfxName, sfxNum, ticindxime)
+    local tableSfx = {
+        sfxname     = sfxName or "Base.theMH_MkII_SFX",     ---1
+        sfxnum      = sfxNum or 12,                         ---2
+        nowsfxnum   = 1,                                    ---3
+        pos         = {sq:getX(), sq:getY() ,sq:getZ()},    ---4
+        square      = sq,                                   ---5
+        ticindxime  = ticindxime or 3.5,                    ---6
+        sfxcount    = 0,                                    ---7
+        func        = function() return end,                ---8
+        varz1       = nil,                                  ---9
+        varz2       = nil,                                  ---10
+        varz3       = nil,                                  ---11
+        item        = {},                                   ---12
+        offset      = 3                                     ---13滞后 ???
+    }
+
+    table.insert(Advanced_trajectory.boomtable, tableSfx)
 end
 
 function Advanced_trajectory.limitCarAim(player) 
@@ -887,60 +912,6 @@ function Advanced_trajectory.limitCarAim(player)
         BaseVehicle.releaseVector2(vehForwardVec)
         BaseVehicle.releaseVector3f(vehicleForwardVector3f)
     end
-end
-
------------------------------------
---EXPLOSION FX ?? FUNC SECT---
------------------------------------
-function Advanced_trajectory.boomsfx(sq, sfxName, sfxNum, ticindxime)
-    -- print(sq)
-    local sfxname       = sfxName or "Base.theMH_MkII_SFX"
-    local sfxnum        = sfxNum or 12
-    local nowsfxnum     = 1
-    local sfxcount      = 0
-    local pos           = {sq:getX(), sq:getY() ,sq:getZ()}
-    local square        = sq
-    local ticindxime    = ticindxime or 3.5
-    local func          = function() return end
-    local varz1,varz2,varz3
-    local item          = {}
-    local offset        = 3
-
-    local tablesfx = {
-        sfxname,         ---1
-        sfxnum,          ---2
-        nowsfxnum,       ---3
-        pos,             ---4
-        square,          ---5
-        ticindxime,      ---6
-        sfxcount,        ---7
-        func,            ---8
-        varz1,           ---9
-        varz2,           ---10
-        varz3,           ---11
-        item,            ---12
-        offset           ---13滞后
-    }
-
-    --[[
-    local tablesfx = {
-        sfxname     = sfxName or "Base.theMH_MkII_SFX",     ---1
-        sfxnum      = sfxNum or 12,                         ---2
-        nowsfxnum   = 1,                                    ---3
-        pos         = {sq:getX(), sq:getY() ,sq:getZ()},    ---4
-        square      = sq,                                   ---5
-        ticindxime  = ticindxime or 3.5,                    ---6
-        sfxcount    = 0,                                    ---7
-        func        = function() return end,                ---8
-        varz1       = nil,                                  ---9
-        varz2       = nil,                                  ---10
-        varz3       = nil,                                  ---11
-        item        = {},                                   ---12
-        offset      = 3                                     ---13滞后 ???
-    }
-    ]]
-
-    table.insert(Advanced_trajectory.boomtable, tablesfx)
 end
 
 -----------------------------------
@@ -2190,14 +2161,14 @@ function Advanced_trajectory.drawDamageText()
     end
 end
 
-function Advanced_trajectory.blowUp(table)
-    if table.throwinfo[2] > 0 then
-        Advanced_trajectory.boomsfx(table.square, table["boomsfx"][1], table["boomsfx"][2], table["boomsfx"][3])
+function Advanced_trajectory.blowUp(tableProj)
+    if tableProj.throwinfo[2] > 0 then
+        Advanced_trajectory.boomsfx(tableProj.square, tableProj["boomsfx"][1], tableProj["boomsfx"][2], tableProj["boomsfx"][3])
     end
 
-    if not table["nonsfx"]  then
+    if not tableProj["nonsfx"]  then
         -- print("Boom")
-        Advanced_trajectory.Boom(table.square, table.throwinfo)
+        Advanced_trajectory.Boom(tableProj.square, tableProj.throwinfo)
     end
 end
 
@@ -2241,20 +2212,20 @@ function Advanced_trajectory.giveOnHitXP(player, zombie, damage)
     end
 end
 
-function Advanced_trajectory.dealWithBulletPen(table, tableIndx)
+function Advanced_trajectory.dealWithBulletPen(tableProj, tableIndx)
     -- set penetration to 1 if null, subtract after zombie is hit
-    if not table["penCount"] then 
-        table["penCount"] = 1
+    if not tableProj["penCount"] then 
+        tableProj["penCount"] = 1
     end
 
-    table["penCount"] = table["penCount"] - 1
+    tableProj["penCount"] = tableProj["penCount"] - 1
 
     -- reduce damage after penetration
     local penDmgReduction = getSandboxOptions():getOptionByName("Advanced_trajectory.penDamageReductionMultiplier"):getValue()
-    table.damage = penDmgReduction * table.damage
+    tableProj.damage = penDmgReduction * tableProj.damage
 
     -- break if iscantthrough and penetration is 0
-    if not table.canPenetrate and (table["penCount"] <= 0) then
+    if not tableProj.canPenetrate and (tableProj["penCount"] <= 0) then
         Advanced_trajectory.table[tableIndx] = nil
         --print("Broke bullet PENETRATION")
 
@@ -2262,31 +2233,31 @@ function Advanced_trajectory.dealWithBulletPen(table, tableIndx)
     end  
 end
 
-function Advanced_trajectory.dealWithZombieShot(table, tableIndx, zombie, damage)
-    if table["wallcarzombie"] or table.weaponName == "Grenade"then
+function Advanced_trajectory.dealWithZombieShot(tableProj, tableIndx, zombie, damage)
+    if tableProj["wallcarzombie"] or tableProj.weaponName == "Grenade"then
 
-        table.throwinfo["zombie"] = zombie
+        tableProj.throwinfo["zombie"] = zombie
 
-        if table.throwinfo[2] > 0 then
-            Advanced_trajectory.boomsfx(table.square)
+        if tableProj.throwinfo[2] > 0 then
+            Advanced_trajectory.boomsfx(tableProj.square)
         end
-        if not table["nonsfx"] then
-            Advanced_trajectory.Boom(table.square, table.throwinfo)
+        if not tableProj["nonsfx"] then
+            Advanced_trajectory.Boom(tableProj.square, tableProj.throwinfo)
         end
         
-        Advanced_trajectory.table[tableIndx] = Advanced_trajectory.removeBulletData(table.item) 
+        Advanced_trajectory.table[tableIndx] = Advanced_trajectory.removeBulletData(tableProj.item) 
 
         return true
 
-    elseif not table["nonsfx"]  then
-        local player = table.player
+    elseif not tableProj["nonsfx"]  then
+        local player = tableProj.player
 
-        if table.weaponName == "flamethrower" then
+        if tableProj.weaponName == "flamethrower" then
             zombie:setOnFire(true)
 
             -- Uncomment this section if you want to handle GrenadeLauncher differently
-            -- elseif table.weaponName == "GrenadeLauncher" then
-            --     tanksuperboom(table.square)
+            -- elseif tableProj.weaponName == "GrenadeLauncher" then
+            --     tanksuperboom(tableProj.square)
             -- end
         end
         
@@ -2294,7 +2265,7 @@ function Advanced_trajectory.dealWithZombieShot(table, tableIndx, zombie, damage
             sendClientCommand("ATY_cshotzombie", "true", {zombie:getOnlineID(), player:getOnlineID()})
         end
 
-        damage = damage * table.damage * 0.1
+        damage = damage * tableProj.damage * 0.1
 
         -- give aim xp upon hit if weapon used is not flamethrower
         if not Advanced_trajectory.hasFlameWeapon then
@@ -2321,7 +2292,7 @@ function Advanced_trajectory.dealWithZombieShot(table, tableIndx, zombie, damage
     end
 end
 
-function Advanced_trajectory.dealWithPlayerShot(table, playerShot, damage)
+function Advanced_trajectory.dealWithPlayerShot(tableProj, playerShot, damage)
 
     local headShotDmgPlayerMultiplier   = getSandboxOptions():getOptionByName("Advanced_trajectory.headShotDmgPlayerMultiplier"):getValue()
     local bodyShotDmgPlayerMultiplier   = getSandboxOptions():getOptionByName("Advanced_trajectory.bodyShotDmgPlayerMultiplier"):getValue()
@@ -2329,21 +2300,21 @@ function Advanced_trajectory.dealWithPlayerShot(table, playerShot, damage)
 
     -- isClient() returns true if the code is being run in MP
     if isClient() then
-        sendClientCommand("ATY_shotplayer", "true", {table.player:getOnlineID(), playerShot:getOnlineID(), damage, table.damage, headShotDmgPlayerMultiplier, bodyShotDmgPlayerMultiplier, footShotDmgPlayerMultiplier})
+        sendClientCommand("ATY_shotplayer", "true", {tableProj.player:getOnlineID(), playerShot:getOnlineID(), damage, tableProj.damage, headShotDmgPlayerMultiplier, bodyShotDmgPlayerMultiplier, footShotDmgPlayerMultiplier})
     else
-        Advanced_trajectory.damagePlayershot(playerShot, damage, table.damage, headShotDmgPlayerMultiplier, bodyShotDmgPlayerMultiplier, footShotDmgPlayerMultiplier)
+        Advanced_trajectory.damagePlayershot(playerShot, damage, tableProj.damage, headShotDmgPlayerMultiplier, bodyShotDmgPlayerMultiplier, footShotDmgPlayerMultiplier)
     end
 end
 
-function Advanced_trajectory.dealWithTargetShot(table, tableIndx)
+function Advanced_trajectory.dealWithTargetShot(tableProj, tableIndx)
 
-    local bulletPosZ = table.bulletPos[3]
+    local bulletPosZ = tableProj.bulletPos[3]
 
     -- get Z level difference between aimed target and bullet (which is always from player level)
-    local zLevelDiff      = table["aimLevel"] - mathfloor(bulletPosZ)
+    local zLevelDiff      = tableProj["aimLevel"] - mathfloor(bulletPosZ)
     local shootLevel    = bulletPosZ + zLevelDiff
 
-    if table["isparabola"] then
+    if tableProj["isparabola"] then
         shootLevel  = bulletPosZ
     end
         
@@ -2354,14 +2325,14 @@ function Advanced_trajectory.dealWithTargetShot(table, tableIndx)
     zLevelDiff = zLevelDiff * 3
 
     local bulletTable = {   
-                            x = table.bulletPos[1] + zLevelDiff,
-                            y = table.bulletPos[2] + zLevelDiff,
+                            x = tableProj.bulletPos[1] + zLevelDiff,
+                            y = tableProj.bulletPos[2] + zLevelDiff,
                             z    = shootLevel, 
-                            dir  = table.bulletDir
+                            dir  = tableProj.bulletDir
                         }
 
     -- returns object zombie and player that was shot
-    local Zombie, Playershot, limb      =  Advanced_trajectory.getShootZombie(bulletTable, table.playerPos, table["missedShot"])
+    local Zombie, Playershot, limb      =  Advanced_trajectory.getShootZombie(bulletTable, tableProj.playerPos, tableProj["missedShot"])
 
     -- DmgZom are the damage multipliers for zombies
     local headShotDmgZomMultiplier      = getSandboxOptions():getOptionByName("Advanced_trajectory.headShotDmgZomMultiplier"):getValue()
@@ -2413,12 +2384,12 @@ function Advanced_trajectory.dealWithTargetShot(table, tableIndx)
     ---DEAL WITH ALIVE PLAYER WHEN HIT---
     -------------------------------------
     -- NOTES: if it's a non friendly player is shot at, determine damage done and which body part is affected
-    -- table.player is you
-    if not table["nonsfx"] and Playershot and table.player then
+    -- tableProj.player is you
+    if not tableProj["nonsfx"] and Playershot and tableProj.player then
 
-        Advanced_trajectory.dealWithPlayerShot(table, Playershot, damagepr)
+        Advanced_trajectory.dealWithPlayerShot(tableProj, Playershot, damagepr)
 
-        Advanced_trajectory.table[tableIndx] = Advanced_trajectory.removeBulletData(table.item) 
+        Advanced_trajectory.table[tableIndx] = Advanced_trajectory.removeBulletData(tableProj.item) 
 
         return true
     end
@@ -2429,19 +2400,19 @@ function Advanced_trajectory.dealWithTargetShot(table, tableIndx)
     if Zombie and Zombie:isAlive() then
 
         -- If zombies are alive, announce the body part it hits if callshot is enabled
-        if table.player and getSandboxOptions():getOptionByName("Advanced_trajectory.callshot"):getValue() then
-            table.player:Say(getText(saywhat))
+        if tableProj.player and getSandboxOptions():getOptionByName("Advanced_trajectory.callshot"):getValue() then
+            tableProj.player:Say(getText(saywhat))
         end
 
         if getSandboxOptions():getOptionByName("Advanced_trajectory.DebugEnableVoodoo"):getValue() then
-            Advanced_trajectory.dealWithPlayerShot(table, table.player, damagepr)
+            Advanced_trajectory.dealWithPlayerShot(tableProj, tableProj.player, damagepr)
         end
 
-        if Advanced_trajectory.dealWithZombieShot(table, tableIndx, Zombie, damagezb) then return true end
+        if Advanced_trajectory.dealWithZombieShot(tableProj, tableIndx, Zombie, damagezb) then return true end
 
-        Advanced_trajectory.itemremove(table.item)
+        Advanced_trajectory.itemremove(tableProj.item)
 
-        if Advanced_trajectory.dealWithBulletPen(table, tableIndx) then return true end
+        if Advanced_trajectory.dealWithBulletPen(tableProj, tableIndx) then return true end
     end
 end
 
@@ -2452,52 +2423,52 @@ function Advanced_trajectory.updateProjectiles()
     -- print(#currTable)
     -- print(getGameTime():getMultiplier())
 
-    for indx, table in pairs(currTable) do
+    for indx, tableProj in pairs(currTable) do
 
         -- Remove bullet projectile to simulate it going from one point to another
         -- If commented out, this will lead to a continous printing of projectiles at every tile it spawns (imagine a long trail of bullets)
-        Advanced_trajectory.itemremove(table.item)
+        Advanced_trajectory.itemremove(tableProj.item)
 
-        if table.square == nil then 
+        if tableProj.square == nil then 
             currTable[indx] = nil
             break
         end
 
-        local currTablez12_ = table.bulletSpeed * 0.35
+        local currTablez12_ = tableProj.bulletSpeed * 0.35
 
-        local bulletPosX = table.bulletPos[1]
-        local bulletPosY = table.bulletPos[2]
-        local bulletPosZ = table.bulletPos[3]
+        local bulletPosX = tableProj.bulletPos[1]
+        local bulletPosY = tableProj.bulletPos[2]
+        local bulletPosZ = tableProj.bulletPos[3]
 
         -- update to square that bullet is currently on
         if Advanced_trajectory.aimlevels then
-            table.square = getWorld():getCell():getOrCreateGridSquare(bulletPosX, bulletPosY, Advanced_trajectory.aimlevels)
+            tableProj.square = getWorld():getCell():getOrCreateGridSquare(bulletPosX, bulletPosY, Advanced_trajectory.aimlevels)
         else
-            table.square = getWorld():getCell():getOrCreateGridSquare(bulletPosX, bulletPosY, bulletPosZ)
+            tableProj.square = getWorld():getCell():getOrCreateGridSquare(bulletPosX, bulletPosY, bulletPosZ)
         end
 
-        table.throwinfo["pos"] = {advMathFloor(bulletPosX), advMathFloor(bulletPosY)}
+        tableProj.throwinfo["pos"] = {advMathFloor(bulletPosX), advMathFloor(bulletPosY)}
 
-        if table.square then
+        if tableProj.square then
 
             local blowUp = Advanced_trajectory.blowUp
 
             -----------------------------------------------
             --CHECK IF PROJECTILE COLLIDED WITH WALL/DOOR--
             -----------------------------------------------
-            if Advanced_trajectory.checkSurfaceCollision(table.square, table.bulletDir, table.bulletPos, table.playerPos, table["nonsfx"], table.damage, indx) and not table.canPassThroughWall then
+            if Advanced_trajectory.checkSurfaceCollision(tableProj.square, tableProj.bulletDir, tableProj.bulletPos, tableProj.playerPos, tableProj["nonsfx"], tableProj.damage, indx) and not tableProj.canPassThroughWall then
                 --print("***********Bullet collided with wall.************")
-                --print("Wallcarmouse: ", table["wallcarmouse"])
-                --print("Wallcarzombie: ", table["wallcarzombie"])
+                --print("Wallcarmouse: ", tableProj["wallcarmouse"])
+                --print("Wallcarzombie: ", tableProj["wallcarzombie"])
                 --print("Cell: ", bulletPosX,", ",bulletPosY, ", ", bulletPosZ)
 
                 -- if grenade type, then blow it up when collided
-                if  table.weaponName =="Grenade" or table["wallcarmouse"] or table["wallcarzombie"] then
-                    blowUp(table)
+                if  tableProj.weaponName =="Grenade" or tableProj["wallcarmouse"] or tableProj["wallcarzombie"] then
+                    blowUp(tableProj)
                 end
 
                 -- collided so remove bullet and make empty table that held data for that bullet
-                currTable[indx] = Advanced_trajectory.removeBulletData(table.item) 
+                currTable[indx] = Advanced_trajectory.removeBulletData(tableProj.item) 
 
                 --print("Break bullet")
 
@@ -2507,80 +2478,80 @@ function Advanced_trajectory.updateProjectiles()
 
             -- reassign square so visual offset of bullet doesn't go whack
             if getWorld():getCell():getOrCreateGridSquare(bulletPosX, bulletPosY, bulletPosZ) then
-                table.square = getWorld():getCell():getOrCreateGridSquare(bulletPosX, bulletPosY, bulletPosZ) 
+                tableProj.square = getWorld():getCell():getOrCreateGridSquare(bulletPosX, bulletPosY, bulletPosZ) 
             end
 
-            table.item = Advanced_trajectory.additemsfx(table.square, table.projectileType .. tostring(table.winddir), advMathFloor(bulletPosX), advMathFloor(bulletPosY), advMathFloor(bulletPosZ))
+            tableProj.item = Advanced_trajectory.additemsfx(tableProj.square, tableProj.projectileType .. tostring(tableProj.winddir), advMathFloor(bulletPosX), advMathFloor(bulletPosY), advMathFloor(bulletPosZ))
 
-            local spnumber      = (table.dirVector[1]^2 + table.dirVector[2]^2)^0.5 * currTablez12_
-            table.bulletDist    = table.bulletDist - spnumber
-            table.currDist      = table.currDist + spnumber
+            local spnumber      = (tableProj.dirVector[1]^2 + tableProj.dirVector[2]^2)^0.5 * currTablez12_
+            tableProj.bulletDist    = tableProj.bulletDist - spnumber
+            tableProj.currDist      = tableProj.currDist + spnumber
 
             -- NOT SURE WHAT WEAPON THIS CHECKS SINCE THERE ARE NO FLAMETHROWERS IN VANILLA
-            if table.weaponName == "flamethrower" then
+            if tableProj.weaponName == "flamethrower" then
 
-                -- print(table.currDist)
-                if table.currDist > 3 then
-                    table.currDist    = 0
-                    table.count       = table.count + 1
+                -- print(tableProj.currDist)
+                if tableProj.currDist > 3 then
+                    tableProj.currDist    = 0
+                    tableProj.count       = tableProj.count + 1
                     
-                    table.bulletPos   = copyTable(table.playerPos)
-                    bulletPosX = table.bulletPos[1]
-                    bulletPosY = table.bulletPos[2]
-                    bulletPosZ = table.bulletPos[3]
+                    tableProj.bulletPos   = copyTable(tableProj.playerPos)
+                    bulletPosX = tableProj.bulletPos[1]
+                    bulletPosY = tableProj.bulletPos[2]
+                    bulletPosZ = tableProj.bulletPos[3]
                 end
 
-                -- print(table.count)
-                if table.count > 4 then
-                    currTable[indx] = Advanced_trajectory.removeBulletData(table.item) 
+                -- print(tableProj.count)
+                if tableProj.count > 4 then
+                    currTable[indx] = Advanced_trajectory.removeBulletData(tableProj.item) 
                     --print("Broke bullet FLAMETHROWER")
                     break
                 end
             
             -- WHERE BULLET BREAKS WHEN OUT OF RANGE. CHECKS IF REMAINING DISTANCE IS LESS THAN 0 AND WEAPON IS NOT GRENADE.
-            elseif table.bulletDist < 0 and table.weaponName ~= "Grenade"  then
+            elseif tableProj.bulletDist < 0 and tableProj.weaponName ~= "Grenade"  then
 
-                if table["wallcarmouse"] or table["wallcarzombie"]then
-                    blowUp(table)
+                if tableProj["wallcarmouse"] or tableProj["wallcarzombie"]then
+                    blowUp(tableProj)
                 end
 
-                currTable[indx] = Advanced_trajectory.removeBulletData(table.item) 
+                currTable[indx] = Advanced_trajectory.removeBulletData(tableProj.item) 
 
-                Advanced_trajectory.determineArrowSpawn(table.square, false)
+                Advanced_trajectory.determineArrowSpawn(tableProj.square, false)
 
                 --print("Broke bullet GRENADE")
                 break
             end
 
 
-            table.bulletDir = table.bulletDir + table.rotSpeed
+            tableProj.bulletDir = tableProj.bulletDir + tableProj.rotSpeed
 
-            if table.item then
-                table.item:setWorldZRotation(table.bulletDir)
+            if tableProj.item then
+                tableProj.item:setWorldZRotation(tableProj.bulletDir)
             end
 
-            bulletPosX = bulletPosX + currTablez12_ * table.dirVector[1]
-            bulletPosY = bulletPosY + currTablez12_ * table.dirVector[2]
+            bulletPosX = bulletPosX + currTablez12_ * tableProj.dirVector[1]
+            bulletPosY = bulletPosY + currTablez12_ * tableProj.dirVector[2]
 
             -- BREAKS GRENADE/THROWABLES 
-            if  table["isparabola"]  then
-                bulletPosZ = 0.5 - table["isparabola"] * table.currDist * (table.currDist - table.distanceConst)
+            if  tableProj["isparabola"]  then
+                bulletPosZ = 0.5 - tableProj["isparabola"] * tableProj.currDist * (tableProj.currDist - tableProj.distanceConst)
                 
                 if bulletPosZ <= 0.3  then
-                    blowUp(table)
-                    currTable[indx] = Advanced_trajectory.removeBulletData(table.item) 
+                    blowUp(tableProj)
+                    currTable[indx] = Advanced_trajectory.removeBulletData(tableProj.item) 
                     --print("Broke bullet PARABOLA")
 
                     break
                 end
             end
 
-            table.bulletPos = {bulletPosX, bulletPosY, bulletPosZ}
+            tableProj.bulletPos = {bulletPosX, bulletPosY, bulletPosZ}
 
             -- NOTES IMPORTANT, WORK HERE: Headshot, Bodypart, Footpart
-            if  (table.weaponName ~= "Grenade" or (table.throwinfo[8]or 0) > 0 or table["wallcarzombie"]) and  not table["wallcarmouse"] then
+            if  (tableProj.weaponName ~= "Grenade" or (tableProj.throwinfo[8]or 0) > 0 or tableProj["wallcarzombie"]) and  not tableProj["wallcarmouse"] then
                 --print("Check for shot targets")
-                if Advanced_trajectory.dealWithTargetShot(table, indx) then
+                if Advanced_trajectory.dealWithTargetShot(tableProj, indx) then
                     break
                 end
             end  
