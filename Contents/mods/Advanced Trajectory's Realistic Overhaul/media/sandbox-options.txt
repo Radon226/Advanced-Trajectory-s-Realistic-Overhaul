@@ -76,6 +76,15 @@ option Advanced_trajectory.penDamageReductionMultiplier
 
 
 
+option Advanced_trajectory.DebugGridMultiplier
+{
+	type = double,
+	min = 0,
+	max = 1.5,
+	default = 1,
+	page = Advanced_trajectory_debug,
+	translation = Advanced_trajectoryDebugGridMultiplier,
+}
 
 option Advanced_trajectory.DebugOffset
 {
@@ -203,8 +212,6 @@ option Advanced_trajectory.angleBoundCar
 	page = Advanced_trajectory_debug,
 	translation = Advanced_trajectoryangleBoundCar,
 }
-
-
 
 
 

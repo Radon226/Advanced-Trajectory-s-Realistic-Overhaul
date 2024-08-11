@@ -1,5 +1,6 @@
 if isServer() then return end
-require "Advanced_trajectory_core"
+local Advanced_trajectory = require "Advanced_trajectory_core"
+
 ISThorowitemToCursor = ISBuildingObject:derive("ISThorowitemToCursor")
 
 function ISThorowitemToCursor:create(x, y, z, north, sprite)
@@ -9,11 +10,10 @@ end
 
 function ISThorowitemToCursor:isValid(square)
 
-	local distan =  ((square:getX() - self.character:getX())^2 + (square:getY() - self.character:getY())^2)^0.5
-	Advanced_trajectory.aimtexdistance = distan
-	if distan< (self.maxrange + self.strength) *1.7  and distan > 0 then
+	local distance = ((square:getX() - self.character:getX())^2 + (square:getY() - self.character:getY())^2)^0.5
+	Advanced_trajectory.aimtexdistance = distance
+	if distance < ((self.maxrange + self.strength) * 1.7) and distance > 0 then
 		return true
-		
 	else
 		return false
 	end
@@ -26,12 +26,12 @@ function ISThorowitemToCursor:render(x, y, z, square)
 		self.floorSprite = IsoSprite.new()
 		self.floorSprite:LoadFramesNoDirPageSimple('media/ui/FloorTileCursor.png')
 	end
-	local r,g,b,a = 0.0,1.0,0.0,0.8
+	local r,g,b,a = 0.0, 1.0, 0.0, 0.8
 	Advanced_trajectory.aimcursorsq = square
 	if not self:isValid(square) then
 		r = 1.0
 		g = 0.0
-		Advanced_trajectory.aimcursorsq=nil
+		Advanced_trajectory.aimcursorsq = nil
 	end
 
 	
@@ -49,12 +49,12 @@ function ISThorowitemToCursor:new(sprite, northSprite, character,weapon)
 	o:init()
 	o:setSprite(sprite)
 	o:setNorthSprite(northSprite)
-	o.character = character
-	o.player = character:getPlayerNum()
-	o.noNeedHammer = true
-	o.skipBuildAction = true
-	o.maxrange = weapon:getMaxRange(character)
-	o.strength =  character:getPerkLevel(Perks.Strength)
+	o.character 		= character
+	o.player 			= character:getPlayerNum()
+	o.noNeedHammer 		= true
+	o.skipBuildAction 	= true
+	o.maxrange 			= weapon:getMaxRange(character)
+	o.strength 			=  character:getPerkLevel(Perks.Strength)
 	return o
 end
 

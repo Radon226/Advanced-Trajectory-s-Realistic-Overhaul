@@ -1,41 +1,42 @@
 local Advanced_trajectory = require "Advanced_trajectory_core"
 
---范例 添加特殊的枪械
+-- REFERENCE 
+--[[
+    local projectilePlayerData = 
+    {
+        item = nil,                             --1 item obj
+        square = nil,                           --2 square obj
+        dirVector = {deltX,deltY},              --3 vector
+        bulletPos = {offX, offY, offZ},         --4 offset BULLET POS
+        bulletDir = dirc,                       --5 direction
+        damage = nil,                           --6 damage
+        bulletDist = handWeapon:getMaxRange() , --7 distance
+        winddir = 1,                            --8 ballistic small categories
+        weaponName = "",                        --9 types
+        rotSpeed = 0,                           --10 rotation speed
+        canPenetrate = false,                   --11 whether it can penetrate
+        bulletSpeed = 0.15,                     --12 ballistic speed
+        iscanbigger = 0,                        --13 can be made bigger
+        projectileType = "",                    --14 ballistic name
+        canPassThroughWall = true,              --15 det whether it can pass through the wall
+        size = 1,                               --16 size
+        currDist = 0,                           --17 current distance
+        distanceConst = 0,                      --18 distance constant
+        player = character,                     --19 players
+        playerPos = {offX, offY, offZ},         --20 original offset PLAYER POS
+        count = 0,                              --21 count
+        throwinfo = {}                          --22 thrown object attributes                                                       
+    }
+]]
 
 
---         item,                                      --1物品obj
---         square,                                    --2方格obj
---         {deltX,deltY},                             --3向量
---         {offx, offy, offz},                        --4偏移量
---         dirc,                                      --5方向
---         _damage,                                   --6伤害
---         ballisticdistance,                         --7距离
---         winddir,                                   --8弹道小类别
---         weaponname,                                --9种类
---         rollspeed,                                 --10旋转速度
---         iscanthrough,                              --11是否能够穿透
---         ballisticspeed,                            --12弹道速度
---         iscanbigger,                               --13是否可以变大
---         sfxname,                                   --14弹道名称
---         isthroughwall,                             --15是否能穿墙
---         1,                                         --16尺寸
---         0,                                         --17当前距离
---         distancez,                                 --18距离常数
---         player,                                    --19玩家
---         {offx, offy, offz},                        --20原始偏移量
---         0,                                         --21计数 
---         throwinfo                                  --22投掷物属性    
-
-
-
-
---"Base.examplegun"
+-- "Base.examplegun"
 local mygun = {}
 
-mygun[4] = {0.75,0.75,0.45}
-mygun[9] = "revolver"
-mygun[11] = true
-mygun[12] = 16
-mygun[14] = "Base.revolversfx"
+mygun.bulletPos = {0.75, 0.75, 0.45}
+mygun.weaponName = "revolver"
+mygun.canPenetrate = true
+mygun.ballisticSpeed = 16
+mygun.projectileType = "Base.revolversfx"
 
 Advanced_trajectory.FullWeaponTypes["Base.examplegun"] = mygun
