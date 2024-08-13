@@ -245,10 +245,10 @@ local function getDistFromHitbox(x, y, targetX, targetY, target)
     local combinedRadius = (target.radius + bulletRadius)^2
     local hitbox = target.hitbox
     local hitboxCount = #hitbox
-    for i = 2, hitboxCount do
-        --print('X: ', x, ' - ', (hitbox[i][1] + targetX), '|| Y: ', y, ' - ', (hitbox[i][2] + targetY))
+    for i = 1, hitboxCount do
+        print('X: ', x, ' - ', (hitbox[i][1] + targetX), '|| Y: ', y, ' - ', (hitbox[i][2] + targetY))
         local dist = (x - (hitbox[i][1] + targetX))^2 + (y - (hitbox[i][2] + targetY))^2
-        --print('Circle ', i, ' || dist: ', dist, ' <=? ', combinedRadius)
+        print('Circle ', i, ' || dist: ', dist, ' <=? ', combinedRadius)
         if dist <= combinedRadius then 
             return dist 
         end
@@ -269,14 +269,14 @@ local function collidedWithTargetHitbox(targetX, targetY, bulletTable, target)
     local bx = bulletTable.x 
     local by = bulletTable.y 
 
-    --print("Collision at i, ", 0, "? [", bx, ", ", by, "]")
     local dist = getDistFromHitbox(bx, by, targetX, targetY, target)
+
     if dist then 
-        --print('+++++++HIT+++++++')
+        print('+++++++HIT+++++++')
         return dist 
     end
 
-    --print('-------MISSED------')
+    print('-------MISSED------')
 
     return false
 end
@@ -383,6 +383,8 @@ function Advanced_trajectory.findTargetShot(bulletTable, playerTable, missedShot
         return false, false, damageIndx
     end
 
+    print('TargetCount: ', #targetTable)
+
     -- minimum distance from bullet to target
     local prevDistanceFromPlayer = 99
 
@@ -397,7 +399,7 @@ function Advanced_trajectory.findTargetShot(bulletTable, playerTable, missedShot
     -------------------------------------------------
     -- goes through zombie table which contains a number of zombies found in the 3x3 grid
     local standHumanoidHitbox = Advanced_trajectory.hitboxes.standHumanoid
-    local crouchHumanoidHitbox = Advanced_trajectory.hitboxes.crouchHumanoid
+    local proneHumanoidHitbox = Advanced_trajectory.hitboxes.proneHumanoid
     local sitHumanoidHitbox = Advanced_trajectory.hitboxes.sitHumanoid 
     for i, entry in pairs(targetTable) do
         local target = entry.entity
@@ -419,10 +421,10 @@ function Advanced_trajectory.findTargetShot(bulletTable, playerTable, missedShot
 
             if missedShot then break end
 
-            local bulletDistFromTarg = nil
+            local bulletDistFromTarg = false
 
             if isProne or (targetType == 'player' and (target:getVariableBoolean("isCrawling") or target:getVariableBoolean("IsCrouchAim"))) then 
-                bulletDistFromTarg = collidedWithTargetHitbox(targetX, targetY, bulletTable, crouchHumanoidHitbox) 
+                bulletDistFromTarg = collidedWithTargetHitbox(targetX, targetY, bulletTable, proneHumanoidHitbox) 
             elseif (targetType == 'player' and target:isSeatedInVehicle()) then
                 bulletDistFromTarg = collidedWithTargetHitbox(targetX, targetY, bulletTable, sitHumanoidHitbox) 
             else
@@ -468,8 +470,9 @@ function Advanced_trajectory.checkBulletCarCollision(square, bulletPos, bulletDa
         if nosfx then return true end
 
         --print("Found vehicle")
+        local dist = (vehicle:getX() - bulletPos[1])^2  + (vehicle:getY() - bulletPos[2])^2
 
-        if ((vehicle:getX() - bulletPos[1])^2  + (vehicle:getY() - bulletPos[2])^2 ) < 2.8  then
+        if dist < 2.8  then
             
             if getSandboxOptions():getOptionByName("AT_VehicleDamageenable"):getValue() then
                 local damage = bulletDamage * 0.3
@@ -484,12 +487,11 @@ function Advanced_trajectory.checkBulletCarCollision(square, bulletPos, bulletDa
                 --print("---Hit vehicle---")
                 --print("Damage: ", damage, " || Pen: ", penCount)
 
-                if penCount and penCount > 1 then 
+                if penCount and penCount > 1 and bulletTable.damage > 0 then 
                     bulletTable["penCount"] = penCount - 1
-                    bulletTable.damage      = bulletTable.damage * 0.5
+                    bulletTable.damage      = bulletTable.damage * 0.75
 
                     --print("no break")
-                    Advanced_trajectory.itemremove(bulletTable.item)
                     return false 
                 end
             end
@@ -2523,7 +2525,7 @@ function Advanced_trajectory.OnWeaponSwing(character, handWeapon)
 
     -- get player fwrd dir vector
     local playerDir = character:getForwardDirection()
-
+    
     if character:isSeatedInVehicle() and Advanced_trajectory.isOverCarAimLimit then
         playerDir:normalize()
 

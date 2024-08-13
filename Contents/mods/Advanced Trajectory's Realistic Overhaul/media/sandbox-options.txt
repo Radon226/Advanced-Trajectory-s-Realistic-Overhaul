@@ -190,7 +190,7 @@ option Advanced_trajectory.carDotProdLimit
 	type = double,
 	min = -1,
 	max = 1,
-	default = 0.5,
+	default = 0.7,
 	page = Advanced_trajectory_debug,
 	translation = Advanced_trajectorycarDotProdLimit,
 }
@@ -199,7 +199,7 @@ option Advanced_trajectory.angleBoundCar
 	type = double,
 	min = 0,
 	max = 90,
-	default = 60,
+	default = 40,
 	page = Advanced_trajectory_debug,
 	translation = Advanced_trajectoryangleBoundCar,
 }
