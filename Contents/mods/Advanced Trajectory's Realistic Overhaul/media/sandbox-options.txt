@@ -158,15 +158,6 @@ option Advanced_trajectory.DebugRemoveFootHitbox
 	translation = Advanced_trajectoryDebugRemoveFootHitbox,
 }
 
-option Advanced_trajectory.DebugHitCountShoot
-{
-	type = integer,
-	min = 0,
-	max = 1,
-	default = 0,
-	page = Advanced_trajectory_debug,
-	translation = Advanced_trajectoryDebugHitCountShoot,
-}
 option Advanced_trajectory.bowBreakChance
 {
 	type = double,
@@ -208,7 +199,7 @@ option Advanced_trajectory.angleBoundCar
 	type = double,
 	min = 0,
 	max = 90,
-	default = 30,
+	default = 60,
 	page = Advanced_trajectory_debug,
 	translation = Advanced_trajectoryangleBoundCar,
 }

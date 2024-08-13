@@ -3,11 +3,11 @@ local Advanced_trajectory = require "Advanced_trajectory_core"
 -------------------------------
 --DAMAGE PLAYER THAT WAS SHOT--
 --------------------------------
-local function damagePlayershotPVP(player, playerShot, damage, baseGunDmg, headShotDmg, bodyShotDmg, footShotDmg, playerOnlineID, playershotOnlineID)
+local function damagePlayershotPVP(player, playerShot, damage, baseGunDmg, playerDmgMultipliers, playerOnlineID, playershotOnlineID)
 
     --print("playerShot:", playerShot, " damagepr:", damage, " firearmdamage:", baseGunDmg)
 
-    local nameShotPart, playerDamageDealt = Advanced_trajectory.damagePlayershot(playerShot, damage, baseGunDmg, headShotDmg, bodyShotDmg, footShotDmg)
+    local nameShotPart, playerDamageDealt = Advanced_trajectory.damagePlayershot(playerShot, damage, baseGunDmg, playerDmgMultipliers)
 
     local isDead = false
     if playerShot:getHealth() < 1 or playerShot:isDead() == true then
@@ -34,9 +34,7 @@ local function Advanced_trajectory_OnServerCommand(module, command, arguments)
         local playershotOnlineID    = arguments[2]         
         local damagepr              = arguments[3]                 
         local baseGunDmg            = arguments[4]               
-        local headShotDmgMultiplier = arguments[5]
-        local bodyShotDmgMultiplier = arguments[6]
-        local footShotDmgMultiplier = arguments[7]
+        local playerDmgMultipliers  = arguments[5]
 
         local player     = getPlayerByOnlineID(playerOnlineID)
 
@@ -48,7 +46,7 @@ local function Advanced_trajectory_OnServerCommand(module, command, arguments)
         -- print(NonPvpZone.getNonPvpZone(getPlayer():getX(), getPlayer():getY()))
         -- print(SafeHouse.getSafeHouse(getPlayer():getCurrentSquare()))
 
-        damagePlayershotPVP(player, clientPlayershot, damagepr, baseGunDmg, headShotDmgMultiplier, bodyShotDmgMultiplier, footShotDmgMultiplier, playerOnlineID, playershotOnlineID)   
+        damagePlayershotPVP(player, clientPlayershot, damagepr, baseGunDmg, playerDmgMultipliers, playerOnlineID, playershotOnlineID)   
     
     -----------------------------------------------------------------------------------------------------------------------------------
     --sendClientCommand("ATY_writePVPLog", "true", {player, playerShot, nameShotPart, damage, baseGunDmg, playerDamageDealt, isDead})--
