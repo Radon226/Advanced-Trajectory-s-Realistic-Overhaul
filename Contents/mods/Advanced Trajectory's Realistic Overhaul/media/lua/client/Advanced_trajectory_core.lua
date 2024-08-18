@@ -2420,9 +2420,12 @@ function Advanced_trajectory.updateProjectiles()
 
             tableProj.item = Advanced_trajectory.additemsfx(tableProj.square, tableProj.projectileType .. tostring(tableProj.winddir), advMathFloor(bulletPosX), advMathFloor(bulletPosY), advMathFloor(bulletPosZ))
 
-            local spnumber      = (tableProj.dirVector[1]^2 + tableProj.dirVector[2]^2)^0.5 * currTablez12_
+            local spnumber          = (tableProj.dirVector[1]^2 + tableProj.dirVector[2]^2)^0.5 * currTablez12_
             tableProj.bulletDist    = tableProj.bulletDist - spnumber
+            tableProj.distTraveled  = tableProj.distTraveled + spnumber
             tableProj.currDist      = tableProj.currDist + spnumber
+
+            --print('distTraveled: ', tableProj.distTraveled)
 
             -- NOT SURE WHAT WEAPON THIS CHECKS SINCE THERE ARE NO FLAMETHROWERS IN VANILLA
             if tableProj.weaponName == "flamethrower" then
@@ -2446,7 +2449,7 @@ function Advanced_trajectory.updateProjectiles()
                 end
             
             -- WHERE BULLET BREAKS WHEN OUT OF RANGE. CHECKS IF REMAINING DISTANCE IS LESS THAN 0 AND WEAPON IS NOT GRENADE.
-            elseif tableProj.bulletDist < 0 and tableProj.weaponName ~= "Grenade"  then
+            elseif (tableProj.bulletDist < 0 or tableProj.distTraveled > 100) and tableProj.weaponName ~= "Grenade"  then
 
                 if tableProj["wallcarmouse"] or tableProj["wallcarzombie"]then
                     blowUp(tableProj)
@@ -2597,7 +2600,8 @@ function Advanced_trajectory.OnWeaponSwing(character, handWeapon)
         playerPos = {offX, offY, offZ},         --20 original offset PLAYER POS
         count = 0,                              --21 count
         throwinfo = {},                         --22 thrown object attributes    
-        isCrit = false,                                                   
+        isCrit = false,                                         
+        distTraveled = 0,          
     }
 
     projectilePlayerData["boomsfx"] = {}
