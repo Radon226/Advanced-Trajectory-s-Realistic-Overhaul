@@ -48,6 +48,15 @@ local Advanced_trajectory = {
     damagedisplayer = {}
 }
 
+-------------
+---TEXT UI---
+-------------
+local aimLevelText = TextDrawObject.new()
+aimLevelText:setDefaultColors(1, 1, 1)
+aimLevelText:setOutlineColors(0, 0, 0, 1)
+aimLevelText:setAllowAnyImage(true)
+aimLevelText:setHorizontalAlign("right")
+
 ----------------------------------------------------------------
 --REMOVE ITEM (ex. bullet projectile when collide) FUNC SECT---
 ----------------------------------------------------------------
@@ -104,7 +113,7 @@ function Advanced_trajectory.isOnTopOfTarget(player, target)
     --print("distance: ", distance)
 
     -- isSteppedOn, isZomProne
-    print('Aim Floor: ', player:isAimAtFloor())
+    --print('Aim Floor: ', player:isAimAtFloor())
     if distance < 1 and player:isAimAtFloor() then 
         return true, true
     else
@@ -246,9 +255,9 @@ local function getDistFromHitbox(x, y, targetX, targetY, target)
     local hitbox = target.hitbox
     local hitboxCount = #hitbox
     for i = 1, hitboxCount do
-        print('X: ', x, ' - ', (hitbox[i][1] + targetX), '|| Y: ', y, ' - ', (hitbox[i][2] + targetY))
+        --print('X: ', x, ' - ', (hitbox[i][1] + targetX), '|| Y: ', y, ' - ', (hitbox[i][2] + targetY))
         local dist = (x - (hitbox[i][1] + targetX))^2 + (y - (hitbox[i][2] + targetY))^2
-        print('Circle ', i, ' || dist: ', dist, ' <=? ', combinedRadius)
+        --print('Circle ', i, ' || dist: ', dist, ' <=? ', combinedRadius)
         if dist <= combinedRadius then 
             return dist 
         end
@@ -272,11 +281,11 @@ local function collidedWithTargetHitbox(targetX, targetY, bulletTable, target)
     local dist = getDistFromHitbox(bx, by, targetX, targetY, target)
 
     if dist then 
-        print('+++++++HIT+++++++')
+        --print('+++++++HIT+++++++')
         return dist 
     end
 
-    print('-------MISSED------')
+    --print('-------MISSED------')
 
     return false
 end
@@ -327,6 +336,11 @@ function Advanced_trajectory.findTargetShot(bulletTable, playerTable, missedShot
     local playerCount = 0
 
     local pointBlankDist = 2
+
+    if getSandboxOptions():getOptionByName("Advanced_trajectory.enablePlayerBulletPosCheck"):getValue() then
+        print('findTarget -> bullet: (', bulletTable.x, ', ', bulletTable.y, ', ', bulletTable.z, ')')
+        print('findTarget -> player: (', playerTable[1], ', ', playerTable[2], ', ', playerTable[3], ')')
+    end
 
     local function addTargetsToTable(sq, targetTable, targetSet)
         local movingObjects = sq:getMovingObjects()
@@ -383,7 +397,7 @@ function Advanced_trajectory.findTargetShot(bulletTable, playerTable, missedShot
         return false, false, damageIndx
     end
 
-    print('TargetCount: ', #targetTable)
+    --print('TargetCount: ', #targetTable)
 
     -- minimum distance from bullet to target
     local prevDistanceFromPlayer = 99
@@ -440,7 +454,7 @@ function Advanced_trajectory.findTargetShot(bulletTable, playerTable, missedShot
                     damageIndx = 1
                 end
 
-                print("+++++++----TARGET REGISTERED----+++++++")
+                --print("+++++++----TARGET REGISTERED----+++++++")
             end
         end
     end
@@ -449,12 +463,17 @@ function Advanced_trajectory.findTargetShot(bulletTable, playerTable, missedShot
     return targetHitData[1], targetHitData[2], damageIndx
 end
 
-function Advanced_trajectory.checkBulletCarCollision(square, bulletPos, bulletDamage, tableIndx)
+function Advanced_trajectory.checkBulletCarCollision(bulletPos, bulletDamage, tableIndx)
     local player = getPlayer()
+    local offset = bulletPos[3] - Advanced_trajectory.aimlevels - 0.5
+    local bulletX = bulletPos[1] - 3 * offset
+    local bulletY = bulletPos[2] - 3 * offset
+    local square = getWorld():getCell():getOrCreateGridSquare(bulletX, bulletY, Advanced_trajectory.aimlevels)
 
     -- get player's current position, not initial parameter
     local playerCurrPosX = player:getX()
     local playerCurrPosY = player:getY()
+    local playerCurrPosZ = player:getZ() 
 
     local playerVehicle 
     if player then
@@ -466,39 +485,65 @@ function Advanced_trajectory.checkBulletCarCollision(square, bulletPos, bulletDa
     
     -- if square has car and player is over a distance away from car, check distance between bullet and car and damage car if close enough
     -- the reason for the initial distance check is to allow the player to shoot targets beyond the car while taking cover next to the car, otherwise have bullet collide with car
-    if vehicle and ((vehicle:getX() - playerCurrPosX)^2  + (vehicle:getY() - playerCurrPosY)^2) > 8 then
-        if nosfx then return true end
+    if vehicle then
+        local distFromPlayer = (vehicle:getX() - playerCurrPosX)^2  + (vehicle:getY() - playerCurrPosY)^2
 
-        --print("Found vehicle")
-        local dist = (vehicle:getX() - bulletPos[1])^2  + (vehicle:getY() - bulletPos[2])^2
+        if distFromPlayer > 8 then
+            if nosfx then return true end
 
-        if dist < 2.8  then
-            
-            if getSandboxOptions():getOptionByName("AT_VehicleDamageenable"):getValue() then
-                local damage = bulletDamage * 0.3
+            local hitVehicle = function()
+                local distFromBullet = (vehicle:getX() - bulletX)^2  + (vehicle:getY() - bulletY)^2
 
-                vehicle:HitByVehicle(vehicle, damage)
+                --print('carColl -> checking hit w/ dist ', distFromBullet)
+                --print('carColl -> bullet: (', bulletX, ', ', bulletY, ', ', offset, ')')
+                --print('carColl ->  car: (', vehicle:getX(), ', ', vehicle:getY(), ', ', vehicle:getZ(), ')')
+                if distFromBullet < 2.8 then
+                    if getSandboxOptions():getOptionByName("AT_VehicleDamageenable"):getValue() then
+                        local damage = bulletDamage * 0.3
+    
+                        vehicle:HitByVehicle(vehicle, damage)
+    
+                        Advanced_trajectory.determineArrowSpawn(square, true)
+    
+                        local bulletTable = Advanced_trajectory.table[tableIndx]
+                        local penCount = bulletTable["penCount"]
+    
+                        --print("carColl -> ---Hit vehicle---")
+                        --print("Damage: ", damage, " || Pen: ", penCount)
+    
+                        if penCount and penCount > 1 and bulletTable.damage > 0 then 
+                            bulletTable["penCount"] = penCount - 1
+                            bulletTable.damage      = bulletTable.damage * 0.75
+    
+                            --print("carColl -> no break")
+                            return false 
+                        end
+                    end
+    
+                    --print("carColl -> yes break")
+                    return true
+                end
+                --print('carColl -> no hit')
+            end
 
-                Advanced_trajectory.determineArrowSpawn(square, true)
+            --[[
+            -- if player is on different Z level from vehicle, then only have it collide with vehicle if player is aiming at the vehicle
+            if playerCurrPosZ ~= vehicle:getZ() then
+                print("carColl -> Different level")
+                local isOnCar = Advanced_trajectory.checkCrossOnCar(player)
 
-                local bulletTable = Advanced_trajectory.table[tableIndx]
-                local penCount = bulletTable["penCount"]
-
-                --print("---Hit vehicle---")
-                --print("Damage: ", damage, " || Pen: ", penCount)
-
-                if penCount and penCount > 1 and bulletTable.damage > 0 then 
-                    bulletTable["penCount"] = penCount - 1
-                    bulletTable.damage      = bulletTable.damage * 0.75
-
-                    --print("no break")
-                    return false 
+                if isOnCar then
+                    return hitVehicle()
+                else
+                    return false
                 end
             end
 
-            --print("yes break")
-            return true
-        end 
+            print("carColl -> Not on diff level")
+            ]]
+            
+            return hitVehicle()
+        end
     end
 
     return false
@@ -722,7 +767,7 @@ function Advanced_trajectory.checkSurfaceCollision(square, bulletDir, bulletPos,
         end
     end
 
-    return Advanced_trajectory.checkBulletCarCollision(square, bulletPos, bulletDamage, tableIndx)
+    return false
 end
 
 -----------------------------
@@ -1008,6 +1053,49 @@ function Advanced_trajectory.getDistanceFromMouseToPlayer(player)
     --print("Dist via Play: ", dist)
 
     return dist
+end
+
+-- returns mouse world coord dependent on the base of the vanilla crosshair, NOT ATRO
+function Advanced_trajectory.checkCrossOnCar(player)
+    local mouseX = getMouseXScaled()
+    local mouseY = getMouseYScaled()
+
+    local playerX = mathfloor(player:getX())
+    local playerY = mathfloor(player:getY())
+    local playerZ = mathfloor(player:getZ())
+
+    local aimlevel = playerZ
+    if Advanced_trajectory.aimlevels then 
+        aimlevel = Advanced_trajectory.aimlevels
+    end
+
+    local levelDiff = aimlevel - playerZ
+
+    local wx, wy = ISCoordConversion.ToWorld(mouseX - 3 * levelDiff, mouseY - 3 * levelDiff, aimlevel)
+    wx, wy = mathfloor(wx) + 1, mathfloor(wy) + 1
+
+    --print('checkCross -> player: (', playerX, ', ', playerY, ', ', playerZ, ')')
+    --print('checkCross -> mouse: (', wx, ', ', wy, ', ', aimlevel, ')')
+
+    local cell = getWorld():getCell()
+    local car = nil
+
+    for x = 1, 1 do
+        for y = -1, 1 do
+            local sq = cell:getGridSquare(wx + x, wy + y, aimlevel)
+            if sq and sq:getVehicleContainer() then
+                car = sq:getVehicleContainer()
+                break
+            end
+        end
+    end
+
+    if car then
+        --print('car: (', car:getX(), ', ', car:getY(),')')
+        return true
+    end
+
+    return false
 end
 
 -----------------------------------
@@ -1726,82 +1814,11 @@ function Advanced_trajectory.OnPlayerUpdate()
             end
         end
 
-
-        -- Get the scaled mouse coordinates
-        local mouseX = getMouseXScaled()
-        local mouseY = getMouseYScaled()
-
-        -- Get the player's Z position and player number
-        local playerZ = mathfloor(player:getZ())
-        local playerX = mathfloor(player:getX())
-        local playerY = mathfloor(player:getY())
-        local playerNum = player:getPlayerNum()
-
-        -- Initialize a flag to check if we are aiming at an object
-        local isAimingObject = false
-
-        -- Loop through Z levels from 0 to 7 to search for targets
-        for Z = 0, 7 do
-            -- Calculate the distance difference between Z level and player's Z position
-            local delDis = Z - playerZ
-
-            -- Calculate world coordinates adjusted for the Z level
-            local wx, wy = ISCoordConversion.ToWorld(mouseX - 3 * delDis, mouseY - 3 * delDis, Z)
-            wx, wy = mathfloor(wx), mathfloor(wy)
-
-            -- Get the current world cell
-            local cell = getWorld():getCell()
-
-            -- Iterate through nearby Y and Z offsets
-            for yz = -1, 1 do
-                for lz = -1, 1 do
-                    -- Get the grid square at the adjusted position
-                    local sq = cell:getGridSquare(wx + 2.2 + yz, wy + 2.2 + lz, Z)
-
-                    -- Check if the grid square is valid and can be seen by the player
-                    if sq and sq:isCanSee(playerNum) then
-                        local movingObjects = sq:getMovingObjects()
-
-                        -- Iterate through moving objects in the grid square
-                        for zz = 1, movingObjects:size() do
-                            local zombie = movingObjects:get(zz - 1)
-
-                            -- Check if the object is an IsoZombie or IsoPlayer
-                            if instanceof(zombie, "IsoZombie") or instanceof(zombie, "IsoPlayer") then
-                                -- Set the aim level and flag, then return
-                                Advanced_trajectory.aimlevels = Z
-                                isAimingObject = true
-                                return
-                            end
-                        end
-
-                    -- make exception if bullet and player are on the same floor to prevent issue with blindness
-                    elseif sq and Z == playerZ then
-                        local movingObjects = sq:getMovingObjects()
-
-                        for zz = 1, movingObjects:size() do
-                            local zombie = movingObjects:get(zz - 1)
-
-                            if instanceof(zombie, "IsoZombie") or instanceof(zombie, "IsoPlayer") then
-                                Advanced_trajectory.aimlevels = Z
-                                isAimingObject = true   
-                                return
-                            end
-                        end
-                    end
-                end
-            end
+        Advanced_trajectory.chooseAimZLevel(player)   
+        
+        if getSandboxOptions():getOptionByName("Advanced_trajectory.enableConstCheckCrossOnCar"):getValue() then
+            Advanced_trajectory.checkCrossOnCar(player)
         end
-
-        --print("Aim Level", Advanced_trajectory.aimlevels)
-
-        -- If no object is aimed at, reset the aim level
-        if not isAimingObject then
-            Advanced_trajectory.aimlevels = nil
-        end
-
-        -- print(Advanced_trajectory.aimlevels)
-         
         
     else 
         if Advanced_trajectory.aimcursor then
@@ -1820,6 +1837,92 @@ function Advanced_trajectory.OnPlayerUpdate()
         Advanced_trajectory.alpha = 0
     end
     
+end
+
+function Advanced_trajectory.chooseAimZLevel(player)
+    -- Get the scaled mouse coordinates
+    local mouseX = getMouseXScaled()
+    local mouseY = getMouseYScaled()
+
+    -- Get the player's Z position and player number
+    local playerZ = mathfloor(player:getZ())
+    local playerX = mathfloor(player:getX())
+    local playerY = mathfloor(player:getY())
+    local playerNum = player:getPlayerNum()
+
+    -- Initialize a flag to check if we are aiming at an object
+    local isAimingObject = false
+
+    -- Get the current world cell
+    local cell = getWorld():getCell()
+
+    local function loopForTargets(start, stop, num)
+        -- Loop through Z levels from 0 to 7 to search for targets
+        for Z = start, stop, num do
+            -- Calculate the distance difference between Z level and player's Z position
+            local levelDiff = Z - playerZ
+
+            -- Calculate world coordinates adjusted for the Z level
+            local wx, wy = ISCoordConversion.ToWorld(mouseX - 3 * levelDiff, mouseY - 3 * levelDiff, Z)
+            wx, wy = mathfloor(wx), mathfloor(wy)
+
+            -- Iterate through nearby Y and Z offsets
+            for x = -1, 1 do
+                for y = -1, 1 do
+                    -- Get the grid square at the adjusted position
+                    local sq = cell:getGridSquare(wx + 2.2, wy + 2.2, Z)
+
+                    -- Check if the grid square is valid and can be seen by the player
+                    if sq and sq:isCanSee(playerNum) then
+                        local movingObjects = sq:getMovingObjects()
+
+                        -- Iterate through moving objects in the grid square
+                        for zz = 1, movingObjects:size() do
+                            local target = movingObjects:get(zz - 1)
+
+                            -- Check if the object is an IsoZombie or IsoPlayer
+                            if instanceof(target, "IsoGameCharacter") then
+                                -- Set the aim level and flag, then return
+                                Advanced_trajectory.aimlevels = Z
+                                isAimingObject = true
+                                return true
+                            end
+                        end
+
+                    -- make exception if bullet and player are on the same floor to prevent issue with blindness
+                    elseif sq and Z == playerZ then
+                        local movingObjects = sq:getMovingObjects()
+
+                        for zz = 1, movingObjects:size() do
+                            local target = movingObjects:get(zz - 1)
+
+                            if instanceof(target, "IsoGameCharacter") then
+                                Advanced_trajectory.aimlevels = Z
+                                isAimingObject = true
+                                return true
+                            end
+                        end
+                    end
+                end
+            end
+        end
+
+        return false
+    end
+
+    if not loopForTargets(playerZ, 0, -1) then
+        loopForTargets(playerZ+1, 7, 1)
+    end
+
+
+    -- If no object is aimed at, reset the aim level
+    if not isAimingObject then
+        Advanced_trajectory.aimlevels = playerZ
+    end
+
+    -- ReadString(UIFont font, String str, int maxLineWidth)
+    aimLevelText:ReadString(UIFont.Medium, tostring(Advanced_trajectory.aimlevels), -1)
+    aimLevelText:AddBatchedDraw(getMouseX() + 35, getMouseY() + 35, true)
 end
 
 function Advanced_trajectory.checkBowAndCrossbow(player, Zombie)
@@ -2281,7 +2384,7 @@ function Advanced_trajectory.dealWithTargetShot(tableProj, tableIndx)
                         }
 
     -- returns zom/player that was shot
-    local target, targetType, limb      =  Advanced_trajectory.findTargetShot(bulletTable, tableProj.playerPos, tableProj["missedShot"])
+    local target, targetType, limb =  Advanced_trajectory.findTargetShot(bulletTable, tableProj.playerPos, tableProj["missedShot"])
 
     local zomDmgMultipliers = {
          head = getSandboxOptions():getOptionByName("Advanced_trajectory.headShotDmgZomMultiplier"):getValue(),
@@ -2393,7 +2496,10 @@ function Advanced_trajectory.updateProjectiles()
             -----------------------------------------------
             --CHECK IF PROJECTILE COLLIDED WITH WALL/DOOR--
             -----------------------------------------------
-            if Advanced_trajectory.checkSurfaceCollision(tableProj.square, tableProj.bulletDir, tableProj.bulletPos, tableProj.playerPos, tableProj["nonsfx"], tableProj.damage, indx) and not tableProj.canPassThroughWall then
+            if (Advanced_trajectory.checkSurfaceCollision(tableProj.square, tableProj.bulletDir, tableProj.bulletPos, tableProj.playerPos, tableProj["nonsfx"], tableProj.damage, indx) or
+                Advanced_trajectory.checkBulletCarCollision(tableProj.bulletPos, tableProj.damage, indx)) and not 
+                tableProj.canPassThroughWall then
+
                 --print("***********Bullet collided with wall.************")
                 --print("Wallcarmouse: ", tableProj["wallcarmouse"])
                 --print("Wallcarzombie: ", tableProj["wallcarzombie"])

@@ -12,7 +12,7 @@ Advanced_trajectory.hitboxes = {
         }
     },
 
-    pronehHumanoid = {
+    proneHumanoid = {
         radius = 0.5,
         isRotate = false,
         hitbox = {
