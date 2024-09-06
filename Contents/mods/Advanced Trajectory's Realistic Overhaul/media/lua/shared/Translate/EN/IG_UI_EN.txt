@@ -1,4 +1,4 @@
-IGUI_FR = {
+IGUI_EN = {
     IGUI_ATRO_showOutlines = "Show Outlines",
     IGUI_ATRO_showOutlines_tooltip = "Show Outlines (need vanilla outlines checked)",
 

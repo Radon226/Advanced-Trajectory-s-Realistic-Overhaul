@@ -16,8 +16,8 @@ Sandbox_EN = {
 	Sandbox_Advanced_trajectoryhideTracer = "Hide Tracer",
 	Sandbox_Advanced_trajectoryshowOutlines = "Show Outlines (need vanilla outlines checked)",
 
-	Sandbox_Advanced_trajectoryenablePerformanceMode = "Enable Performance Mode",
-	Sandbox_Advanced_trajectoryenablePerformanceMode_tooltip = "Check this if you want more performance when shooting lots of bullets. Be aware this will make target hitboxes smaller.",
+	Sandbox_Advanced_trajectoryenableAutoAimZLevel = "Enable Auto Aim Z Level",
+	Sandbox_Advanced_trajectoryenableAutoAimZLevel_tooltip = "Check this if you don't want ot manually set which Z level you want to shoot at. Be aware that this will reduce FPS a lot when aiming.",
 	
 	Sandbox_Advanced_trajectorycallshot = "Report Attacking Part / Callshot",
 	Sandbox_Advanced_trajectorycallshot_tooltip = "For debugging, character says what body part was shot.",

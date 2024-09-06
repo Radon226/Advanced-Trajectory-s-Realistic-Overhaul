@@ -12,6 +12,8 @@ local Advanced_trajectory = {
     aimnumBeforeShot    = 0,
     maxaimnum           = 100,
     minaimnum           = 0,
+
+    aimlevels           = 0,
     
     targetDistance      = 0,
     isOverDistanceLimit = false,
@@ -48,13 +50,37 @@ local Advanced_trajectory = {
     damagedisplayer = {}
 }
 
+-------------------------
+--MATH FLOOR FUNC SECT---
+-------------------------
+local function mathfloor(number)
+    return math.floor(number)
+end
+
+local function advMathFloor(number)
+    return number - mathfloor(number)
+end
+
+------------------------------
+--MAKE TABLE COPY FUNC SECT---
+------------------------------
+local function copyTable(table2)
+    local table1={}
+
+    for i,k in pairs(table2) do
+        table1[i] = table2[i]
+    end
+    -- print(table1)
+    return table1
+end
+
 -------------
 ---TEXT UI---
 -------------
 local aimLevelText = TextDrawObject.new()
-aimLevelText:setDefaultColors(1, 1, 1)
+local aimLevelTextTrans = 0.5
+aimLevelText:setDefaultColors(1, 1, 1, aimLevelTextTrans)
 aimLevelText:setOutlineColors(0, 0, 0, 1)
-aimLevelText:setAllowAnyImage(true)
 aimLevelText:setHorizontalAlign("right")
 
 ----------------------------------------------------------------
@@ -67,30 +93,6 @@ function Advanced_trajectory.itemremove(worlditem)
 
     -- worlditem:getWorldItem():getSquare():transmitRemoveItemFromSquare(worlditem:getWorldItem())
     worlditem:getWorldItem():removeFromSquare()
-end
-
--------------------------
---MATH FLOOR FUNC SECT---
--------------------------
-local function mathfloor(number)
-    return math.floor(number)
-end
-
-local function advMathFloor(number)
-    return number - mathfloor(number)
-end
-
--------------------------
---TABLE ?? FUNC SECT---
--------------------------
-local function copyTable(table2)
-    local table1={}
-
-    for i,k in pairs(table2) do
-        table1[i] = table2[i]
-    end
-    -- print(table1)
-    return table1
 end
 
 function Advanced_trajectory.getTargetDistanceFromPlayer(player, target)
@@ -526,21 +528,19 @@ function Advanced_trajectory.checkBulletCarCollision(bulletPos, bulletDamage, ta
                 --print('carColl -> no hit')
             end
 
-            --[[
             -- if player is on different Z level from vehicle, then only have it collide with vehicle if player is aiming at the vehicle
-            if playerCurrPosZ ~= vehicle:getZ() then
-                print("carColl -> Different level")
-                local isOnCar = Advanced_trajectory.checkCrossOnCar(player)
+            -- if playerCurrPosZ ~= vehicle:getZ() then
+            --     print("carColl -> Different level")
+            --     local isOnCar = Advanced_trajectory.checkCrossOnCar(player)
 
-                if isOnCar then
-                    return hitVehicle()
-                else
-                    return false
-                end
-            end
+            --     if isOnCar then
+            --         return hitVehicle()
+            --     else
+            --         return false
+            --     end
+            -- end
 
-            print("carColl -> Not on diff level")
-            ]]
+            -- print("carColl -> Not on diff level")
             
             return hitVehicle()
         end
@@ -1056,60 +1056,62 @@ function Advanced_trajectory.getDistanceFromMouseToPlayer(player)
 end
 
 -- returns mouse world coord dependent on the base of the vanilla crosshair, NOT ATRO
-function Advanced_trajectory.checkCrossOnCar(player)
-    local mouseX = getMouseXScaled()
-    local mouseY = getMouseYScaled()
+-- function Advanced_trajectory.checkCrossOnCar(player)
+--     local mouseX = getMouseXScaled()
+--     local mouseY = getMouseYScaled()
 
-    local playerX = mathfloor(player:getX())
-    local playerY = mathfloor(player:getY())
-    local playerZ = mathfloor(player:getZ())
+--     local playerX = mathfloor(player:getX())
+--     local playerY = mathfloor(player:getY())
+--     local playerZ = mathfloor(player:getZ())
 
-    local aimlevel = playerZ
-    if Advanced_trajectory.aimlevels then 
-        aimlevel = Advanced_trajectory.aimlevels
-    end
+--     local aimlevel = playerZ
+--     if Advanced_trajectory.aimlevels then 
+--         aimlevel = Advanced_trajectory.aimlevels
+--     end
 
-    local levelDiff = aimlevel - playerZ
+--     local levelDiff = aimlevel - playerZ
 
-    local wx, wy = ISCoordConversion.ToWorld(mouseX - 3 * levelDiff, mouseY - 3 * levelDiff, aimlevel)
-    wx, wy = mathfloor(wx) + 1, mathfloor(wy) + 1
+--     local wx, wy = ISCoordConversion.ToWorld(mouseX - 3 * levelDiff, mouseY - 3 * levelDiff, aimlevel)
+--     wx, wy = mathfloor(wx) + 1, mathfloor(wy) + 1
 
-    --print('checkCross -> player: (', playerX, ', ', playerY, ', ', playerZ, ')')
-    --print('checkCross -> mouse: (', wx, ', ', wy, ', ', aimlevel, ')')
+--     --print('checkCross -> player: (', playerX, ', ', playerY, ', ', playerZ, ')')
+--     --print('checkCross -> mouse: (', wx, ', ', wy, ', ', aimlevel, ')')
 
-    local cell = getWorld():getCell()
-    local car = nil
+--     local cell = getWorld():getCell()
+--     local car = nil
 
-    for x = 1, 1 do
-        for y = -1, 1 do
-            local sq = cell:getGridSquare(wx + x, wy + y, aimlevel)
-            if sq and sq:getVehicleContainer() then
-                car = sq:getVehicleContainer()
-                break
-            end
-        end
-    end
+--     for x = 1, 1 do
+--         for y = -1, 1 do
+--             local sq = cell:getGridSquare(wx + x, wy + y, aimlevel)
+--             if sq and sq:getVehicleContainer() then
+--                 car = sq:getVehicleContainer()
+--                 break
+--             end
+--         end
+--     end
 
-    if car then
-        --print('car: (', car:getX(), ', ', car:getY(),')')
-        return true
-    end
+--     if car then
+--         --print('car: (', car:getX(), ', ', car:getY(),')')
+--         return true
+--     end
 
-    return false
-end
+--     return false
+-- end
 
 -----------------------------------
 --AIMNUM/BLOOM LOGIC FUNC SECT---
 -----------------------------------
 function Advanced_trajectory.OnPlayerUpdate()
-
     local player = getPlayer() 
-
     if not player then return end
 
     local weaitem = player:getPrimaryHandItem()
     local isAiming = player:isAiming()
     local hasGun = instanceof(weaitem, "HandWeapon") 
+
+    if Mouse.isRightPressed() and not getSandboxOptions():getOptionByName("Advanced_trajectory.enableAutoAimZLevel"):getValue() then
+        Advanced_trajectory.aimlevels = mathfloor(player:getZ())
+    end
 
     if isAiming and hasGun then
         Advanced_trajectory.hasFlameWeapon = string.contains(weaitem:getAmmoType() or "","FlameFuel")
@@ -1778,13 +1780,13 @@ function Advanced_trajectory.OnPlayerUpdate()
         --print("Trans/Alpha: ", Advanced_trajectory.alpha)
         --print("Shaky Effect: ", Advanced_trajectory.stressEffect + Advanced_trajectory.painEffect + Advanced_trajectory.panicEffect)
         --print("totalArmPain [arms]: ", totalArmPain, ", HL", handPainL ,", FL", forearmPainL ,", UL", upperarmPainL ,", HR", handPainR ,", FR", forearmPainR ,", UR", upperarmPainR)
-        --print("isSneezeCough: ", isSneezeCough)
-        --print("P", panicLv, ", E", enduranceLv ,", H", hyperLv ,", H", hypoLv ,", S", stressLv,", T", tiredLv)
-        --print("Aim Level (code): ", reversedLevel)
-        --print("Aim Level (real): ", realLevel)
-        --print("Def/Curr ReduceSpeed: ", speed, "/", reduceSpeed)
-        --print("FocusCounterSpeed: ", focusCounterSpeed)
-        --print("FocusLimit/Min/Max/Aimnum: ", focusLimit, " / ", Advanced_trajectory.minaimnum, " / ", Advanced_trajectory.maxaimnum, " / ", Advanced_trajectory.aimnum)   
+        -- print("isSneezeCough: ", isSneezeCough)
+        -- print("P", panicLv, ", E", enduranceLv ,", H", hyperLv ,", H", hypoLv ,", S", stressLv,", T", tiredLv)
+        -- print("Aim Level (code): ", reversedLevel)
+        -- print("Aim Level (real): ", realLevel)
+        -- print("Def/Curr ReduceSpeed: ", speed, "/", reduceSpeed)
+        -- print("FocusCounterSpeed: ", focusCounterSpeed)
+        -- print("FocusLimit/Min/Max/Aimnum: ", focusLimit, " / ", Advanced_trajectory.minaimnum, " / ", Advanced_trajectory.maxaimnum, " / ", Advanced_trajectory.aimnum)   
         --------------------------------------------------------------------
         if not Advanced_trajectory.panel.instance and getSandboxOptions():getOptionByName("Advanced_trajectory.aimpoint"):getValue() then
             Advanced_trajectory.panel.instance = Advanced_trajectory.panel:new(0, 0, 200, 200)
@@ -1816,9 +1818,9 @@ function Advanced_trajectory.OnPlayerUpdate()
 
         Advanced_trajectory.chooseAimZLevel(player)   
         
-        if getSandboxOptions():getOptionByName("Advanced_trajectory.enableConstCheckCrossOnCar"):getValue() then
-            Advanced_trajectory.checkCrossOnCar(player)
-        end
+        -- if getSandboxOptions():getOptionByName("Advanced_trajectory.enableConstCheckCrossOnCar"):getValue() then
+        --     Advanced_trajectory.checkCrossOnCar(player)
+        -- end
         
     else 
         if Advanced_trajectory.aimcursor then
@@ -1840,6 +1842,62 @@ function Advanced_trajectory.OnPlayerUpdate()
 end
 
 function Advanced_trajectory.chooseAimZLevel(player)
+    local minZ = 0
+    local maxZ = 7
+
+    if getSandboxOptions():getOptionByName("Advanced_trajectory.enableAutoAimZLevel"):getValue() then
+        Advanced_trajectory.autoChooseAimZLevel(player, minZ, maxZ)
+    else
+        Advanced_trajectory.manualChooseAimZLevel(player, minZ, maxZ)
+    end
+
+    aimLevelText:AddBatchedDraw(getMouseX() + 35, getMouseY() + 35, true)
+end
+
+function Advanced_trajectory.manualChooseAimZLevel(player, minZ, maxZ)
+    local playerZ = mathfloor(player:getZ())
+    local isKeyDown = isKeyDown(Keyboard.KEY_LSHIFT)
+    local chosenZ = Advanced_trajectory.aimlevels
+
+    local str = ''
+
+    if isKeyDown then
+        if Mouse.getWheelState() > 0 then
+            chosenZ = chosenZ + 1
+            getCore():doZoomScroll(0, 1)
+        elseif Mouse.getWheelState() < 0 then
+            chosenZ = chosenZ - 1
+            getCore():doZoomScroll(0, -1)
+        elseif Mouse.isMiddlePressed() then
+            chosenZ = playerZ
+        end
+
+        if chosenZ > maxZ then chosenZ = maxZ end
+        if chosenZ < minZ then chosenZ = minZ end
+    end
+
+    if chosenZ == playerZ then
+        str = '0'
+    elseif chosenZ == 0 then
+        str = 'G'
+    elseif chosenZ > playerZ  then
+        str = '+' .. chosenZ - playerZ
+    elseif chosenZ < playerZ  then
+        str = '-' .. playerZ - chosenZ
+    end
+
+    Advanced_trajectory.aimlevels = chosenZ
+
+    if isKeyDown then
+        aimLevelText:ReadString(UIFont.Large, str, -1)
+        aimLevelText:setDefaultColors(1, 1, 1, 1)
+    else
+        aimLevelText:ReadString(UIFont.Medium, str, -1)
+        aimLevelText:setDefaultColors(1, 1, 1, aimLevelTextTrans)
+    end
+end
+
+function Advanced_trajectory.autoChooseAimZLevel(player, minZ, maxZ)
     -- Get the scaled mouse coordinates
     local mouseX = getMouseXScaled()
     local mouseY = getMouseYScaled()
@@ -1850,8 +1908,9 @@ function Advanced_trajectory.chooseAimZLevel(player)
     local playerY = mathfloor(player:getY())
     local playerNum = player:getPlayerNum()
 
-    -- Initialize a flag to check if we are aiming at an object
-    local isAimingObject = false
+    local str = ''
+
+    local chosenZ = playerZ
 
     -- Get the current world cell
     local cell = getWorld():getCell()
@@ -1870,59 +1929,61 @@ function Advanced_trajectory.chooseAimZLevel(player)
             for x = -1, 1 do
                 for y = -1, 1 do
                     -- Get the grid square at the adjusted position
-                    local sq = cell:getGridSquare(wx + 2.2, wy + 2.2, Z)
+                    local sq = cell:getGridSquare(wx + x + 2.2, wy + y + 2.2, Z)
 
-                    -- Check if the grid square is valid and can be seen by the player
-                    if sq and sq:isCanSee(playerNum) then
-                        local movingObjects = sq:getMovingObjects()
+                    -- make sure sq is not null
+                    if sq then
+                        -- if sq seen on floor Z, return true if zom is detected on that floor
+                        if sq:isCanSee(playerNum) then
+                            local movingObjects = sq:getMovingObjects()
 
-                        -- Iterate through moving objects in the grid square
-                        for zz = 1, movingObjects:size() do
-                            local target = movingObjects:get(zz - 1)
-
-                            -- Check if the object is an IsoZombie or IsoPlayer
-                            if instanceof(target, "IsoGameCharacter") then
-                                -- Set the aim level and flag, then return
-                                Advanced_trajectory.aimlevels = Z
-                                isAimingObject = true
-                                return true
+                            -- Iterate through moving objects in the grid square
+                            for obj = 1, movingObjects:size() do
+                                local target = movingObjects:get(obj - 1)
+    
+                                -- Check if the object is an IsoZombie or IsoPlayer
+                                if instanceof(target, "IsoGameCharacter") then
+                                    -- Set the aim level and flag, then return
+                                    chosenZ = Z
+                                    return true
+                                end
                             end
-                        end
-
-                    -- make exception if bullet and player are on the same floor to prevent issue with blindness
-                    elseif sq and Z == playerZ then
-                        local movingObjects = sq:getMovingObjects()
-
-                        for zz = 1, movingObjects:size() do
-                            local target = movingObjects:get(zz - 1)
-
-                            if instanceof(target, "IsoGameCharacter") then
-                                Advanced_trajectory.aimlevels = Z
-                                isAimingObject = true
-                                return true
+                        elseif Z == playerZ then
+                            -- if sq can't be seen, just set Z to player's Z
+                            local movingObjects = sq:getMovingObjects()
+                            for obj = 1, movingObjects:size() do
+                                local target = movingObjects:get(obj - 1)
+    
+                                if instanceof(target, "IsoGameCharacter") then
+                                    chosenZ = Z
+                                    return true
+                                end
                             end
                         end
                     end
                 end
             end
         end
-
-        return false
     end
 
-    if not loopForTargets(playerZ, 0, -1) then
-        loopForTargets(playerZ+1, 7, 1)
+    if not loopForTargets(playerZ, minZ, -1) then
+        loopForTargets(playerZ+1, maxZ, 1)
     end
 
-
-    -- If no object is aimed at, reset the aim level
-    if not isAimingObject then
-        Advanced_trajectory.aimlevels = playerZ
+    if chosenZ == playerZ then
+        str = '0'
+    elseif chosenZ == 0 then
+        str = 'G'
+    elseif chosenZ > playerZ  then
+        str = '+' .. chosenZ - playerZ
+    elseif chosenZ < playerZ  then
+        str = '-' .. playerZ - chosenZ
     end
 
-    -- ReadString(UIFont font, String str, int maxLineWidth)
-    aimLevelText:ReadString(UIFont.Medium, tostring(Advanced_trajectory.aimlevels), -1)
-    aimLevelText:AddBatchedDraw(getMouseX() + 35, getMouseY() + 35, true)
+    Advanced_trajectory.aimlevels = chosenZ
+
+    aimLevelText:ReadString(UIFont.Medium, str, -1)
+    aimLevelText:setDefaultColors(1, 1, 1, aimLevelTextTrans)
 end
 
 function Advanced_trajectory.checkBowAndCrossbow(player, Zombie)
