@@ -1109,6 +1109,7 @@ function Advanced_trajectory.OnPlayerUpdate()
     local isAiming = player:isAiming()
     local hasGun = instanceof(weaitem, "HandWeapon") 
 
+    -- if have manual aim Z level enabled, reset aimlevel to player level when about to aim 
     if Mouse.isRightPressed() and not getSandboxOptions():getOptionByName("Advanced_trajectory.enableAutoAimZLevel"):getValue() then
         Advanced_trajectory.aimlevels = mathfloor(player:getZ())
     end
