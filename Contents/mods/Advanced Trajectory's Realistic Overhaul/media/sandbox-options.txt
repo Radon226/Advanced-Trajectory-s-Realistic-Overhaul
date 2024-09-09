@@ -296,6 +296,15 @@ option Advanced_trajectory.enableDistanceLimitPenalty
 	page = Advanced_trajectory,
 	translation = Advanced_trajectoryenableDistanceLimitPenalty,
 }
+option Advanced_trajectory.distanceLimitScaling
+{
+	type = double,
+	min = 0,
+	max = 1,
+	default = 1,
+	page = Advanced_trajectory,
+	translation = distanceLimitScaling,
+}
 option Advanced_trajectory.distanceFocusPenalty
 {
 	type = double,
@@ -496,7 +505,7 @@ option Advanced_trajectory.bulletdistance
 	type = double,
 	min = 0,
 	max = 100,
-	default = 4,
+	default = 2,
 	page = Advanced_trajectory,
 	translation = Advanced_trajectorybulletdistance,
 }

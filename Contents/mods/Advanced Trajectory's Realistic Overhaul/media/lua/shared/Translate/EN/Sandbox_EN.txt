@@ -95,8 +95,10 @@ Sandbox_EN = {
 	
 	Sandbox_Advanced_trajectoryenableDistanceLimitPenalty = "Enable Distance Limit Penalty",
 	Sandbox_Advanced_trajectoryenableDistanceLimitPenalty_tooltip = "Player loses accuracy when trying to shoot targets past their distance limit. Uncheck to disable.",
-	Sandbox_Advanced_trajectorydistanceFocusPenalty = "Distance Focus Penalty",
-	Sandbox_Advanced_trajectorydistanceFocusPenalty_tooltip = "Higher means more punishing bloom scaling.",
+	Sandbox_Advanced_trajectorydistanceFocusPenalty = "Distance Penalty Scaling",
+	Sandbox_Advanced_trajectorydistanceFocusPenalty_tooltip = "Affects when the penalty will be applied. The lower the value, the lesser the distance that the crosshair needs to be from the player to activate the penalty.",
+	Sandbox_Advanced_trajectorydistanceFocusPenalty = "Distance Bloom Penalty",
+	Sandbox_Advanced_trajectorydistanceFocusPenalty_tooltip = "Higher means more punishing bloom scaling the further away the crosshair is from your character.",
 
 	Sandbox_Advanced_trajectoryrunNGunLv = "Level with Run and Gun Unlocked",
 	Sandbox_Advanced_trajectoryrunNGunLv_tooltip = "When aiming moving and turnin.",

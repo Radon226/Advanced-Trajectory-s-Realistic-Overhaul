@@ -89,7 +89,7 @@ aimLevelText:setHorizontalAlign("right")
 function Advanced_trajectory.itemremove(worlditem)
     if worlditem == nil then return end
 
-    --print("Type: ", worlditem:getType())
+    -- print("Type: ", worlditem:getType())
 
     -- worlditem:getWorldItem():getSquare():transmitRemoveItemFromSquare(worlditem:getWorldItem())
     worlditem:getWorldItem():removeFromSquare()
@@ -339,10 +339,10 @@ function Advanced_trajectory.findTargetShot(bulletTable, playerTable, missedShot
 
     local pointBlankDist = 2
 
-    if getSandboxOptions():getOptionByName("Advanced_trajectory.enablePlayerBulletPosCheck"):getValue() then
-        print('findTarget -> bullet: (', bulletTable.x, ', ', bulletTable.y, ', ', bulletTable.z, ')')
-        print('findTarget -> player: (', playerTable[1], ', ', playerTable[2], ', ', playerTable[3], ')')
-    end
+    -- if getSandboxOptions():getOptionByName("Advanced_trajectory.enablePlayerBulletPosCheck"):getValue() then
+    --     print('findTarget -> bullet: (', bulletTable.x, ', ', bulletTable.y, ', ', bulletTable.z, ')')
+    --     print('findTarget -> player: (', playerTable[1], ', ', playerTable[2], ', ', playerTable[3], ')')
+    -- end
 
     local function addTargetsToTable(sq, targetTable, targetSet)
         local movingObjects = sq:getMovingObjects()
@@ -774,6 +774,8 @@ end
 --ADD TEXTURE FX FUNC SECT---
 -----------------------------
 function Advanced_trajectory.additemsfx(square, itemname, x, y, z)
+    --print('additemsfx -> sq: ', square, ' || item: ', itemname)
+    --print('additemsfx -> (', x, ', ', y, ', ', z, ')')
     if square:getZ() > 7 then return end
     local iteminv = InventoryItemFactory.CreateItem(itemname)
     local itemin = IsoWorldInventoryObject.new(iteminv, square, advMathFloor(x), advMathFloor(y), advMathFloor(z));
@@ -784,7 +786,9 @@ function Advanced_trajectory.additemsfx(square, itemname, x, y, z)
     
     if chunk then
         square:getChunk():recalcHashCodeObjects()
-    else return end
+    else 
+        return 
+    end
     -- iteminv:setAutoAge();
     -- itemin:setKeyId(iteminv:getKeyId());
     -- itemin:setName(iteminv:getName());
@@ -811,8 +815,6 @@ function Advanced_trajectory.boomontick()
         if tableSfx.nowSfxNum == 1 and tableSfx.sfxCount == 0 then 
 
             local itemOrNone = Advanced_trajectory.additemsfx(tableSfx.square, tableSfx.sfxName..tostring(tableSfx.nowSfxNum), tableSfx.pos[1], tableSfx.pos[2], tableSfx.pos[3])
-
-            -- nil error when inserting a value to table.item
             table.insert(tableSfx.item, itemOrNone)
             tableSfx.nowSfxNum = tableSfx.nowSfxNum + 1
 
@@ -1258,8 +1260,9 @@ function Advanced_trajectory.OnPlayerUpdate()
         --------------------------------
         ---TARGET DISTANCE LIMIT SECT---
         --------------------------------
-        local enableDistanceLimitPenalty  = getSandboxOptions():getOptionByName("Advanced_trajectory.enableDistanceLimitPenalty"):getValue() 
-        local distanceFocusPenalty  = getSandboxOptions():getOptionByName("Advanced_trajectory.distanceFocusPenalty"):getValue() 
+        local enableDistanceLimitPenalty    = getSandboxOptions():getOptionByName("Advanced_trajectory.enableDistanceLimitPenalty"):getValue() 
+        local distanceFocusPenalty          = getSandboxOptions():getOptionByName("Advanced_trajectory.distanceFocusPenalty"):getValue() 
+        local distanceLimitScaling        = getSandboxOptions():getOptionByName("Advanced_trajectory.distanceLimitScaling"):getValue() 
  
         local shotgunDistanceModifier = getSandboxOptions():getOptionByName("Advanced_trajectory.shotgunDistanceModifier"):getValue()
 
@@ -1274,6 +1277,7 @@ function Advanced_trajectory.OnPlayerUpdate()
         
         --local distanceLimit = (maxDistance * distanceLimitPenalty) + ((maxDistance * (1-distanceLimitPenalty)) * realLevel/10)
         local distanceLimit = maxDistance * realLevel/10
+        distanceLimit = distanceLimit * distanceLimitScaling
         
         local targetDist = Advanced_trajectory.getDistanceFromMouseToPlayer(player)
 
@@ -2586,7 +2590,7 @@ function Advanced_trajectory.updateProjectiles()
                 tableProj.square = getWorld():getCell():getOrCreateGridSquare(bulletPosX, bulletPosY, bulletPosZ) 
             end
 
-            tableProj.item = Advanced_trajectory.additemsfx(tableProj.square, tableProj.projectileType .. tostring(tableProj.winddir), advMathFloor(bulletPosX), advMathFloor(bulletPosY), advMathFloor(bulletPosZ))
+            tableProj.item = Advanced_trajectory.additemsfx(tableProj.square, tableProj.projectileType .. tostring(tableProj.winddir), bulletPosX, bulletPosY, bulletPosZ)
 
             local spnumber          = (tableProj.dirVector[1]^2 + tableProj.dirVector[2]^2)^0.5 * currTablez12_
             tableProj.bulletDist    = tableProj.bulletDist - spnumber
@@ -2757,7 +2761,7 @@ function Advanced_trajectory.OnWeaponSwing(character, handWeapon)
         weaponName = "",                        --9 types
         rotSpeed = 0,                           --10 rotation speed
         canPenetrate = false,                   --11 whether it can penetrate
-        bulletSpeed = 1.8,                     --12 ballistic speed
+        bulletSpeed = 1.8,                      --12 ballistic speed
         iscanbigger = 0,                        --13 can be made bigger
         projectileType = "",                    --14 ballistic name
         canPassThroughWall = true,              --15 det whether it can pass through the wall
@@ -2847,7 +2851,7 @@ function Advanced_trajectory.OnWeaponSwing(character, handWeapon)
             projectilePlayerData["isparabola"] = projectilePlayerData.throwinfo[6]
         
             -- disabling enable range means guns don't work (no projectiles)
-        elseif getSandboxOptions():getOptionByName("Advanced_trajectory.Enablerange"):getValue() and (handWeapon:getSubCategory() =="Firearm" or handWeapon:getSubCategory() =="BBGun") then ----枪
+        elseif getSandboxOptions():getOptionByName("Advanced_trajectory.Enablerange"):getValue() and (handWeapon:getSubCategory() =="Firearm" or handWeapon:getSubCategory() =="BBGun") then 
 
             local hideTracer = getSandboxOptions():getOptionByName("Advanced_trajectory.hideTracer"):getValue()
             --print("Tracer hidden: ", hideTracer)
@@ -2867,7 +2871,7 @@ function Advanced_trajectory.OnWeaponSwing(character, handWeapon)
                     --print("Empty")
                     projectilePlayerData.projectileType = "Empty.aty_Shotguna"    
                 else
-                    --print("Base")
+                    --print("---- Base shotgun ----")
                     projectilePlayerData.projectileType = "Base.aty_Shotguna"  
                 end
 
@@ -2908,7 +2912,7 @@ function Advanced_trajectory.OnWeaponSwing(character, handWeapon)
                     --print("Empty")
                     projectilePlayerData.projectileType = "Empty.aty_revolversfx"  
                 else
-                    --print("Base")
+                    --print("---- Base normal ----")
                     projectilePlayerData.projectileType = "Base.aty_revolversfx" 
                 end
 
@@ -2931,13 +2935,13 @@ function Advanced_trajectory.OnWeaponSwing(character, handWeapon)
             --print("Weapon is not firearm, but ", handWeapon:getSubCategory())
             return      
         end
-        
-
     end
 
     projectilePlayerData.square = projectilePlayerData.square or getWorld():getCell():getGridSquare(offX,offY,offZ)
 
     if projectilePlayerData.square == nil then return end
+
+    --projectilePlayerData.item = Advanced_trajectory.additemsfx(projectilePlayerData.square, projectilePlayerData.projectileType .. tostring(projectilePlayerData.winddir), offX, offY, offZ)
 
     -- NOTES: projectilePlayerData.damage is damage, firearm damages vary from 0 to 2. Example, M16 has min to max: 0.8 to 1.4 (source wiki)
     projectilePlayerData.damage = projectilePlayerData.damage or (handWeapon:getMinDamage() + ZombRandFloat(0.1, 1.3) * (0.5 + handWeapon:getMaxDamage() - handWeapon:getMinDamage()))
