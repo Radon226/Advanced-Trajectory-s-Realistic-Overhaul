@@ -8,7 +8,7 @@ option Advanced_trajectory.showOutlines
 {type = boolean,default = false,page = Advanced_trajectory,translation = Advanced_trajectoryshowOutlines,}
 
 option Advanced_trajectory.enableAutoAimZLevel
-{type = boolean,default = false,page = Advanced_trajectory,translation = Advanced_trajectoryenableAutoAimZLevel,}
+{type = boolean,default = true,page = Advanced_trajectory,translation = Advanced_trajectoryenableAutoAimZLevel,}
 
 option Advanced_trajectory.hideTracer
 {type = boolean,default = false,page = Advanced_trajectory,translation = Advanced_trajectoryhideTracer,}
@@ -1070,6 +1070,15 @@ option Advanced_trajectory.enableOgCrosshair
 	default = false,
 	page = Advanced_trajectory_crosshair,
 	translation = Advanced_trajectoryenableOgCrosshair,
+}
+option Advanced_trajectory.aimLevelTextTrans
+{
+	type = double,
+	min = 0,
+	max = 1,
+	default = 0.5,
+	page = Advanced_trajectory_crosshair,
+	translation = aimLevelTextTrans,
 }
 option Advanced_trajectory.crosshairMaxTransparency
 {

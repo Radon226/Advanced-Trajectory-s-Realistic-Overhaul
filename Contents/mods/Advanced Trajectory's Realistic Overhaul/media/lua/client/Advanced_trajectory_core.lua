@@ -78,7 +78,7 @@ end
 ---TEXT UI---
 -------------
 local aimLevelText = TextDrawObject.new()
-local aimLevelTextTrans = 0.5
+local aimLevelTextTrans = getSandboxOptions():getOptionByName("Advanced_trajectory.aimLevelTextTrans"):getValue()  
 aimLevelText:setDefaultColors(1, 1, 1, aimLevelTextTrans)
 aimLevelText:setOutlineColors(0, 0, 0, 1)
 aimLevelText:setHorizontalAlign("right")
@@ -1853,10 +1853,10 @@ function Advanced_trajectory.chooseAimZLevel(player)
     if getSandboxOptions():getOptionByName("Advanced_trajectory.enableAutoAimZLevel"):getValue() then
         Advanced_trajectory.autoChooseAimZLevel(player, minZ, maxZ)
     else
-        Advanced_trajectory.manualChooseAimZLevel(player, minZ, maxZ)
+        if Advanced_trajectory.manualChooseAimZLevel(player, minZ, maxZ) then
+            aimLevelText:AddBatchedDraw(getMouseX() + 35, getMouseY() + 35, true)
+        end
     end
-
-    aimLevelText:AddBatchedDraw(getMouseX() + 35, getMouseY() + 35, true)
 end
 
 function Advanced_trajectory.manualChooseAimZLevel(player, minZ, maxZ)
@@ -1899,6 +1899,12 @@ function Advanced_trajectory.manualChooseAimZLevel(player, minZ, maxZ)
     else
         aimLevelText:ReadString(UIFont.Medium, str, -1)
         aimLevelText:setDefaultColors(1, 1, 1, aimLevelTextTrans)
+    end
+
+    if chosenZ ~= playerZ or isKeyDown then 
+        return true
+    else
+        return false
     end
 end
 
@@ -1986,9 +1992,6 @@ function Advanced_trajectory.autoChooseAimZLevel(player, minZ, maxZ)
     end
 
     Advanced_trajectory.aimlevels = chosenZ
-
-    aimLevelText:ReadString(UIFont.Medium, str, -1)
-    aimLevelText:setDefaultColors(1, 1, 1, aimLevelTextTrans)
 end
 
 function Advanced_trajectory.checkBowAndCrossbow(player, Zombie)
