@@ -1867,15 +1867,22 @@ function Advanced_trajectory.manualChooseAimZLevel(player, minZ, maxZ)
 
     local str = ''
 
+    local currZoom = getCore():getZoom(0)
+
     if isKeyDown then
+        -- scroll up
         if Mouse.getWheelState() > 0 then
             chosenZ = chosenZ + 1
-            getCore():doZoomScroll(0, 1)
+            if currZoom ~= getCore():getMinZoom() then getCore():doZoomScroll(0, 1) end
+
+        -- scroll down
         elseif Mouse.getWheelState() < 0 then
             chosenZ = chosenZ - 1
-            getCore():doZoomScroll(0, -1)
+            if currZoom ~= getCore():getMaxZoom() then getCore():doZoomScroll(0, -1) end
+
         elseif Mouse.isMiddlePressed() then
             chosenZ = playerZ
+
         end
 
         if chosenZ > maxZ then chosenZ = maxZ end
