@@ -491,7 +491,7 @@ function Advanced_trajectory.checkBulletCarCollision(bulletPos, bulletDamage, ta
         local distFromPlayer = (vehicle:getX() - playerCurrPosX)^2  + (vehicle:getY() - playerCurrPosY)^2
 
         if distFromPlayer > 8 then
-            if nosfx then return true end
+            if nonsfx then return true end
 
             local hitVehicle = function()
                 local distFromBullet = (vehicle:getX() - bulletX)^2  + (vehicle:getY() - bulletY)^2
@@ -555,7 +555,7 @@ end
 -- checks the squares that the bullet travels, this means there's need to be a limit to how fast the bullet travels
 -- this function determines whether bullets should "break" meaning they stop, pretty much a collision checker
 -- bullet square, dirc, bullet offset, player offset, nonsfx
-function Advanced_trajectory.checkSurfaceCollision(square, bulletDir, bulletPos, playerPos, nosfx, bulletDamage, tableIndx)
+function Advanced_trajectory.checkSurfaceCollision(square, bulletDir, bulletPos, playerPos, nonsfx, bulletDamage, tableIndx)
     --[[
     local bulletPosFloorX = mathfloor(bulletPos[1])
     local bulletPosFloorY = mathfloor(bulletPos[2])
@@ -570,6 +570,7 @@ function Advanced_trajectory.checkSurfaceCollision(square, bulletDir, bulletPos,
 
     local playerPosX = playerPos[1]
     local playerPosY = playerPos[2]
+    local playerPosZ = mathfloor(playerPos[3])
 
     local angle = bulletDir
     if angle > 180 then
@@ -626,7 +627,7 @@ function Advanced_trajectory.checkSurfaceCollision(square, bulletDir, bulletPos,
                     -- if the locoobject is "IsoWindow" which is a class and it's not smashed, smash it
                     if instanceof(locobject,"IsoWindow") and not locobject:isSmashed() and not locobject:IsOpen() then
 
-                        if nosfx then return true end
+                        if nonsfx then return true end
 
                         locobject:setSmashed(true)
                         getSoundManager():PlayWorldSoundWav("SmashWindow",square, 0.5, 2, 0.5, true);
@@ -637,8 +638,8 @@ function Advanced_trajectory.checkSurfaceCollision(square, bulletDir, bulletPos,
 
                     -- prevents wall collision when shooting targets below on roofs by ignoring wall near player
                     if Advanced_trajectory.aimlevels then 
-                        --print("Aim Level | playerZ: ", Advanced_trajectory.aimlevels, " || ", playerPosFloorZ)
-                        if (wallN or doorN or wallNW or wallSE or wallW or doorW) and (Advanced_trajectory.aimlevels ~= playerPosFloorZ) then
+                        --print("Aim Level | playerZ: ", Advanced_trajectory.aimlevels, " || ", playerPosZ)
+                        if (wallN or doorN or wallNW or wallSE or wallW or doorW) and (Advanced_trajectory.aimlevels ~= playerPosZ) then
                             return false
                         end
                     end
@@ -653,7 +654,7 @@ function Advanced_trajectory.checkSurfaceCollision(square, bulletDir, bulletPos,
                         (angle<=0 and angle>=-45) and (playerPosY  > squareY or playerPosX  < squareX)
                         then
                             --print("----Facing outside into wallNW----")
-                            if nosfx then return true end
+                            if nonsfx then return true end
                             getSoundManager():PlayWorldSoundWav("BreakObject",square, 0.5, 2, 0.5, true);
 
                             local spawnSquare = getWorld():getCell():getOrCreateGridSquare(squareX - offset, squareY - offset, squareZ)
@@ -667,7 +668,7 @@ function Advanced_trajectory.checkSurfaceCollision(square, bulletDir, bulletPos,
                         (angle>=-90 and angle<=-45) and (playerPosY  > squareY or playerPosX  < squareX) 
                         then
                             --print("----Facing inside into wallNW----")
-                            if nosfx then return true end
+                            if nonsfx then return true end
                             getSoundManager():PlayWorldSoundWav("BreakObject",square, 0.5, 2, 0.5, true);
 
                             local spawnSquare = getWorld():getCell():getOrCreateGridSquare(squareX + offset, squareY + offset, squareZ)
@@ -683,7 +684,7 @@ function Advanced_trajectory.checkSurfaceCollision(square, bulletDir, bulletPos,
                         (angle<=0 and angle>=-45) and (playerPosY  > squareY or playerPosX  < squareX)
                         then
                             --print("----Facing inside into wallSE----")
-                            if nosfx then return true end
+                            if nonsfx then return true end
                             getSoundManager():PlayWorldSoundWav("BreakObject",square, 0.5, 2, 0.5, true);
 
                             local spawnSquare = getWorld():getCell():getOrCreateGridSquare(squareX - offset, squareY - offset, squareZ)
@@ -697,7 +698,7 @@ function Advanced_trajectory.checkSurfaceCollision(square, bulletDir, bulletPos,
                         (angle>=-90 and angle<=-45) and (playerPosY  > squareY or playerPosX  < squareX) 
                         then
                             --print("----Facing outside into wallSE----")
-                            if nosfx then return true end
+                            if nonsfx then return true end
                             getSoundManager():PlayWorldSoundWav("BreakObject",square, 0.5, 2, 0.5, true);
 
                             local spawnSquare = getWorld():getCell():getOrCreateGridSquare(squareX + offset, squareY + offset, squareZ)
@@ -711,7 +712,7 @@ function Advanced_trajectory.checkSurfaceCollision(square, bulletDir, bulletPos,
                         -- facing east into wallN
                         if (isAngleTrue) and playerPosY  > squareY then
                             --print("----Facing EAST into wallN----")
-                            if nosfx then return true end
+                            if nonsfx then return true end
                             getSoundManager():PlayWorldSoundWav("BreakObject",square, 0.5, 2, 0.5, true);
 
                             local spawnSquare = getWorld():getCell():getOrCreateGridSquare(squareX, squareY + offset, squareZ)
@@ -723,7 +724,7 @@ function Advanced_trajectory.checkSurfaceCollision(square, bulletDir, bulletPos,
                         -- facing west into wallN
                         if (isAngleTrue) and playerPosY < squareY then
                             --print("----Facing WEST into wallN----")
-                            if nosfx then return true end
+                            if nonsfx then return true end
                             getSoundManager():PlayWorldSoundWav("BreakObject",square, 0.5, 2, 0.5, true);
 
                             local spawnSquare = getWorld():getCell():getOrCreateGridSquare(squareX, squareY - offset, squareZ)
@@ -738,7 +739,7 @@ function Advanced_trajectory.checkSurfaceCollision(square, bulletDir, bulletPos,
                         if (isAngleTrue) and playerPosX < squareX then
                             --print("----Facing SOUTH into wallW----")
 
-                            if nosfx then return true end
+                            if nonsfx then return true end
                             getSoundManager():PlayWorldSoundWav("BreakObject",square, 0.5, 2, 0.5, true);
 
                             local spawnSquare = getWorld():getCell():getOrCreateGridSquare(squareX - offset, squareY, squareZ)
@@ -750,7 +751,7 @@ function Advanced_trajectory.checkSurfaceCollision(square, bulletDir, bulletPos,
                         -- facing north into wallW
                         if (isAngleTrue) and playerPosX > squareX then
                             --print("----Facing NORTH into wallW----")
-                            if nosfx then return true end
+                            if nonsfx then return true end
                             getSoundManager():PlayWorldSoundWav("BreakObject",square, 0.5, 2, 0.5, true);
 
                             local spawnSquare = getWorld():getCell():getOrCreateGridSquare(squareX + offset, squareY, squareZ)
