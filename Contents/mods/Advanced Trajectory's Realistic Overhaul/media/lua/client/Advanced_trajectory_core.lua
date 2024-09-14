@@ -1238,10 +1238,12 @@ function Advanced_trajectory.OnPlayerUpdate()
 
         local heavyLv   = player:getMoodles():getMoodleLevel(MoodleType.HeavyLoad) -- add bloom
 
+        -- add to realMin or focusLimit if want to increase minaimnum from negative moodles
+        baseAimnumPenalty = 6
 
          -- Main purpose is to nerf lv 10 when exhausted
         if enduranceLv > 0 then    
-            realMin = realMin + 6    
+            realMin = realMin + baseAimnumPenalty    
             maxaimnum = maxaimnum + enduranceLv*2
         end
         -----------------------------------
@@ -1323,7 +1325,17 @@ function Advanced_trajectory.OnPlayerUpdate()
         end
 
         if stressLv > 1 and hasFocusSkill then
-            focusLimit = focusLimit + 6 * (stressLv-1)
+            focusLimit = focusLimit + baseAimnumPenalty * (stressLv-1)
+        end
+
+        ------ DRUNK 1 SECT ------
+        --------------------------
+        if drunkLv >= 3 and realLevel < 3 then
+            realMin = realMin + (baseAimnumPenalty * drunkLv)
+        end
+
+        if drunkLv >= 3 and hasFocusSkill then
+            focusLimit = focusLimit + (baseAimnumPenalty * drunkLv)
         end
 
 
@@ -1354,9 +1366,9 @@ function Advanced_trajectory.OnPlayerUpdate()
         if totalArmPain >= 39 and painLv > 1 then
             if hasFocusSkill then
                 if painLv == 2 then
-                    focusLimit = focusLimit + 6
+                    focusLimit = focusLimit + baseAimnumPenalty
                 else
-                    focusLimit = focusLimit + 6 * (0.5 + totalArmPain/50)
+                    focusLimit = focusLimit + baseAimnumPenalty * (0.5 + totalArmPain/50)
                 end
             end
 
