@@ -21,8 +21,12 @@ end
 
 local function Advanced_trajectory_OnServerCommand(module, command, arguments)
 
+    -- this is the target player that was shot
+    -- if target was you (id 0), return 
+    -- if you are the only player in mp, clientPlayershot id would be your id even when shooting diff zombies
     local clientPlayershot = getPlayer()
 
+    -- will always pass if statement if playing in MP no matter what IsoGameChar you shoot
     if not clientPlayershot then return end
 
     ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -36,15 +40,7 @@ local function Advanced_trajectory_OnServerCommand(module, command, arguments)
         local baseGunDmg            = arguments[4]               
         local playerDmgMultipliers  = arguments[5]
 
-        local player     = getPlayerByOnlineID(playerOnlineID)
-
-        --print(player:getUsername(), " -> ", playershot:getUsername())
-
-        --if playershotOnlineID ~= clientPlayershot:getOnlineID() then return end
-
-        --if (Sandbox_options.nonPvpZoneProtect and NonPvpZone.getNonPvpZone(clientPlayershot:getX(), clientPlayershot:getY())) or (Sandbox_options.safezoneProtect and SafeHouse.getSafeHouse(clientPlayershot:getCurrentSquare())) then return end
-        -- print(NonPvpZone.getNonPvpZone(getPlayer():getX(), getPlayer():getY()))
-        -- print(SafeHouse.getSafeHouse(getPlayer():getCurrentSquare()))
+        local player = getPlayerByOnlineID(playerOnlineID)
 
         damagePlayershotPVP(player, clientPlayershot, damagepr, baseGunDmg, playerDmgMultipliers, playerOnlineID, playershotOnlineID)   
     
@@ -58,7 +54,16 @@ local function Advanced_trajectory_OnServerCommand(module, command, arguments)
         local damagepr                  = arguments[4]                 
         local baseGunDmg                = arguments[5]     
         local damageDealtToTarget       = arguments[6]     
-        local targetIsDead              = arguments[7]   
+        local targetIsDead              = arguments[7]  
+        
+        -- if shooter is invisible from admin power, then shooter var will be nil
+        if not shooter then
+            shooter = 'unknown/invisible'
+        end
+        
+        if not target then
+            target = 'unknown/invisible'
+        end
     
         local log1 = string.format(("[ATROPVP] \"%s\" shot \"%s\" (PartShot: \"%s\" || HitDmg: \"%s\" || BaseGunDmg: \"%s\"  || ActDmg: \"%s\")"), shooter, target, strShotPart, damagepr, baseGunDmg, damageDealtToTarget)
         writeLog("ATROPVP", log1)
@@ -74,9 +79,9 @@ local function Advanced_trajectory_OnServerCommand(module, command, arguments)
     elseif module == "ATY_shotsfx" then
 
         local itemobj = arguments[1]            --tablez[1] or item obj
-        local characterOnlineID = arguments[2]  --character:getOnlineID()
+        local playerOnlineID = arguments[2]     --character:getOnlineID()
 
-        if characterOnlineID == clientPlayershot:getOnlineID() then return end
+        if playerOnlineID == clientPlayershot:getOnlineID() then return end
         table.insert(Advanced_trajectory.table, itemobj)
 
 
@@ -92,32 +97,28 @@ local function Advanced_trajectory_OnServerCommand(module, command, arguments)
 
 
 
-    -------------------------------------------------------------------------------------------
-    --sendClientCommand("ATY_cshotzombie", "true", {Zombie:getOnlineID(),vt[19]:getOnlineID()})--
-    -------------------------------------------------------------------------------------------
+    -----------------------------------------------------------------------------------------------------
+    --sendClientCommand("ATY_cshotzombie", "true", {Zombie:getOnlineID(),vt[19]:getOnlineID(), damage})--
+    -----------------------------------------------------------------------------------------------------
     elseif module == "ATY_cshotzombie" then
 
-        local zedOnlineID = arguments[1]        --Zombie:getOnlineID()
-        local playerOnlineID = arguments[2]     --vt[19]:getOnlineID()
+        local zedOnlineID       = arguments[1]      -- Zombie:getOnlineID()
+        local playerOnlineID    = arguments[2]      -- vt[19]:getOnlineID()
+        local damage            = arguments[3]      -- damage
 
-        if clientPlayershot:getOnlineID() == playerOnlineID then return end
+        local player = getPlayerByOnlineID(playerOnlineID)
+        if not player then
+            player = clientPlayershot
+        end
+
         local zombies = getCell():getZombieList()
 
         for i = 1, zombies:size() do
-
-            local zombiez = zombies:get(i - 1)
-            if zombiez:getOnlineID() == zedOnlineID then
-
-                -- if not string.find(tostring(zombiez:getCurrentState()), "Climb") and not string.find(tostring(zombiez:getCurrentState()), "Craw") then
-
-                --     zombiez:changeState(ZombieIdleState.instance())
-
-                -- end
-                zombiez:setHitReaction("Shot")
+            local zombie = zombies:get(i - 1)
+            if zombie:getOnlineID() == zedOnlineID then
+                Advanced_trajectory.damageZombie(zombie, damage, player) 
             end
         end
-
-
         
     -------------------------------------------------------------------
     --sendClientCommand("ATY_killzombie", "true", {Zombie:getOnlineID()})--

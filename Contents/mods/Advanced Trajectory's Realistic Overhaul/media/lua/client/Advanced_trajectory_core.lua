@@ -2285,10 +2285,24 @@ function Advanced_trajectory.damagePlayershot(playerShot, damage, baseGunDmg, pl
     return nameShotPart, playerDamageDealt
 end
 
-function Advanced_trajectory.damageZombie(zombie, damage) 
-    zombie:setHealth(zombie:getHealth() - damage)
+function Advanced_trajectory.damageZombie(zombie, damage, player) 
+    --zombie:setHealth(zombie:getHealth() - damage)
+
+    print('damageZom - damage: ', damage)
+    print('damageZom - zomHP bef: ', zombie:getHealth())
+
+    --Hit(HandWeapon weapon, IsoGameCharacter wielder, float damageSplit, boolean bIgnoreDamage, float modDelta, boolean bRemote)
+    -- damageSplit: is where damage is dealt to zombie (set to damage val)
+    -- bIgnoreDamage: if true, zombie will receive no damage (set to false)
+    -- modDelta: is where damage is dealt to zombie (also set to damage val)
+    -- bRemote: if true, zombie will not have any hit reactions  (set to true)
+    zombie:Hit(player:getPrimaryHandItem(), player, damage, false, damage, true)
     zombie:setHitReaction("Shot")
     zombie:addBlood(getSandboxOptions():getOptionByName("AT_Blood"):getValue())
+    zombie:setAttackedBy(player)
+    --zombie:setAttackedBy(getCell():getFakeZombieForHit())
+
+    print('damageZom - zomHP aft: ', zombie:getHealth())
 end
 
 function Advanced_trajectory.drawDamageText()
@@ -2406,10 +2420,6 @@ function Advanced_trajectory.dealWithZombieShot(tableProj, tableIndx, zombie, da
             --     tanksuperboom(tableProj.square)
             -- end
         end
-        
-        if isClient() then
-            sendClientCommand("ATY_cshotzombie", "true", {zombie:getOnlineID(), player:getOnlineID()})
-        end
 
         damage = damage * tableProj.damage * 0.1
 
@@ -2423,7 +2433,12 @@ function Advanced_trajectory.dealWithZombieShot(tableProj, tableIndx, zombie, da
             Advanced_trajectory.displayDamageOnZom(zombie, damage)
         end
 
-        Advanced_trajectory.damageZombie(zombie, damage)
+        if isClient() then
+            print('In MP, sending clientCmd for cshotzombie')
+            sendClientCommand("ATY_cshotzombie", "true", {zombie:getOnlineID(), player:getOnlineID(), damage})
+        else
+            Advanced_trajectory.damageZombie(zombie, damage, tableProj.player)
+        end
         
         -- if zombie's health is very low, just kill it (recall full health is over 140) and give xp like usual
         if zombie:getHealth() <= 0.1 then                                                 
