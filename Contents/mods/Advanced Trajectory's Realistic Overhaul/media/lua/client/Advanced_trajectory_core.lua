@@ -71,6 +71,11 @@ local Advanced_trajectory = {
     },
 }
 
+local gameTime
+Events.OnGameTimeLoaded.Add(function()
+    gameTime = GameTime.getInstance()
+end)
+
 -------------------------
 --MATH FLOOR FUNC SECT---
 -------------------------
@@ -555,20 +560,6 @@ function Advanced_trajectory.checkBulletCarCollision(bulletPos, bulletDamage, ta
                 end
                 --print('carColl -> no hit')
             end
-
-            -- if player is on different Z level from vehicle, then only have it collide with vehicle if player is aiming at the vehicle
-            -- if playerCurrPosZ ~= vehicle:getZ() then
-            --     print("carColl -> Different level")
-            --     local isOnCar = Advanced_trajectory.checkCrossOnCar(player)
-
-            --     if isOnCar then
-            --         return hitVehicle()
-            --     else
-            --         return false
-            --     end
-            -- end
-
-            -- print("carColl -> Not on diff level")
             
             return hitVehicle()
         end
@@ -861,7 +852,7 @@ function Advanced_trajectory.boomontick()
 
         end
             
-        tableSfx.sfxCount = tableSfx.sfxCount + getGameTime():getMultiplier()
+        tableSfx.sfxCount = tableSfx.sfxCount + gameTime:getMultiplier()
     end
 end
 
@@ -1086,49 +1077,6 @@ function Advanced_trajectory.getDistanceFromMouseToPlayer(player)
     return dist
 end
 
--- returns mouse world coord dependent on the base of the vanilla crosshair, NOT ATRO
--- function Advanced_trajectory.checkCrossOnCar(player)
---     local mouseX = getMouseXScaled()
---     local mouseY = getMouseYScaled()
-
---     local playerX = mathfloor(player:getX())
---     local playerY = mathfloor(player:getY())
---     local playerZ = mathfloor(player:getZ())
-
---     local aimlevel = playerZ
---     if Advanced_trajectory.aimlevels then 
---         aimlevel = Advanced_trajectory.aimlevels
---     end
-
---     local levelDiff = aimlevel - playerZ
-
---     local wx, wy = ISCoordConversion.ToWorld(mouseX - 3 * levelDiff, mouseY - 3 * levelDiff, aimlevel)
---     wx, wy = mathfloor(wx) + 1, mathfloor(wy) + 1
-
---     --print('checkCross -> player: (', playerX, ', ', playerY, ', ', playerZ, ')')
---     --print('checkCross -> mouse: (', wx, ', ', wy, ', ', aimlevel, ')')
-
---     local cell = getWorld():getCell()
---     local car = nil
-
---     for x = 1, 1 do
---         for y = -1, 1 do
---             local sq = cell:getGridSquare(wx + x, wy + y, aimlevel)
---             if sq and sq:getVehicleContainer() then
---                 car = sq:getVehicleContainer()
---                 break
---             end
---         end
---     end
-
---     if car then
---         --print('car: (', car:getX(), ', ', car:getY(),')')
---         return true
---     end
-
---     return false
--- end
-
 -----------------------------------
 --AIMNUM/BLOOM LOGIC FUNC SECT---
 -----------------------------------
@@ -1139,6 +1087,7 @@ function Advanced_trajectory.OnPlayerUpdate()
     local weaitem = player:getPrimaryHandItem()
     local isAiming = player:isAiming()
     local hasGun = instanceof(weaitem, "HandWeapon") 
+    local gameTimeMultiplier = gameTime:getMultiplier() * 16
 
     -- if have manual aim Z level enabled, reset aimlevel to player level when about to aim 
     if Mouse.isRightPressed() and not getSandboxOptions():getOptionByName("Advanced_trajectory.enableAutoAimZLevel"):getValue() then
@@ -1171,8 +1120,8 @@ function Advanced_trajectory.OnPlayerUpdate()
         local realLevel     = player:getPerkLevel(Perks.Aiming)     -- 0 to 10
         local reversedLevel = 11 - realLevel  -- 11 to 1 
 
-        local gametimemul   = getGameTime():getMultiplier() * 16 / (reversedLevel + 10)
-        local constantTime  = getGameTime():getMultiplier() * 16 / (1 + 10)
+        local gametimemul   = gameTimeMultiplier / (reversedLevel + 10)
+        local constantTime  = gameTimeMultiplier / (1 + 10)
 
         local maxaimnumModifier         = getSandboxOptions():getOptionByName("Advanced_trajectory.maxaimnum"):getValue() 
         local realMaxaimnum             = weaitem:getAimingTime() + (reversedLevel * maxaimnumModifier)
@@ -1193,11 +1142,11 @@ function Advanced_trajectory.OnPlayerUpdate()
 
         -- bloom reduction scaling rate capped at 8
         if realLevel > 8 then
-            gametimemul = getGameTime():getMultiplier() * 16 / (12-8 + 10)
+            gametimemul = gameTimeMultiplier / (12-8 + 10)
         end
 
         if realLevel < 3 then
-            gametimemul = getGameTime():getMultiplier() * 16 / (12-3 + 10)
+            gametimemul = gameTimeMultiplier / (12-3 + 10)
         end
 
         -- maxaimnum capped at 8
@@ -1823,9 +1772,9 @@ function Advanced_trajectory.OnPlayerUpdate()
         Advanced_trajectory.maxaimnum = maxaimnum
         Advanced_trajectory.maxFocusCounter = maxFocusCounter
 
-        --print("Trans/Alpha: ", Advanced_trajectory.alpha)
-        --print("Shaky Effect: ", Advanced_trajectory.stressEffect + Advanced_trajectory.painEffect + Advanced_trajectory.panicEffect)
-        --print("totalArmPain [arms]: ", totalArmPain, ", HL", handPainL ,", FL", forearmPainL ,", UL", upperarmPainL ,", HR", handPainR ,", FR", forearmPainR ,", UR", upperarmPainR)
+        -- print("Trans/Alpha: ", Advanced_trajectory.alpha)
+        -- print("Shaky Effect: ", Advanced_trajectory.stressEffect + Advanced_trajectory.painEffect + Advanced_trajectory.panicEffect)
+        -- print("totalArmPain [arms]: ", totalArmPain, ", HL", handPainL ,", FL", forearmPainL ,", UL", upperarmPainL ,", HR", handPainR ,", FR", forearmPainR ,", UR", upperarmPainR)
         -- print("isSneezeCough: ", isSneezeCough)
         -- print("P", panicLv, ", E", enduranceLv ,", H", hyperLv ,", H", hypoLv ,", S", stressLv,", T", tiredLv)
         -- print("Aim Level (code): ", reversedLevel)
@@ -1863,11 +1812,7 @@ function Advanced_trajectory.OnPlayerUpdate()
         end
 
         Advanced_trajectory.chooseAimZLevel(player)   
-        
-        -- if getSandboxOptions():getOptionByName("Advanced_trajectory.enableConstCheckCrossOnCar"):getValue() then
-        --     Advanced_trajectory.checkCrossOnCar(player)
-        -- end
-        
+                
     else 
         if Advanced_trajectory.aimcursor then
             getCell():setDrag(nil, 0);
@@ -1878,7 +1823,7 @@ function Advanced_trajectory.OnPlayerUpdate()
             Advanced_trajectory.panel.instance:removeFromUIManager()
             Advanced_trajectory.panel.instance=nil
         end
-        local constantTime = getGameTime():getMultiplier() * 16/(1+10)
+        local constantTime = gameTimeMultiplier/(1+10)
         local nonAdsEffect = 2
         Advanced_trajectory.aimnum = Advanced_trajectory.aimnum + constantTime
         Advanced_trajectory.maxFocusCounter = 100
@@ -2354,7 +2299,7 @@ function Advanced_trajectory.damageZombie(zombie, damage, isCrit, limbShot, play
 end
 
 function Advanced_trajectory.drawDamageText()
-    local timemultiplier = getGameTime():getMultiplier()
+    local timemultiplier = gameTime:getMultiplier()
 
     for indx, val in pairs(Advanced_trajectory.damagedisplayer) do
         val[1] = val[1] - timemultiplier
@@ -2614,7 +2559,7 @@ function Advanced_trajectory.updateProjectiles()
     local currTable = Advanced_trajectory.table
 
     -- print(#currTable)
-    -- print(getGameTime():getMultiplier())
+    -- print(gameTime:getMultiplier())
 
     for indx, tableProj in pairs(currTable) do
 
