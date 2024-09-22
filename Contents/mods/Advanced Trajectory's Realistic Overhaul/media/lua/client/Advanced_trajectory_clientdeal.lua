@@ -105,6 +105,8 @@ local function Advanced_trajectory_OnServerCommand(module, command, arguments)
         local zedOnlineID       = arguments[1]      -- Zombie:getOnlineID()
         local playerOnlineID    = arguments[2]      -- vt[19]:getOnlineID()
         local damage            = arguments[3]      -- damage
+        local isCrit            = arguments[4]
+        local limbShot          = arguments[5]
 
         local player = getPlayerByOnlineID(playerOnlineID)
         if not player then
@@ -116,7 +118,7 @@ local function Advanced_trajectory_OnServerCommand(module, command, arguments)
         for i = 1, zombies:size() do
             local zombie = zombies:get(i - 1)
             if zombie:getOnlineID() == zedOnlineID then
-                Advanced_trajectory.damageZombie(zombie, damage, player) 
+                Advanced_trajectory.damageZombie(zombie, damage, isCrit, limbShot, player) 
             end
         end
         

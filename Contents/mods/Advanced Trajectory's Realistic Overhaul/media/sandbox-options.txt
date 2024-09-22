@@ -69,6 +69,15 @@ option Advanced_trajectory.penDamageReductionMultiplier
 	page = Advanced_trajectory_damage,
 	translation = Advanced_trajectorypenDamageReductionMultiplier,
 }
+option Advanced_trajectory.minDamageToGetHitReaction
+{
+	type = double,
+	min = 0,
+	max = 2,
+	default = 0.3,
+	page = Advanced_trajectory_damage,
+	translation = Advanced_trajectorypenminDamageToGetHitReaction,
+}
 
 
 
@@ -106,26 +115,6 @@ option Advanced_trajectory.DebugSpawnOffset
 	translation = Advanced_trajectoryDebugSpawnOffset,
 }
 
-option Advanced_trajectory.DebugZomMindistCondition
-{
-	type = double,
-	min = 0,
-	max = 10,
-	default = 0.42,
-	page = Advanced_trajectory_debug,
-	translation = Advanced_trajectoryDebugZomMindistCondition,
-}
-
-option Advanced_trajectory.DebugPlayerMindistCondition
-{
-	type = double,
-	min = 0,
-	max = 10,
-	default = 0.4,
-	page = Advanced_trajectory_debug,
-	translation = Advanced_trajectoryDebugPlayerMindistCondition,
-}
-
 option Advanced_trajectory.DebugEnableBow
 {
 	type = boolean,
@@ -149,15 +138,6 @@ option Advanced_trajectory.DebugSayShotPart
 	page = Advanced_trajectory_debug,
 	translation = Advanced_trajectoryDebugSayShotPart,
 }
-
-option Advanced_trajectory.DebugRemoveFootHitbox
-{
-	type = boolean,
-	default = false,
-	page = Advanced_trajectory_debug,
-	translation = Advanced_trajectoryDebugRemoveFootHitbox,
-}
-
 option Advanced_trajectory.bowBreakChance
 {
 	type = double,
@@ -166,15 +146,6 @@ option Advanced_trajectory.bowBreakChance
 	default = 30,
 	page = Advanced_trajectory_debug,
 	translation = Advanced_trajectorybowBreakChance,
-}
-option Advanced_trajectory.hitRegThreshold
-{
-	type = double,
-	min = -10,
-	max = 10,
-	default = 0.1,
-	page = Advanced_trajectory_debug,
-	translation = Advanced_trajectoryhitRegThreshold,
 }
 option Advanced_trajectory.hitRegThreshold
 {
