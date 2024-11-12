@@ -301,19 +301,11 @@ local function getDistFromHitbox(x, y, targetX, targetY, target)
     return false
 end
 
--- thinking about rectangular hitbox for more accurate hitboxes
--- targetTable [x, y]
--- bulletTable [x, y, bulletDir]
--- hitbox [radius, isRotate, circle1, circle2, ...]
--- need to implement check if entity rotates and take into account of look direction to rotate the hitboxes accordingly
+-- if HIT, return dist. if MISS, return false
+-- bulletTable [x, y, dir]
+-- need to implement check if entity rotates and take into account of look direction to rotate the hitboxes accordingly if they stack
 local function collidedWithTargetHitbox(targetX, targetY, bulletTable, target)
-    local bulletSpeed = getSandboxOptions():getOptionByName("Advanced_trajectory.bulletspeed"):getValue() * 0.35
-    local steps = bulletSpeed / 5
-
-    local bx = bulletTable.x 
-    local by = bulletTable.y 
-
-    local dist = getDistFromHitbox(bx, by, targetX, targetY, target)
+    local dist = getDistFromHitbox(bulletTable.x , bulletTable.y, targetX, targetY, target)
 
     if dist then 
         --print('+++++++HIT+++++++')
@@ -321,7 +313,6 @@ local function collidedWithTargetHitbox(targetX, targetY, bulletTable, target)
     end
 
     --print('-------MISSED------')
-
     return false
 end
 
@@ -377,8 +368,35 @@ function Advanced_trajectory.searchTargetNearBullet(bulletTable, playerTable, mi
     --     print('searchTarget -> player: (', playerTable[1], ', ', playerTable[2], ', ', playerTable[3], ')')
     -- end
 
-    local function addTargetsToTable(sq, targetTable, targetSet)
+    local function addTargetsToTable(sq, targetTable, targetSet, player)
         local movingObjects = sq:getMovingObjects()
+
+        local isNearWall = false
+        local staticObjects = sq:getObjects()
+        if staticObjects then
+            for i=1,staticObjects:size() do
+                local locobject = staticObjects:get(i-1)
+                local sprite = locobject:getSprite()
+                if sprite  then
+                    local Properties = sprite:getProperties()
+                    if Properties then
+                        local wallN = Properties:Is(IsoFlagType.WallN)
+                        local doorN = Properties:Is(IsoFlagType.doorN)
+
+                        local wallNW = Properties:Is(IsoFlagType.WallNW)
+                        local wallSE = Properties:Is(IsoFlagType.WallSE)
+
+                        local wallW = Properties:Is(IsoFlagType.WallW)
+                        local doorW = Properties:Is(IsoFlagType.doorW)
+
+                        if (wallN or doorN or wallNW or wallSE or wallW or doorW) then
+                            isNearWall = true
+                            break
+                        end
+                    end
+                end
+            end
+        end
 
         -- Iterate through moving objects in the grid square
         for zz = 1, movingObjects:size() do
@@ -388,18 +406,26 @@ function Advanced_trajectory.searchTargetNearBullet(bulletTable, playerTable, mi
             if instanceof(zombieOrPlayer, "IsoZombie") then
                 -- check health and zombie dupes
                 if zombieOrPlayer:getHealth() > 0 and not targetSet[zombieOrPlayer] then
-                    local entry = { entity = zombieOrPlayer, distanceFromPlayer = getTargetDistanceFromPlayer(player, zombieOrPlayer), entityType = 'zombie'}
-                    table.insert(targetTable, entry)
-                    targetSet[zombieOrPlayer] = true
+                    if isNearWall and not player:CanSee(zombieOrPlayer) then 
+                        --print('SKIP: IS NEAR WALL AND CANT SEE -- ', player:CanSee(zombieOrPlayer))
+                    else
+                        local entry = { entity = zombieOrPlayer, distanceFromPlayer = getTargetDistanceFromPlayer(player, zombieOrPlayer), entityType = 'zombie'}
+                        table.insert(targetTable, entry)
+                        targetSet[zombieOrPlayer] = true
+                    end
                 end
             end
             if instanceof(zombieOrPlayer, "IsoPlayer") then
                 --print("FOUND PLAYER TARGET")
                 if allowPVP(player, zombieOrPlayer) and not targetSet[zombieOrPlayer] then
                     --print("player registered for a meal [it's a bullet]")
-                    local entry = { entity = zombieOrPlayer, distanceFromPlayer = getTargetDistanceFromPlayer(player, zombieOrPlayer),  entityType = 'player'}
-                    table.insert(targetTable, entry)
-                    targetSet[zombieOrPlayer] = true
+                    if isNearWall and not player:CanSee(zombieOrPlayer) then 
+                        --print('SKIP: IS NEAR WALL AND CANT SEE')
+                    else
+                        local entry = { entity = zombieOrPlayer, distanceFromPlayer = getTargetDistanceFromPlayer(player, zombieOrPlayer),  entityType = 'player'}
+                        table.insert(targetTable, entry)
+                        targetSet[zombieOrPlayer] = true
+                    end
                 end
             end
         end
@@ -418,11 +444,11 @@ function Advanced_trajectory.searchTargetNearBullet(bulletTable, playerTable, mi
 
             -- Check if the grid square is valid and can be seen by the player
             if sq and sq:isCanSee(playerNum) then
-                addTargetsToTable(sq, targetTable, targetSet)
+                addTargetsToTable(sq, targetTable, targetSet, player)
 
             -- make exception if bullet and player are on the same floor to prevent issue with blindness
             elseif sq and mathfloor(bulletTable.z) == mathfloor(playerPosZ) then
-                addTargetsToTable(sq, targetTable, targetSet)
+                addTargetsToTable(sq, targetTable, targetSet, player)
             end
         end
     end
@@ -482,8 +508,6 @@ function Advanced_trajectory.searchTargetNearBullet(bulletTable, playerTable, mi
                 --print('CurrDistTarg: ', bulletDistFromTarg, ' || PrevDistTarg: ', targetHitData[3])
 
                 if bulletDistFromTarg < targetHitData[3] then
-                    -- if zom facing bullet, then it return false. else true
-                    --local isNotFacingBullet = Advanced_trajectory.isObjectFacingZombie(bulletTable.x, bulletTable.y, bulletTable.dir, targetX, targetY, hitRegThreshold)
                     prevDistanceFromPlayer = distanceFromPlayer
                     targetHitData = {target, targetType, bulletDistFromTarg}
                     damageIndx = 1
@@ -574,7 +598,7 @@ end
 -- checks the squares that the bullet travels, this means there's need to be a limit to how fast the bullet travels
 -- this function determines whether bullets should "break" meaning they stop, pretty much a collision checker
 -- bullet square, dirc, bullet offset, player offset, nonsfx
-function Advanced_trajectory.checkSurfaceCollision(square, bulletDir, bulletPos, playerPos, nonsfx, bulletDamage, tableIndx)
+function Advanced_trajectory.checkObjectCollision(square, bulletDir, bulletPos, playerPos, nonsfx)
     --[[
     local bulletPosFloorX = mathfloor(bulletPos[1])
     local bulletPosFloorY = mathfloor(bulletPos[2])
@@ -2460,7 +2484,7 @@ function Advanced_trajectory.dealWithTargetShot(tableProj, tableIndx)
     local bulletPosZ = tableProj.bulletPos[3]
 
     -- get Z level difference between aimed target and bullet (bulletZ is always from player level)
-    local zLevelDiff      = tableProj["aimLevel"] - mathfloor(bulletPosZ)
+    local zLevelDiff    = tableProj["aimLevel"] - mathfloor(bulletPosZ)
     local shootLevel    = bulletPosZ + zLevelDiff
 
     if tableProj["isparabola"] then
@@ -2474,10 +2498,11 @@ function Advanced_trajectory.dealWithTargetShot(tableProj, tableIndx)
     zLevelDiff = zLevelDiff * 3
 
     local bulletTable = {   
-                            x = tableProj.bulletPos[1] + zLevelDiff,
-                            y = tableProj.bulletPos[2] + zLevelDiff,
-                            z    = shootLevel, 
-                            dir  = tableProj.bulletDir
+                            x       = tableProj.bulletPos[1] + zLevelDiff,
+                            y       = tableProj.bulletPos[2] + zLevelDiff,
+                            z       = shootLevel, 
+                            dir     = tableProj.bulletDir,
+                            dirVector = tableProj.dirVector
                         }
 
     -- returns zom/player that was shot
@@ -2554,6 +2579,17 @@ function Advanced_trajectory.dealWithTargetShot(tableProj, tableIndx)
     end
 end
 
+local function checkCollision(square, tableProj, indx)
+    if (Advanced_trajectory.checkObjectCollision(square, tableProj.bulletDir, tableProj.bulletPos, tableProj.playerPos, tableProj["nonsfx"]) or
+    Advanced_trajectory.checkBulletCarCollision(tableProj.bulletPos, tableProj.damage, indx)) and not 
+    tableProj.canPassThroughWall
+    then
+        return true
+    end
+
+    return false
+end
+
 function Advanced_trajectory.updateProjectiles()
     -- changes made to currTable will also apply to the global Advanced_trajectory.table
     local currTable = Advanced_trajectory.table
@@ -2572,50 +2608,56 @@ function Advanced_trajectory.updateProjectiles()
             break
         end
 
-        local currTablez12_ = tableProj.bulletSpeed * 0.35
+        local bulletSpeed = tableProj.bulletSpeed 
+        local halfBulletSpeed = bulletSpeed / 2
 
         local bulletPosX = tableProj.bulletPos[1]
         local bulletPosY = tableProj.bulletPos[2]
         local bulletPosZ = tableProj.bulletPos[3]
 
+        -- [1]: current sq position (P)
+        -- [2]: prev sq half pos (P/2)
+        squares = {}
+
         -- update to square that bullet is currently on
         if Advanced_trajectory.aimlevels then
-            tableProj.square = getWorld():getCell():getOrCreateGridSquare(bulletPosX, bulletPosY, Advanced_trajectory.aimlevels)
+            squares[1] = getWorld():getCell():getOrCreateGridSquare(bulletPosX, bulletPosY, Advanced_trajectory.aimlevels)
+            if bulletSpeed > 1 then 
+                squares[2] = getWorld():getCell():getOrCreateGridSquare(bulletPosX - halfBulletSpeed * tableProj.dirVector[1], bulletPosY - halfBulletSpeed * tableProj.dirVector[2], Advanced_trajectory.aimlevels)
+            end
         else
-            tableProj.square = getWorld():getCell():getOrCreateGridSquare(bulletPosX, bulletPosY, bulletPosZ)
+            squares[1] = getWorld():getCell():getOrCreateGridSquare(bulletPosX, bulletPosY, bulletPosZ)
+            if bulletSpeed > 1 then 
+                squares[2] = getWorld():getCell():getOrCreateGridSquare(bulletPosX - halfBulletSpeed * tableProj.dirVector[1], bulletPosY - halfBulletSpeed * tableProj.dirVector[2], bulletPosZ)
+            end
         end
 
         tableProj.throwinfo["pos"] = {advMathFloor(bulletPosX), advMathFloor(bulletPosY)}
 
-        if tableProj.square then
+        if squares[1] and squares[#squares] then
 
             local blowUp = Advanced_trajectory.blowUp
-
             -----------------------------------------------
             --CHECK IF PROJECTILE COLLIDED WITH WALL/DOOR--
             -----------------------------------------------
-            if (Advanced_trajectory.checkSurfaceCollision(tableProj.square, tableProj.bulletDir, tableProj.bulletPos, tableProj.playerPos, tableProj["nonsfx"], tableProj.damage, indx) or
-                Advanced_trajectory.checkBulletCarCollision(tableProj.bulletPos, tableProj.damage, indx)) and not 
-                tableProj.canPassThroughWall then
+            --print("Check for object")
+            local collided = false
+            for i = 1, #squares do 
+                if checkCollision(squares[1], tableProj, indx) then
+                    -- if grenade type, then blow it up when collided
+                    if  tableProj.weaponName =="Grenade" or tableProj["wallcarmouse"] or tableProj["wallcarzombie"] then
+                        blowUp(tableProj)
+                    end
 
-                --print("***********Bullet collided with wall.************")
-                --print("Wallcarmouse: ", tableProj["wallcarmouse"])
-                --print("Wallcarzombie: ", tableProj["wallcarzombie"])
-                --print("Cell: ", bulletPosX,", ",bulletPosY, ", ", bulletPosZ)
+                    -- collided so remove bullet and make empty table that held data for that bullet
+                    currTable[indx] = Advanced_trajectory.removeBulletData(tableProj.item) 
 
-                -- if grenade type, then blow it up when collided
-                if  tableProj.weaponName =="Grenade" or tableProj["wallcarmouse"] or tableProj["wallcarzombie"] then
-                    blowUp(tableProj)
+                    print("Break bullet from object collision")
+                    collided = true
                 end
-
-                -- collided so remove bullet and make empty table that held data for that bullet
-                currTable[indx] = Advanced_trajectory.removeBulletData(tableProj.item) 
-
-                --print("Break bullet")
-
-                -- projectile is removed so break out of for loop and move to next projectile data table
-                break
             end
+
+            if collided then break end
 
             -- reassign square so visual offset of bullet doesn't go whack
             if getWorld():getCell():getOrCreateGridSquare(bulletPosX, bulletPosY, bulletPosZ) then
@@ -2624,7 +2666,7 @@ function Advanced_trajectory.updateProjectiles()
 
             tableProj.item = Advanced_trajectory.additemsfx(tableProj.square, tableProj.projectileType .. tostring(tableProj.winddir), bulletPosX, bulletPosY, bulletPosZ)
 
-            local spnumber          = (tableProj.dirVector[1]^2 + tableProj.dirVector[2]^2)^0.5 * currTablez12_
+            local spnumber          = (tableProj.dirVector[1]^2 + tableProj.dirVector[2]^2)^0.5 * bulletSpeed
             tableProj.bulletDist    = tableProj.bulletDist - spnumber
             tableProj.distTraveled  = tableProj.distTraveled + spnumber
             tableProj.currDist      = tableProj.currDist + spnumber
@@ -2674,9 +2716,6 @@ function Advanced_trajectory.updateProjectiles()
                 tableProj.item:setWorldZRotation(tableProj.bulletDir)
             end
 
-            bulletPosX = bulletPosX + currTablez12_ * tableProj.dirVector[1]
-            bulletPosY = bulletPosY + currTablez12_ * tableProj.dirVector[2]
-
             -- BREAKS GRENADE/THROWABLES 
             if  tableProj["isparabola"]  then
                 bulletPosZ = 0.5 - tableProj["isparabola"] * tableProj.currDist * (tableProj.currDist - tableProj.distanceConst)
@@ -2690,14 +2729,24 @@ function Advanced_trajectory.updateProjectiles()
                 end
             end
 
-            tableProj.bulletPos = {bulletPosX, bulletPosY, bulletPosZ}
-
             if  (tableProj.weaponName ~= "Grenade" or (tableProj.throwinfo[8]or 0) > 0 or tableProj["wallcarzombie"]) and  not tableProj["wallcarmouse"] then
-                --print("Check for shot targets")
-                if Advanced_trajectory.dealWithTargetShot(tableProj, indx) then
-                    break
+                print("Check for shot targets")
+                if #squares > 1 then
+                    tableProj.square = squares[2]
+                    tableProj.bulletPos[1] = bulletPosX - halfBulletSpeed * tableProj.dirVector[1]
+                    tableProj.bulletPos[2] = bulletPosY - halfBulletSpeed * tableProj.dirVector[2]
+                    Advanced_trajectory.dealWithTargetShot(tableProj, indx) 
                 end
+
+                tableProj.square = squares[1]
+                tableProj.bulletPos[1] = bulletPosX 
+                tableProj.bulletPos[2] = bulletPosY 
+                Advanced_trajectory.dealWithTargetShot(tableProj, indx) 
             end  
+
+            bulletPosX = bulletPosX + bulletSpeed * tableProj.dirVector[1]
+            bulletPosY = bulletPosY + bulletSpeed * tableProj.dirVector[2]
+            tableProj.bulletPos = {bulletPosX, bulletPosY, bulletPosZ}
         end
     end
 
@@ -2793,7 +2842,7 @@ function Advanced_trajectory.OnWeaponSwing(character, handWeapon)
         weaponName = "",                        --9 types
         rotSpeed = 0,                           --10 rotation speed
         canPenetrate = false,                   --11 whether it can penetrate
-        bulletSpeed = 1.8,                      --12 ballistic speed
+        bulletSpeed = 1,                      --12 ballistic speed
         iscanbigger = 0,                        --13 can be made bigger
         projectileType = "",                    --14 ballistic name
         canPassThroughWall = true,              --15 det whether it can pass through the wall
@@ -3011,7 +3060,7 @@ function Advanced_trajectory.OnWeaponSwing(character, handWeapon)
     projectilePlayerData.bulletDir = projectilePlayerData.bulletDir * 360 / (2 * math.pi)
 
     -- ballistic speed
-    projectilePlayerData.bulletSpeed = projectilePlayerData.bulletSpeed * getSandboxOptions():getOptionByName("Advanced_trajectory.bulletspeed"):getValue() 
+    projectilePlayerData.bulletSpeed = getSandboxOptions():getOptionByName("Advanced_trajectory.bulletspeed"):getValue() 
 
     -- bullet distance
     projectilePlayerData.bulletDist = projectilePlayerData.bulletDist * getSandboxOptions():getOptionByName("Advanced_trajectory.bulletdistance"):getValue() 
@@ -3056,7 +3105,7 @@ function Advanced_trajectory.OnWeaponSwing(character, handWeapon)
             end
 
 
-            adirc = dirc1 +ZombRandFloat(-math.pi * numpi,math.pi*numpi)
+            adirc = dirc1 + ZombRandFloat(-math.pi * numpi,math.pi*numpi)
 
             projectilePlayerData.dirVector = {math.cos(adirc), math.sin(adirc)}
             projectilePlayerData.bulletPos = {projectilePlayerData.bulletPos[1], projectilePlayerData.bulletPos[2], projectilePlayerData.bulletPos[3]}

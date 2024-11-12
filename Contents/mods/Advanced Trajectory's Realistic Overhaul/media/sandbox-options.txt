@@ -459,8 +459,8 @@ option Advanced_trajectory.bulletspeed
 {
 	type = double,
 	min = 0,
-	max = 2.4,
-	default = 1.7,
+	max = 2,
+	default = 1,
 	page = Advanced_trajectory,
 	translation = Advanced_trajectorybulletspeed,
 }
