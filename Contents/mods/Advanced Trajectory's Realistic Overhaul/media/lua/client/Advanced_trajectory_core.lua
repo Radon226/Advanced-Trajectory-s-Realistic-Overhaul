@@ -2035,8 +2035,6 @@ function Advanced_trajectory.checkBowAndCrossbow(player, Zombie)
         broke = true
     end
 
-    print('Has bow', isBow)
-
     if isBow then
         if isClient() then
             sendClientCommand("ATY_bowzombie", "attachProjZombie", {player:getOnlineID(), Zombie:getOnlineID(), {Zombie:getX(), Zombie:getY(), Zombie:getZ()}, proj, broke})
