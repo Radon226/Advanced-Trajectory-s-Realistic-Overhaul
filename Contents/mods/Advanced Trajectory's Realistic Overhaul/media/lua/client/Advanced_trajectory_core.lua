@@ -446,7 +446,7 @@ function Advanced_trajectory.searchTargetNearBullet(bulletTable, playerTable, mi
             if sq and sq:isCanSee(playerNum) then
                 addTargetsToTable(sq, targetTable, targetSet, player)
 
-            -- make exception if bullet and player are on the same floor to prevent issue with blindness
+            -- make exception if bullet and player are on the same floor to prevent issue with blindness (ex. not hiting any zombies in the forest)
             elseif sq and mathfloor(bulletTable.z) == mathfloor(playerPosZ) then
                 addTargetsToTable(sq, targetTable, targetSet, player)
             end
@@ -1122,8 +1122,7 @@ function Advanced_trajectory.OnPlayerUpdate()
         Advanced_trajectory.hasFlameWeapon = string.contains(weaitem:getAmmoType() or "","FlameFuel")
     end
 
-    if isAiming and hasGun and not weaitem:hasTag("Thrown") and not Advanced_trajectory.hasFlameWeapon and not (weaitem:hasTag("XBow") and not getSandboxOptions():getOptionByName("Advanced_trajectory.DebugEnableBow"):getValue()) and (((weaitem:isRanged() and getSandboxOptions():getOptionByName("Advanced_trajectory.Enablerange"):getValue()) or (weaitem:getSwingAnim() =="Throw" and getSandboxOptions():getOptionByName("Advanced_trajectory.Enablethrow"):getValue())) or Advanced_trajectory.FullWeaponTypes[weaitem:getFullType()]) then
-
+    if isAiming and hasGun and not weaitem:hasTag("Thrown") and not Advanced_trajectory.hasFlameWeapon and not (string.contains(weaitem:getAmmoType() or "", "MandelaArrow")) and not (weaitem:hasTag("XBow") and not getSandboxOptions():getOptionByName("Advanced_trajectory.DebugEnableBow"):getValue()) and (((weaitem:isRanged() and getSandboxOptions():getOptionByName("Advanced_trajectory.Enablerange"):getValue()) or (weaitem:getSwingAnim() =="Throw" and getSandboxOptions():getOptionByName("Advanced_trajectory.Enablethrow"):getValue())) or Advanced_trajectory.FullWeaponTypes[weaitem:getFullType()]) then
         -- print(getPlayer():getCoopPVP())
 
         if getSandboxOptions():getOptionByName("Advanced_trajectory.showOutlines"):getValue() then
@@ -2036,6 +2035,8 @@ function Advanced_trajectory.checkBowAndCrossbow(player, Zombie)
         broke = true
     end
 
+    print('Has bow', isBow)
+
     if isBow then
         if isClient() then
             sendClientCommand("ATY_bowzombie", "attachProjZombie", {player:getOnlineID(), Zombie:getOnlineID(), {Zombie:getX(), Zombie:getY(), Zombie:getZ()}, proj, broke})
@@ -2451,7 +2452,7 @@ function Advanced_trajectory.dealWithZombieShot(tableProj, tableIndx, zombie, da
         end
 
         if isClient() then
-            print('In MP, sending clientCmd for cshotzombie')
+            --print('In MP, sending clientCmd for cshotzombie')
             sendClientCommand("ATY_cshotzombie", "true", {zombie:getOnlineID(), player:getOnlineID(), damage, tableProj.isCrit, limbShot})
         else
             Advanced_trajectory.damageZombie(zombie, damage, tableProj.isCrit, limbShot, tableProj.player)
@@ -2652,7 +2653,7 @@ function Advanced_trajectory.updateProjectiles()
                     -- collided so remove bullet and make empty table that held data for that bullet
                     currTable[indx] = Advanced_trajectory.removeBulletData(tableProj.item) 
 
-                    print("Break bullet from object collision")
+                    --print("Break bullet from object collision")
                     collided = true
                 end
             end
@@ -2730,7 +2731,7 @@ function Advanced_trajectory.updateProjectiles()
             end
 
             if  (tableProj.weaponName ~= "Grenade" or (tableProj.throwinfo[8]or 0) > 0 or tableProj["wallcarzombie"]) and  not tableProj["wallcarmouse"] then
-                print("Check for shot targets")
+                --print("Check for shot targets")
                 if #squares > 1 then
                     tableProj.square = squares[2]
                     tableProj.bulletPos[1] = bulletPosX - halfBulletSpeed * tableProj.dirVector[1]
@@ -2760,10 +2761,11 @@ end
 function Advanced_trajectory.OnWeaponSwing(character, handWeapon)
     
     if  getSandboxOptions():getOptionByName("Advanced_trajectory.showOutlines"):getValue() and 
-        instanceof(handWeapon, "HandWeapon") and not handWeapon:hasTag("Thrown") and not 
+        (handWeapon:isRanged() and getSandboxOptions():getOptionByName("Advanced_trajectory.Enablerange"):getValue()) and
+        instanceof(handWeapon, "HandWeapon") and not 
+        handWeapon:hasTag("Thrown") and not 
         Advanced_trajectory.hasFlameWeapon and not 
-        (handWeapon:hasTag("XBow") and not getSandboxOptions():getOptionByName("Advanced_trajectory.DebugEnableBow"):getValue()) and 
-        (handWeapon:isRanged() and getSandboxOptions():getOptionByName("Advanced_trajectory.Enablerange"):getValue()) then
+        (handWeapon:hasTag("XBow") and not getSandboxOptions():getOptionByName("Advanced_trajectory.DebugEnableBow"):getValue()) then
 
         handWeapon:setMaxHitCount(0)
     end
