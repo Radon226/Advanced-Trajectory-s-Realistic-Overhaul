@@ -361,7 +361,7 @@ function Advanced_trajectory.searchTargetNearBullet(bulletTable, playerTable, mi
 
     local playerCount = 0
 
-    local pointBlankDist = 2
+    local pointBlankDist = getSandboxOptions():getOptionByName("Advanced_trajectory.pointBlankMaxDistance"):getValue()
 
     -- if getSandboxOptions():getOptionByName("Advanced_trajectory.enablePlayerBulletPosCheck"):getValue() then
     --     print('searchTarget -> bullet: (', bulletTable.x, ', ', bulletTable.y, ', ', bulletTable.z, ')')
@@ -565,17 +565,19 @@ function Advanced_trajectory.checkBulletCarCollision(bulletPos, bulletDamage, ta
                         Advanced_trajectory.determineArrowSpawn(square, true)
     
                         local bulletTable = Advanced_trajectory.table[tableIndx]
-                        local penCount = bulletTable["penCount"]
-    
-                        --print("carColl -> ---Hit vehicle---")
-                        --print("Damage: ", damage, " || Pen: ", penCount)
-    
-                        if penCount and penCount > 1 and bulletTable.damage > 0 then 
-                            bulletTable["penCount"] = penCount - 1
-                            bulletTable.damage      = bulletTable.damage * 0.75
-    
-                            --print("carColl -> no break")
-                            return false 
+                        if bulletTable then 
+                            local penCount = bulletTable["penCount"]
+        
+                            --print("carColl -> ---Hit vehicle---")
+                            --print("Damage: ", damage, " || Pen: ", penCount)
+        
+                            if penCount and penCount > 1 and bulletTable.damage > 0 then 
+                                bulletTable["penCount"] = penCount - 1
+                                bulletTable.damage      = bulletTable.damage * 0.75
+        
+                                --print("carColl -> no break")
+                                return false 
+                            end
                         end
                     end
     
@@ -1258,7 +1260,9 @@ function Advanced_trajectory.OnPlayerUpdate()
         end
 
         Advanced_trajectory.isOverCarAimLimit = false
-        Advanced_trajectory.limitCarAim(player) 
+        if getSandboxOptions():getOptionByName("Advanced_trajectory.enableCarAimLimit"):getValue()  then
+            Advanced_trajectory.limitCarAim(player) 
+        end
 
         --------------------------------
         ---TARGET DISTANCE LIMIT SECT---
@@ -2463,9 +2467,13 @@ function Advanced_trajectory.dealWithZombieShot(tableProj, tableIndx, zombie, da
             end 
         end
 
+        -- no longer needed after reworking how zombie is hit
+        -- >> zombie:Hit(player:getPrimaryHandItem(), player, damage, false, damage, true)
+        --[[
         if getSandboxOptions():getOptionByName("Advanced_trajectory.DebugEnableBow"):getValue() then
             Advanced_trajectory.checkBowAndCrossbow(player, zombie)
         end  
+        ]]
     end
 end
 

@@ -22,6 +22,9 @@ Sandbox_EN = {
 	Sandbox_Advanced_trajectorycallshot = "Report Attacking Part / Callshot",
 	Sandbox_Advanced_trajectorycallshot_tooltip = "For debugging, character says what body part was shot.",
 	
+	Sandbox_Advanced_trajectoryenableCarAimLimit = "Limit aiming to a cone in car"
+	Sandbox_Advanced_trajectoryenableCarAimLimit_tooltip = "Nerfs shooting in cars. Player aim is limited to a cone."
+
 	Sandbox_Advanced_trajectoryEnablerange = "Enable Ranged Weapon",
 	Sandbox_Advanced_trajectoryEnablethrow = "Enable Throwed Weapon",
 	Sandbox_Advanced_trajectoryIgnorePVPSafety = "Ignore PVP Safety (PVP)",
@@ -56,6 +59,9 @@ Sandbox_EN = {
 	Sandbox_Advanced_trajectorybodyShotDmgPlayerMultiplier_tooltip = "Multiplier on base damage for bodyshot",
 	Sandbox_Advanced_trajectoryfootShotDmgPlayerMultiplier = "Footshot Damage Multiplier (PVP)",
 	Sandbox_Advanced_trajectoryfootShotDmgPlayerMultiplier_tooltip = "Multiplier on base damage for footshot",
+
+	Sandbox_Advanced_trajectoryminDamageToGetHitReaction = "Minimum Damage for Zombie to React to Projectile Hit"
+	Sandbox_Advanced_trajectoryminDamageToGetHitReaction_tooltip = "Minimum damage that needs to be done to zombie for it to react to projectile hit."
 
 	Sandbox_Advanced_trajectoryenableBulletPenFlesh = "Enable Bullet Penetration Through Flesh",
 	Sandbox_Advanced_trajectorypenDamageReductionMultiplier = "Bullet Penetration Reduction Multiplier",
@@ -276,20 +282,22 @@ Sandbox_EN = {
 
 
 
-	Sandbox_Advanced_trajectoryenableHitOrMiss 				= "Enable Hit or Miss",
-	Sandbox_Advanced_trajectoryenableHitOrMiss_tooltip 		= "If enabled, player will have a chance of missing depending on bloom. Bullet will pass through zombies without damaging them.",
-	Sandbox_Advanced_trajectoryannounceHitOrMiss 			= "Say Hit or Miss (DEBUG)",
-	Sandbox_Advanced_trajectoryannounceHitOrMiss_tooltip 	= "Player will announce if their bullet hit or missed with bloom value comparisons.",
-	Sandbox_Advanced_trajectoryhitLevelScaling				= "Hitchance Level Scaling",
-	Sandbox_Advanced_trajectoryhitLevelScaling_tooltip 		= "Affects how much aiming level will decrease the chances of not missing. Higher means lower chance of missing per level.",
-	Sandbox_Advanced_trajectoryshotgunHitBuff 				= "Shotgun Hitchance Buff",
-	Sandbox_Advanced_trajectoryshotgunHitBuff_tooltip 		= "A flat value that gives a flat increase in chances of hitting zombies with a shotgun.",
-	Sandbox_Advanced_trajectorymissMin 						= "Min Miss",
-	Sandbox_Advanced_trajectorymissMin_tooltip 				= "Bloom value in which player will start having a chance of missing. Must be less than max. rand(minMiss + buff + aimLevel*hitScaling, maxMiss)",
-	Sandbox_Advanced_trajectorymissMax 						= "Max Miss",
-	Sandbox_Advanced_trajectorymissMax_tooltip 				= "Bloom value in which player will start having a chance of missing. Must be greater than min. rand(minMiss + buff + aimLevel*hitScaling, maxMiss)",
-	Sandbox_Advanced_trajectorymissMinTransparency 			= "Crosshair Transparency (Miss Min)",
-	Sandbox_Advanced_trajectorymissMinTransparency_tooltip 	= "Makes crosshair slightly transparent when bloom reaches miss min so players know when they'll start having a chance of missing.",
+	Sandbox_Advanced_trajectoryenableHitOrMiss 					= "Enable Hit or Miss",
+	Sandbox_Advanced_trajectoryenableHitOrMiss_tooltip 			= "If enabled, player will have a chance of missing depending on bloom. Bullet will pass through zombies without damaging them.",
+	Sandbox_Advanced_trajectorypointBlankMaxDistance			= "Max Distance for Point Blank"
+	Sandbox_Advanced_trajectorypointBlankMaxDistance_tooltip 	= "Max distance for point blank to register when projectile detects zombie in its proximity. Set to 0 to pretty much disable it."
+	Sandbox_Advanced_trajectoryannounceHitOrMiss 				= "Say Hit or Miss (DEBUG)",
+	Sandbox_Advanced_trajectoryannounceHitOrMiss_tooltip 		= "Player will announce if their bullet hit or missed with bloom value comparisons.",
+	Sandbox_Advanced_trajectoryhitLevelScaling					= "Hitchance Level Scaling",
+	Sandbox_Advanced_trajectoryhitLevelScaling_tooltip 			= "Affects how much aiming level will decrease the chances of not missing. Higher means lower chance of missing per level.",
+	Sandbox_Advanced_trajectoryshotgunHitBuff 					= "Shotgun Hitchance Buff",
+	Sandbox_Advanced_trajectoryshotgunHitBuff_tooltip 			= "A flat value that gives a flat increase in chances of hitting zombies with a shotgun.",
+	Sandbox_Advanced_trajectorymissMin 							= "Min Miss",
+	Sandbox_Advanced_trajectorymissMin_tooltip 					= "Must be less than max. Bullet misses if currentBloom > rand(minMiss + buff + aimLevel*hitScaling, maxMiss)",
+	Sandbox_Advanced_trajectorymissMax 							= "Max Miss",
+	Sandbox_Advanced_trajectorymissMax_tooltip 					= "Must be greater than min. Bullet misses if currentBloom > rand(minMiss + buff + aimLevel*hitScaling, maxMiss)",
+	Sandbox_Advanced_trajectorymissMinTransparency 				= "Crosshair Transparency (Miss Min)",
+	Sandbox_Advanced_trajectorymissMinTransparency_tooltip 		= "Makes crosshair slightly transparent when bloom reaches "Min Miss" value so players know when they'll start having a chance of missing.",
 
 
 
