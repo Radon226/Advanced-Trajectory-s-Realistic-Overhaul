@@ -121,7 +121,7 @@ option Advanced_trajectory.DebugSpawnOffset
 option Advanced_trajectory.DebugEnableBow
 {
 	type = boolean,
-	default = false,
+	default = true,
 	page = Advanced_trajectory_debug,
 	translation = Advanced_trajectoryDebugEnableBow,
 }
