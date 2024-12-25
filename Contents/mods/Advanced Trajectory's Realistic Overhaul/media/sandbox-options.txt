@@ -747,7 +747,7 @@ option Advanced_trajectory.maxShotgunProjCone
 	type = double,
 	min = 0,
 	max = 1,
-	default = 0.2,
+	default = 0.1,
 	page = Advanced_trajectory_shotgun,
 	translation = Advanced_trajectorymaxShotgunProjCone,
 }

@@ -3102,7 +3102,7 @@ function Advanced_trajectory.OnWeaponSwing(character, handWeapon)
             local adirc
 
             -- lower value means tighter spread
-            local numpi = getSandboxOptions():getOptionByName("Advanced_trajectory.shotgundivision"):getValue() *0.7
+            local numpi = getSandboxOptions():getOptionByName("Advanced_trajectory.shotgundivision"):getValue() * 0.7
 
             --------------------------------
             -----ANGLE ATTACHMENT EFFECT---
