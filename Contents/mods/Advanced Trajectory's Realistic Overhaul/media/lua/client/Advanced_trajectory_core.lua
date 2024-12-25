@@ -524,15 +524,23 @@ end
 
 function Advanced_trajectory.checkBulletCarCollision(bulletPos, bulletDamage, tableIndx)
     local player = getPlayer()
+
+    -- get player's current position, not initial parameter
+    local playerCurrPosZ = player:getZ() 
+
+    -- if high ground and aiming target below, ignore car
+    if playerCurrPosZ > Advanced_trajectory.aimlevels then 
+        --print('carColl -> no hit')
+        return false 
+    end
+
+    local playerCurrPosX = player:getX()
+    local playerCurrPosY = player:getY()
+
     local offset = bulletPos[3] - Advanced_trajectory.aimlevels - 0.5
     local bulletX = bulletPos[1] - 3 * offset
     local bulletY = bulletPos[2] - 3 * offset
     local square = getWorld():getCell():getOrCreateGridSquare(bulletX, bulletY, Advanced_trajectory.aimlevels)
-
-    -- get player's current position, not initial parameter
-    local playerCurrPosX = player:getX()
-    local playerCurrPosY = player:getY()
-    local playerCurrPosZ = player:getZ() 
 
     local playerVehicle 
     if player then
@@ -2285,7 +2293,7 @@ function Advanced_trajectory.damagePlayershot(playerShot, damage, baseGunDmg, pl
     return nameShotPart, playerDamageDealt
 end
 
-function getHitReaction(isCrit, limbShot, damage)
+function getHitReaction(isCrit, limbShot, damage, weaponName)
     local hitReactions = Advanced_trajectory.hitReactions
     -- 0 to 2
     -- val 0.3 would be at least 30 hp (zom hp usually 1.0)
@@ -2295,18 +2303,18 @@ function getHitReaction(isCrit, limbShot, damage)
         return hitReactions.head[ZombRand(#hitReactions.head)+1]
     end
 
-    if damage >= minDamage then
+    if damage >= minDamage or weaponName == 'Shotgun' then
         return hitReactions.body[ZombRand(#hitReactions.body)+1]
     end
 
     return false
 end
 
-function Advanced_trajectory.damageZombie(zombie, damage, isCrit, limbShot, player) 
+function Advanced_trajectory.damageZombie(zombie, damage, isCrit, limbShot, player, weaponName) 
     --print('damageZom - damage: ', damage)
     --print('damageZom - zomHP bef: ', zombie:getHealth())
 
-    local reaction = getHitReaction(isCrit, limbShot, damage)
+    local reaction = getHitReaction(isCrit, limbShot, damage, weaponName)
     --print('reaction: ', reaction)
     
     -- Hit(HandWeapon weapon, IsoGameCharacter wielder, float damageSplit, boolean bIgnoreDamage, float modDelta, boolean bRemote)
@@ -2457,7 +2465,7 @@ function Advanced_trajectory.dealWithZombieShot(tableProj, tableIndx, zombie, da
             --print('In MP, sending clientCmd for cshotzombie')
             sendClientCommand("ATY_cshotzombie", "true", {zombie:getOnlineID(), player:getOnlineID(), damage, tableProj.isCrit, limbShot})
         else
-            Advanced_trajectory.damageZombie(zombie, damage, tableProj.isCrit, limbShot, tableProj.player)
+            Advanced_trajectory.damageZombie(zombie, damage, tableProj.isCrit, limbShot, tableProj.player, tableProj.weaponName)
         end
         
         -- if zombie's health is very low, just kill it (recall full health is over 140) and give xp like usual

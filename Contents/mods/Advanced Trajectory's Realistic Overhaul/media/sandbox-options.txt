@@ -777,7 +777,7 @@ option Advanced_trajectory.shotgundivision
 	type = double,
 	min = 0,
 	max = 1,
-	default = 0.1,
+	default = 0.05,
 	page = Advanced_trajectory_shotgun,
 	translation = Advanced_trajectoryshotgundivision,
 }
