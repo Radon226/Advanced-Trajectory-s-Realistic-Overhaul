@@ -13,7 +13,7 @@ Sandbox_EN = {
 
 	Sandbox_Advanced_trajectoryaimpoint = "Enable The Aimpoint",
 	Sandbox_Advanced_trajectoryaimpoint_tooltip = "Show or hide crosshair.",
-	Sandbox_Advanced_trajectoryhideTracer = "Hide Tracer",
+	Sandbox_Advanced_trajectoryhideTracer = "Hide Tracer (DO NOT ENABLE)",
 	Sandbox_Advanced_trajectoryshowOutlines = "Show Outlines (need vanilla outlines checked)",
 
 	Sandbox_Advanced_trajectoryenableAutoAimZLevel = "Enable Auto Aim Z Level",
@@ -24,7 +24,9 @@ Sandbox_EN = {
 	
 	Sandbox_Advanced_trajectoryenableCarAimLimit = "Limit aiming to a cone in car"
 	Sandbox_Advanced_trajectoryenableCarAimLimit_tooltip = "Nerfs shooting in cars. Player aim is limited to a cone."
-
+	Sandbox_Advanced_trajectoryenableBulletIgnoreCarFromHighLevel = "Bullets ignore cars below when shooting from a higher level"
+	Sandbox_Advanced_trajectoryenableBulletIgnoreCarFromHighLevel_tooltip = "If enabled, bullet will ignore car when shooting from a higher level." 
+	
 	Sandbox_Advanced_trajectoryEnablerange = "Enable Ranged Weapon",
 	Sandbox_Advanced_trajectoryEnablethrow = "Enable Throwed Weapon",
 	Sandbox_Advanced_trajectoryIgnorePVPSafety = "Ignore PVP Safety (PVP)",

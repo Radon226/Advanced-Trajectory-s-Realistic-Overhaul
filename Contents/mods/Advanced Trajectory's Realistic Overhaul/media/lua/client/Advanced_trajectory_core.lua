@@ -529,7 +529,7 @@ function Advanced_trajectory.checkBulletCarCollision(bulletPos, bulletDamage, ta
     local playerCurrPosZ = player:getZ() 
 
     -- if high ground and aiming target below, ignore car
-    if playerCurrPosZ > Advanced_trajectory.aimlevels then 
+    if playerCurrPosZ > Advanced_trajectory.aimlevels and getSandboxOptions():getOptionByName("Advanced_trajectory.enableBulletIgnoreCarFromHighLevel"):getValue() then 
         --print('carColl -> no hit')
         return false 
     end

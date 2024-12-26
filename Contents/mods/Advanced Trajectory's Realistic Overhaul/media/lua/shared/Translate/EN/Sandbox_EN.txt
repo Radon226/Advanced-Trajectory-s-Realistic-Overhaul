@@ -24,6 +24,8 @@ Sandbox_EN = {
 	
 	Sandbox_Advanced_trajectoryenableCarAimLimit = "Limit aiming to a cone in car"
 	Sandbox_Advanced_trajectoryenableCarAimLimit_tooltip = "Nerfs shooting in cars. Player aim is limited to a cone."
+	Sandbox_Advanced_trajectoryenableBulletIgnoreCarFromHighLevel = "Bullets ignore cars below when shooting from a higher level"
+	Sandbox_Advanced_trajectoryenableBulletIgnoreCarFromHighLevel_tooltip = "If enabled, bullet will ignore car when shooting from a higher level." 
 
 	Sandbox_Advanced_trajectoryEnablerange = "Enable Ranged Weapon",
 	Sandbox_Advanced_trajectoryEnablethrow = "Enable Throwed Weapon",
