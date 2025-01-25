@@ -828,11 +828,10 @@ end
 --------------------------------------------------------------------------
 --REMOVE ITEM FROM WORLD (ex. bullet projectile when collide) FUNC SECT---
 --------------------------------------------------------------------------
+-- if error, then projectile is too far away since chunk hasn't loaded
 -- param is type InventoryItem
 function Advanced_trajectory.itemremove(worlditem)
     if worlditem == nil then return end
-
-    -- print("Type: ", worlditem:getType())
 
     --worlditem:getWorldItem():getSquare():transmitRemoveItemFromSquare(worlditem:getWorldItem())
     worlditem:getWorldItem():removeFromSquare()
@@ -1303,10 +1302,12 @@ function Advanced_trajectory.OnPlayerUpdate()
         distanceLimit = distanceLimit * distanceLimitScaling
         
         local targetDist = Advanced_trajectory.getDistanceFromMouseToPlayer(player)
+        local maxBulletDist = getSandboxOptions():getOptionByName("Advanced_trajectory.maxBulletDist"):getValue() * 70.51    -- use this so it scales correctly with targetDist value
 
         --print("target / maxDistance / limit: ", targetDist, " || ", maxDistance, " || ", distanceLimit)
+        --print("target / maxBulletDistance: ", targetDist, " || ", maxBulletDist)
 
-        if targetDist > maxDistance then
+        if targetDist > maxDistance or targetDist > maxBulletDist then
             targetDist = maxDistance
             Advanced_trajectory.isOverDistanceLimit = true  
         else
@@ -2819,6 +2820,8 @@ function Advanced_trajectory.updateProjectiles()
             tableProj.currDist      = tableProj.currDist + spnumber
 
             --print('distTraveled: ', tableProj.distTraveled)
+            --print('[updateProjectiles() -> bulletDistTravel: ', tableProj.distTraveled * 70.51)
+            --print('[updateProjectiles() -> mouseDist: ', Advanced_trajectory.getDistanceFromMouseToPlayer(getPlayer()))
 
             -- NOT SURE WHAT WEAPON THIS CHECKS SINCE THERE ARE NO FLAMETHROWERS IN VANILLA
             if tableProj.weaponName == "flamethrower" then
@@ -2842,13 +2845,14 @@ function Advanced_trajectory.updateProjectiles()
                 end
             
             -- WHERE BULLET BREAKS WHEN OUT OF RANGE. CHECKS IF REMAINING DISTANCE IS LESS THAN 0 AND WEAPON IS NOT GRENADE.
-            elseif (tableProj.bulletDist < 0 or tableProj.distTraveled > 100) and tableProj.weaponName ~= "Grenade"  then
+            elseif (tableProj.bulletDist < 0 or tableProj.distTraveled > getSandboxOptions():getOptionByName("Advanced_trajectory.maxBulletDist"):getValue()) and tableProj.weaponName ~= "Grenade"  then
 
                 if tableProj["wallcarmouse"] or tableProj["wallcarzombie"]then
                     blowUp(tableProj)
                 end
 
                 currTable[indx] = Advanced_trajectory.removeBulletData(tableProj.item) 
+                --print('[updateProjectiles() -> bullet removed')
 
                 Advanced_trajectory.determineArrowSpawn(tableProj.square, false)
 

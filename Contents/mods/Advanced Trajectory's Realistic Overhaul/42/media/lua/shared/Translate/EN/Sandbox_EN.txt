@@ -126,6 +126,8 @@ Sandbox_EN = {
 	Sandbox_Advanced_trajectorybulletspeed = "Ballistic Speed / Bullet Speed",
 
 	Sandbox_Advanced_trajectorybulletdistance = "Ballistic Distance / Bullet Distance",
+	Sandbox_Advanced_trajectorymaxBulletDist = "Max Bullet Distance",
+	Sandbox_Advanced_trajectorymaxBulletDist_tooltip = "After certain distance, bullet will be removed from the world. Purpose is to prevent error when bullet is removed in an unrendered tile/chunk",
 
 	Sandbox_Advanced_trajectoryshotgunnum = "Shotgun Projectile Count",
 	Sandbox_Advanced_trajectoryshotgunnum_tooltip = "Amount of pellots shot",
