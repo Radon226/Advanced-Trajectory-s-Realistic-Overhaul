@@ -217,9 +217,15 @@ function Advanced_trajectory.determineArrowSpawn(square, isBroken)
 end
 
 function Advanced_trajectory.allowPVP(player, target)
-    -- allow PVP if
+    -- allow PVP if (ShowSafety ON)
     -- 1) target is not the client player (you can't shoot you)
     -- 2) target or player does not have PVP safety enabled
+    -- 3) target is not in the same faction as player
+    -- 4) faction PVP is enabled for either target or player
+    -- 5) sandbox option IgnorePVPSafety is on
+
+    -- allow PVP if (ShowSafety OFF)
+    -- 1) target is not the client player (you can't shoot you)
     -- 3) target is not in the same faction as player
     -- 4) faction PVP is enabled for either target or player
     -- 5) sandbox option IgnorePVPSafety is on
@@ -255,9 +261,11 @@ function Advanced_trajectory.allowPVP(player, target)
         return false
     end
 
-    -- if safety is on for BOTH players, then PVP is not allowed
-    if player:getSafety():isEnabled() and target:getSafety():isEnabled() then 
-        return false
+    if getServerOptions():getOptionByName("ShowSafety"):getValue() then
+        -- if safety is on for BOTH players, then PVP is not allowed
+        if player:getSafety():isEnabled() and target:getSafety():isEnabled() then 
+            return false
+        end
     end
 
     local playerFaction = Faction.getPlayerFaction(player)
@@ -269,6 +277,10 @@ function Advanced_trajectory.allowPVP(player, target)
 
     local playerFactionPvp = player:isFactionPvp()
     local targetFactionPvp = target:isFactionPvp()
+
+    if playerFaction ~= targetFaction then
+        return true
+    end
     
     -- allow PVP if player and target is in the same faction and faction PVP is on
     if playerFaction == targetFaction then
@@ -277,10 +289,7 @@ function Advanced_trajectory.allowPVP(player, target)
         end
     end
 
-    if playerFaction ~= targetFaction then
-        return true
-    end
-
+    -- else do not allow pvp 
     return false
 end
 
