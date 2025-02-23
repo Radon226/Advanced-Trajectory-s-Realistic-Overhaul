@@ -230,6 +230,11 @@ function Advanced_trajectory.allowPVP(player, target)
     -- 4) faction PVP is enabled for either target or player
     -- 5) sandbox option IgnorePVPSafety is on
 
+    -- if sandbox option PVP is not on, do not allow PVP
+    if not getServerOptions():getOptionByName("PVP"):getValue() then
+        return false
+    end
+
     -- if either players are somehow null, return false
     if not player or not target then 
         return false 
