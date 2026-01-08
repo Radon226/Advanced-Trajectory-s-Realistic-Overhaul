@@ -34,26 +34,10 @@ function Advanced_trajectory.Boom(sq, info)
         sq:AddWorldInventoryItem(info[10], info["pos"][1], info["pos"][2], 0)
     end
 
-
-    -- player:setPrimaryHandItem(nil)
-    -- player:setSecondaryHandItem(nil)
-    -- local inventory = player:getInventory()
-    -- -- local itemtype = handWeapon:getFullType()
-    -- if inventory:contains(info[10]) then
-    --     inventory:Remove(info[10])
-    --     local item  = inventory:AddItem(info[10])
-
-    --     player:setPrimaryHandItem(item)
-    --     player:setSecondaryHandItem(item)
-    -- end
-
-    
-
-
     local smokeRange        = info[1] - 2
     local explosionPower    = info[2]
     local explosionRange    = info[3] - 2
-    local firePower         = info[4]
+    --local firePower         = info[4]
     local fireRange         = info[5] - 2
 
     for i = -smokeRange, smokeRange do
@@ -200,8 +184,8 @@ function Advanced_trajectory.Boom(sq, info)
         addSound(player, sq:getX(), sq:getY(), sq:getZ(), noiseRange, 50); 
     elseif smokeRange > 0 then
         addSound(player, sq:getX(), sq:getY(), sq:getZ(), smokeRange * 7, 50); 
-    elseif fireRange > 0 then
-        addSound(player, sq:getX(), sq:getY(), sq:getZ(), firePower, 50); 
+    --elseif fireRange > 0 then
+        --addSound(player, sq:getX(), sq:getY(), sq:getZ(), firePower, 50); --firepower deprecated b42
     else
         addSound(player, sq:getX(), sq:getY(), sq:getZ(), explosionPower, 50); 
     end

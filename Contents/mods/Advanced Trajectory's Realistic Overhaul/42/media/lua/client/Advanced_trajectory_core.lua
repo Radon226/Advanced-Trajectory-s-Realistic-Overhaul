@@ -181,12 +181,12 @@ function Advanced_trajectory.determineArrowSpawn(square, isBroken)
     local isBow = false
 
     -- check if player has a bow
-    if string.contains(weaitem:getAmmoType() or "","Arrow_Fiberglass") then
+    if string.contains(weaitem:getAmmoType():toString() or "","Arrow_Fiberglass") then
         proj  = instanceItem("Arrow_Fiberglass")
         isBow = true
     end
 
-    if string.contains(weaitem:getAmmoType() or "","Bolt_Bear") then
+    if string.contains(weaitem:getAmmoType():toString() or "","Bolt_Bear") then
         proj  = instanceItem("Bolt_Bear")
         isBow = true
     end
@@ -364,16 +364,16 @@ function Advanced_trajectory.searchTargetNearBullet(bulletTable, playerTable, mi
                 local locobject = staticObjects:get(i-1)
                 local sprite = locobject:getSprite()
                 if sprite  then
-                    local Properties = sprite:getProperties()
-                    if Properties then
-                        local wallN = Properties:Is(IsoFlagType.WallN)
-                        --local doorN = Properties:Is(IsoFlagType.doorN)
+                    local properties = sprite:getProperties()
+                    if properties then
+                        local wallN = properties:has(IsoFlagType.WallN)
+                        --local doorN = properties:has(IsoFlagType.doorN)
 
-                        local wallNW = Properties:Is(IsoFlagType.WallNW)
-                        local wallSE = Properties:Is(IsoFlagType.WallSE)
+                        local wallNW = properties:has(IsoFlagType.WallNW)
+                        local wallSE = properties:has(IsoFlagType.WallSE)
 
-                        local wallW = Properties:Is(IsoFlagType.WallW)
-                        --local doorW = Properties:Is(IsoFlagType.doorW)
+                        local wallW = properties:has(IsoFlagType.WallW)
+                        --local doorW = properties:has(IsoFlagType.doorW)
 
                         if (wallN or wallNW or wallSE or wallW) then
                             isNearWall = true
@@ -669,14 +669,14 @@ function Advanced_trajectory.checkObjectCollision(square, bulletDir, bulletPos, 
                 local properties = sprite:getProperties()
                 if properties then
 
-                    local wallN = properties:Is(IsoFlagType.WallN) and not properties:Is(IsoFlagType.HoppableN)
-                    local doorN = properties:Is(IsoFlagType.doorN)
+                    local wallN = properties:has(IsoFlagType.WallN) and not properties:has(IsoFlagType.HoppableN)
+                    local doorN = properties:has(IsoFlagType.doorN)
 
-                    local wallNW = properties:Is(IsoFlagType.WallNW)
-                    local wallSE = properties:Is(IsoFlagType.WallSE)
+                    local wallNW = properties:has(IsoFlagType.WallNW)
+                    local wallSE = properties:has(IsoFlagType.WallSE)
 
-                    local wallW = properties:Is(IsoFlagType.WallW) and not properties:Is(IsoFlagType.HoppableW)
-                    local doorW = properties:Is(IsoFlagType.doorW)
+                    local wallW = properties:has(IsoFlagType.WallW) and not properties:has(IsoFlagType.HoppableW)
+                    local doorW = properties:has(IsoFlagType.doorW)
 
                     -- if the locoobject is "IsoWindow" which is a class and it's not smashed, smash it
                     if instanceof(locobject,"IsoWindow") and not locobject:isSmashed() and not locobject:IsOpen() then
@@ -1046,7 +1046,7 @@ function Advanced_trajectory.getAttachmentEffects(weapon)
 end
 
 function Advanced_trajectory.getIsHoldingShotgun(weapon)
-    if (string.contains(weapon:getAmmoType() or "","Shotgun") or string.contains(weapon:getAmmoType() or "","shotgun") or string.contains(weapon:getAmmoType() or "","shell") or string.contains(weapon:getAmmoType() or "","Shell")) then
+    if (string.contains(weapon:getAmmoType():toString() or "","Shotgun") or string.contains(weapon:getAmmoType():toString() or "","shotgun") or string.contains(weapon:getAmmoType():toString() or "","shell") or string.contains(weapon:getAmmoType():toString() or "","Shell")) then
         return true
     end
 
@@ -1128,7 +1128,8 @@ function Advanced_trajectory.OnPlayerUpdate()
 
     local weaitem = player:getPrimaryHandItem()
     local isAiming = player:isAiming()
-    local hasGun = instanceof(weaitem, "HandWeapon") 
+    local weaponType = WeaponType.getWeaponType(player):getType()
+    local hasGun = weaponType == "firearm" or weaponType == "handgun"
     local gameTimeMultiplier = gameTime:getMultiplier() * 16
 
     -- if have manual aim Z level enabled, reset aimlevel to player level when about to aim 
@@ -1137,10 +1138,10 @@ function Advanced_trajectory.OnPlayerUpdate()
     end
 
     if isAiming and hasGun then
-        Advanced_trajectory.hasFlameWeapon = string.contains(weaitem:getAmmoType() or "","FlameFuel")
+        Advanced_trajectory.hasFlameWeapon = string.contains(weaitem:getAmmoType():toString() or "", "FlameFuel")
     end
 
-    if isAiming and hasGun and not weaitem:hasTag("Thrown") and not Advanced_trajectory.hasFlameWeapon and not (string.contains(weaitem:getAmmoType() or "", "MandelaArrow")) and not (weaitem:hasTag("XBow") and not getSandboxOptions():getOptionByName("Advanced_trajectory.DebugEnableBow"):getValue()) and (((weaitem:isRanged() and getSandboxOptions():getOptionByName("Advanced_trajectory.Enablerange"):getValue()) or (weaitem:getSwingAnim() =="Throw" and getSandboxOptions():getOptionByName("Advanced_trajectory.Enablethrow"):getValue())) or Advanced_trajectory.FullWeaponTypes[weaitem:getFullType()]) then        
+    if (isAiming and hasGun) and not Advanced_trajectory.hasFlameWeapon then
         -- print(getPlayer():getCoopPVP())
         Mouse.setCursorVisible(false)
 
@@ -1196,7 +1197,7 @@ function Advanced_trajectory.OnPlayerUpdate()
 
         local canRunNGun = false
         -- run and gun unlock
-        if realLevel >= getSandboxOptions():getOptionByName("Advanced_trajectory.runNGunLv"):getValue() or player:HasTrait("RunNGun") then
+        if realLevel >= getSandboxOptions():getOptionByName("Advanced_trajectory.runNGunLv"):getValue()then
             canRunNGun = true
         end
 
@@ -1243,17 +1244,17 @@ function Advanced_trajectory.OnPlayerUpdate()
         -- MOODLE LEVELS SECT--
         ------------------------
         -- level 0 to 4 (least to severe)
-        local stressLv      = player:getMoodles():getMoodleLevel(MoodleType.Stress) -- inc minaimnum
-        local enduranceLv   = player:getMoodles():getMoodleLevel(MoodleType.Endurance) -- inc minaimnum, dec aim speed
-        local panicLv       = player:getMoodles():getMoodleLevel(MoodleType.Panic) -- transparency
-        local drunkLv       = player:getMoodles():getMoodleLevel(MoodleType.Drunk) -- scaling and pos
-        local painLv        = player:getMoodles():getMoodleLevel(MoodleType.Pain)
-        
-        local hyperLv   = player:getMoodles():getMoodleLevel(MoodleType.Hyperthermia) -- dec aim speed
-        local hypoLv    = player:getMoodles():getMoodleLevel(MoodleType.Hypothermia) -- dec aim speed
-        local tiredLv   = player:getMoodles():getMoodleLevel(MoodleType.Tired) -- dec aim speed
+        local stressLv      = player:getMoodles():getMoodleLevel(MoodleType.STRESS) -- inc minaimnum
+        local enduranceLv   = player:getMoodles():getMoodleLevel(MoodleType.ENDURANCE) -- inc minaimnum, dec aim speed
+        local panicLv       = player:getMoodles():getMoodleLevel(MoodleType.PANIC) -- transparency
+        local drunkLv       = player:getMoodles():getMoodleLevel(MoodleType.DRUNK) -- scaling and pos
+        local painLv        = player:getMoodles():getMoodleLevel(MoodleType.PAIN)
 
-        local heavyLv   = player:getMoodles():getMoodleLevel(MoodleType.HeavyLoad) -- add bloom
+        local hyperLv   = player:getMoodles():getMoodleLevel(MoodleType.HYPERTHERMIA) -- dec aim speed
+        local hypoLv    = player:getMoodles():getMoodleLevel(MoodleType.HYPOTHERMIA) -- dec aim speed
+        local tiredLv   = player:getMoodles():getMoodleLevel(MoodleType.TIRED) -- dec aim speed
+
+        local heavyLv   = player:getMoodles():getMoodleLevel(MoodleType.HEAVY_LOAD) -- add bloom
 
         -- add to realMin or focusLimit if want to increase minaimnum from negative moodles
         baseAimnumPenalty = 6
@@ -1548,13 +1549,13 @@ function Advanced_trajectory.OnPlayerUpdate()
                     Advanced_trajectory.isCrouch = false
                 end
 
-                local endurance = player:getStats():getEndurance()
+                local endurance = player:getStats():get(CharacterStat.ENDURANCE)
                 local staminaCrouchScale = getSandboxOptions():getOptionByName("Advanced_trajectory.staminaCrouchScale"):getValue() 
                 local staminaHeavyCrouchScale    = getSandboxOptions():getOptionByName("Advanced_trajectory.staminaHeavyCrouchScale"):getValue() 
 
                 if endurance > 0 then 
                     local effect = staminaCrouchScale * ((heavyLv*staminaHeavyCrouchScale) + 1) * (11 - player:getPerkLevel(Perks.Fitness))
-                    player:getStats():setEndurance(player:getStats():getEndurance() - effect)
+                    player:getStats():set(CharacterStat.ENDURANCE, endurance - effect)
                 end
 
                 maxFocusCounter = 100
@@ -1581,12 +1582,12 @@ function Advanced_trajectory.OnPlayerUpdate()
                     Advanced_trajectory.isCrawl = false
                 end
 
-                local endurance = player:getStats():getEndurance()
+                local endurance = player:getStats():get(CharacterStat.ENDURANCE)
                 local staminaCrawlScale         = getSandboxOptions():getOptionByName("Advanced_trajectory.staminaCrawlScale"):getValue() 
                 local staminaHeavyCrawlScale    = getSandboxOptions():getOptionByName("Advanced_trajectory.staminaHeavyCrawlScale"):getValue() 
                 if endurance > 0 then 
                     local effect = staminaCrawlScale * ((heavyLv * staminaHeavyCrawlScale) + 1) * (11 - player:getPerkLevel(Perks.Fitness))
-                    player:getStats():setEndurance(player:getStats():getEndurance() - effect)
+                    player:getStats():set(CharacterStat.ENDURANCE, endurance - effect)
                 end
             end
         else
@@ -1599,7 +1600,7 @@ function Advanced_trajectory.OnPlayerUpdate()
         ----------------------------
         local runNGunMultiplierBuff = 1
         if canRunNGun then
-            runNGunMultiplierBuff = 0.25
+            runNGunMultiplierBuff = getSandboxOptions():getOptionByName("Advanced_trajectory.runNGunBuff"):getValue() 
         end
 
         local drunkActionEffectModifier = getSandboxOptions():getOptionByName("Advanced_trajectory.drunkActionEffectModifier"):getValue() 
@@ -1646,7 +1647,7 @@ function Advanced_trajectory.OnPlayerUpdate()
         end 
 
         if aimnum > minaimnum then
-            aimnum = aimnum - gametimemul*reduceSpeed
+            aimnum = aimnum - (gametimemul * reduceSpeed)
         end
         ----------------------------
         ------- AIMNUM LIMIT SECT---
@@ -1843,13 +1844,6 @@ function Advanced_trajectory.OnPlayerUpdate()
             --getPlayer():getPrimaryHandItem():getSmokeRange()
 
             if not Advanced_trajectory.aimcursor then
-                -- Advanced_trajectory.thorwerinfo = {
-                --     weaitem:getSmokeRange(),
-                --     weaitem:getExplosionPower(),
-                --     weaitem:getExplosionRange(),
-                --     weaitem:getFirePower(),
-                --     weaitem:getFireRange()
-                -- }
                 Advanced_trajectory.aimcursor = ISThorowitemToCursor:new("", "", player,weaitem)
                 getCell():setDrag(Advanced_trajectory.aimcursor, 0)
             end
@@ -2104,12 +2098,12 @@ function Advanced_trajectory.checkBowAndCrossbow(player, Zombie)
     local proj  = ""
     local isBow = false
     local broke = false
-    if string.contains(weaitem:getAmmoType() or "","Arrow_Fiberglass") then
+    if string.contains(weaitem:getAmmoType():toString() or "","Arrow_Fiberglass") then
         proj  = instanceItem("Arrow_Fiberglass")
         isBow = true
     end
 
-    if string.contains(weaitem:getAmmoType() or "","Bolt_Bear") then
+    if string.contains(weaitem:getAmmoType():toString() or "","Bolt_Bear") then
         proj  = instanceItem("Bolt_Bear")
         isBow = true
     end
@@ -2355,8 +2349,9 @@ function Advanced_trajectory.damagePlayershot(playerShot, damage, baseGunDmg, pl
     playerShot:getBodyDamage():ReduceGeneralHealth(playerDamageDealt)
 
     local stats = playerShot:getStats()
-	local pain = math.min(stats:getPain() + playerShot:getBodyDamage():getInitialBitePain() * BodyPartType.getPainModifyer(shotpart:index()), 100)
-	stats:setPain(pain)
+
+    local pain = math.min(stats:get(CharacterStat.PAIN) + playerShot:getBodyDamage():getInitialBitePain() * BodyPartType.getPainModifyer(shotpart:index()), 100)
+	stats:set(CharacterStat.PAIN, pain)
 
     playerShot:updateMovementRates()
     playerShot:getBodyDamage():Update()
@@ -2366,7 +2361,7 @@ function Advanced_trajectory.damagePlayershot(playerShot, damage, baseGunDmg, pl
     return nameShotPart, playerDamageDealt
 end
 
-function getHitReaction(isCrit, limbShot, damage)
+function getHitReaction(isCrit, limbShot, damage, weapon)
     local hitReactions = Advanced_trajectory.hitReactions
     -- 0 to 2
     -- val 0.3 would be at least 30 hp (zom hp usually 1.0)
@@ -2376,7 +2371,7 @@ function getHitReaction(isCrit, limbShot, damage)
         return hitReactions.head[ZombRand(#hitReactions.head)+1]
     end
 
-    if damage >= minDamage then
+    if damage >= minDamage or Advanced_trajectory.getIsHoldingShotgun(weapon) then
         return hitReactions.body[ZombRand(#hitReactions.body)+1]
     end
 
@@ -2387,7 +2382,9 @@ function Advanced_trajectory.damageZombie(zombie, damage, isCrit, limbShot, play
     --print('damageZom - damage: ', damage)
     --print('damageZom - zomHP bef: ', zombie:getHealth())
 
-    local reaction = getHitReaction(isCrit, limbShot, damage)
+    local weapon = player:getPrimaryHandItem()
+
+    local reaction = getHitReaction(isCrit, limbShot, damage, weapon)
     --print('reaction: ', reaction)
     
     -- Hit(HandWeapon weapon, IsoGameCharacter wielder, float damageSplit, boolean bIgnoreDamage, float modDelta, boolean bRemote)
@@ -2396,7 +2393,7 @@ function Advanced_trajectory.damageZombie(zombie, damage, isCrit, limbShot, play
     --     modDelta: is where damage is dealt to zombie (also set to damage val)
     --     bRemote: if true, zombie will not have any hit reactions  (set to true)
 
-    zombie:Hit(player:getPrimaryHandItem(), player, damage, false, damage, true)
+    zombie:Hit(weapon, player, damage, false, damage, true)
     if reaction then
         zombie:setHitReaction(reaction)
     end
@@ -2919,9 +2916,7 @@ function Advanced_trajectory.OnWeaponSwing(character, handWeapon)
     if  getSandboxOptions():getOptionByName("Advanced_trajectory.showOutlines"):getValue() and 
         (handWeapon:isRanged() and getSandboxOptions():getOptionByName("Advanced_trajectory.Enablerange"):getValue()) and
         instanceof(handWeapon, "HandWeapon") and not 
-        handWeapon:hasTag("Thrown") and not 
-        Advanced_trajectory.hasFlameWeapon and not 
-        (handWeapon:hasTag("XBow") and not getSandboxOptions():getOptionByName("Advanced_trajectory.DebugEnableBow"):getValue()) then
+        getSandboxOptions():getOptionByName("Advanced_trajectory.DebugEnableBow"):getValue() then
 
         handWeapon:setMaxHitCount(0)
     end
@@ -3022,7 +3017,7 @@ function Advanced_trajectory.OnWeaponSwing(character, handWeapon)
         handWeapon:getSmokeRange(),
         handWeapon:getExplosionPower(),
         handWeapon:getExplosionRange(),
-        handWeapon:getFirePower(),
+        1, -- was initially handWeapon:getFirePower() but that is deprecated now
         handWeapon:getFireRange()
     }
 
@@ -3052,7 +3047,7 @@ function Advanced_trajectory.OnWeaponSwing(character, handWeapon)
 
     local isHoldingShotgun = false
     if not ispass then  
-        if getSandboxOptions():getOptionByName("Advanced_trajectory.Enablethrow"):getValue() and handWeapon:getSwingAnim() =="Throw" then  --投掷物
+        if getSandboxOptions():getOptionByName("Advanced_trajectory.Enablethrow"):getValue() and handWeapon:getSwingAnim() =="Throw" then  
 
             if projectilePlayerData.throwinfo[1] == 0 and projectilePlayerData.throwinfo[2] == 0 and projectilePlayerData.throwinfo[4] == 0 then
                 projectilePlayerData.throwinfo[6] = 0.016
@@ -3121,7 +3116,7 @@ function Advanced_trajectory.OnWeaponSwing(character, handWeapon)
 
                 isHoldingShotgun = true
             
-            elseif string.contains(handWeapon:getAmmoType() or "", "INCRound") or string.contains(handWeapon:getAmmoType() or "", "HERound") then 
+            elseif string.contains(handWeapon:getAmmoType():toString() or "", "INCRound") or string.contains(handWeapon:getAmmoType():toString() or "", "HERound") then 
                 -- The idea here is to solve issue of Brita's launchers spawning a bullet along with their grenade.
                 --print("Weapon has round type ammo (Brita grenades).")
                 return
@@ -3129,7 +3124,7 @@ function Advanced_trajectory.OnWeaponSwing(character, handWeapon)
                 -- Break bullet if flamethrower
                 --print("Weapon is flame type.")
                 return
-            elseif ((handWeapon:hasTag("XBow") and not getSandboxOptions():getOptionByName("Advanced_trajectory.DebugEnableBow"):getValue()) or handWeapon:hasTag("Thrown")) then
+            elseif (not getSandboxOptions():getOptionByName("Advanced_trajectory.DebugEnableBow"):getValue()) then
                 -- Break bullet if bow
                 --print("Weapon is either bow or throwable nonexplosive.")
                 return

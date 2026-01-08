@@ -9,13 +9,13 @@ ProjectileGreen=0.8399999737739563
 ProjectileBlue=0.5299999713897705
 
 # 0.9120000004768372
-ProjectileAlpha=0
+ProjectileAlpha=0.9120000004768372
 
 # 0.1770000010728836
 ProjectileLength=0.1770000010728836
 
 # 0.34700000286102295
-ProjectileStartThickeness=0.34700000286102295
+ProjectileStartThickness=0.34700000286102295
 
 # 0.04899999871850014
 ProjectileEndThickness=0.04899999871850014
@@ -33,13 +33,13 @@ ProjectileTrailGreen=0.8399999737739563
 ProjectileTrailBlue=0.6100000143051147
 
 # 0.5189999938011169
-ProjectileTrailAlpha=0
+ProjectileTrailAlpha=0.5189999938011169
 
 # 0.8981999754905701
 ProjectileTrailLength=0.8981999754905701
 
 # 0.009999999776482582
-ProjectileTrailStartThickeness=0.009999999776482582
+ProjectileTrailStartThickness=0.009999999776482582
 
 # 0.34700000286102295
 ProjectileTrailEndThickness=0.34700000286102295
@@ -54,7 +54,7 @@ ProjectilePathGreen=1.0
 ProjectilePathBlue=1.0
 
 # 0.10100000351667404
-ProjectilePathAlpha=0
+ProjectilePathAlpha=0.10100000351667404
 
 # 0.009999999776482582
 ProjectilePathStartThickness=0.009999999776482582
