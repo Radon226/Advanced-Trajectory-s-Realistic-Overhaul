@@ -2356,7 +2356,7 @@ function Advanced_trajectory.damagePlayershot(playerShot, damage, baseGunDmg, pl
     playerShot:updateMovementRates()
     playerShot:getBodyDamage():Update()
 
-    playerShot:addBlood(50)
+    playerShot:addBlood(nil, true, true, true)
 
     return nameShotPart, playerDamageDealt
 end
@@ -2397,7 +2397,7 @@ function Advanced_trajectory.damageZombie(zombie, damage, isCrit, limbShot, play
     if reaction then
         zombie:setHitReaction(reaction)
     end
-    zombie:addBlood(getSandboxOptions():getOptionByName("AT_Blood"):getValue())
+    zombie:addBlood(nil, true, true, true)
     zombie:setAttackedBy(player)
 
     --print('damageZom - zomHP aft: ', zombie:getHealth())
@@ -2575,7 +2575,7 @@ function Advanced_trajectory.dealWithAnimalShot(tableProj, animal, damage)
         if reaction then
             zombie:setHitReaction(reaction)
         end
-        animal:addBlood(getSandboxOptions():getOptionByName("AT_Blood"):getValue())
+        animal:addBlood(nil, true, true, true)
         animal:setAttackedBy(player)
         
         -- kill if hp < 0.1
