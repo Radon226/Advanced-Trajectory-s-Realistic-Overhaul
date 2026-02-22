@@ -833,7 +833,10 @@ end
 function Advanced_trajectory.itemremove(worlditem)
     if worlditem == nil then return end
 
-    --worlditem:getWorldItem():getSquare():transmitRemoveItemFromSquare(worlditem:getWorldItem())
+    if isServer() or isClient() then 
+        --print("Removing item on server", isServer(), " || Removing item on client: ", isClient())
+        worlditem:getWorldItem():getSquare():transmitRemoveItemFromSquare(worlditem:getWorldItem())
+    end
     worlditem:getWorldItem():removeFromSquare()
 end
 
